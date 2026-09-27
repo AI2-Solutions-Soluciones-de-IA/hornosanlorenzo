@@ -1,5 +1,5 @@
 ---
-import { Image } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import { statSync } from "node:fs";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
@@ -22,6 +22,12 @@ const paginas = Object.entries(
   // Orden numérico: con diez páginas o más, «pagina-10» iría detrás de la 1.
   .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
   .map(([, m]) => m.default);
+
+// Para el visor: cada página a su tamaño original (1200 px de ancho), que es
+// lo que se ve al ampliar. Se carga solo al abrirla.
+const grandes = await Promise.all(
+  paginas.map((img) => getImage({ src: img, width: img.width, quality: 80 })),
+);
 ---
 <MarketingLayout
   title="Carta"
@@ -55,6 +61,13 @@ const paginas = Object.entries(
       >
         {paginas.map((img, i) => (
           <li class="carta-pagina snap-start shrink-0 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)]">
+            <button
+              type="button"
+              class="carta-abrir"
+              data-visor-abrir={i}
+              data-grande={grandes[i].src}
+              aria-label={`Ampliar la página ${i + 1}`}
+            >
             <Image
               src={img}
               alt={`Carta del obrador, página ${i + 1} de ${paginas.length}`}
@@ -64,6 +77,7 @@ const paginas = Object.entries(
               loading={i < 2 ? "eager" : "lazy"}
               class="block w-full h-auto"
             />
+            </button>
           </li>
         ))}
       </ol>
@@ -71,7 +85,28 @@ const paginas = Object.entries(
     <p class="carta-contador numeracion mt-4 text-center" aria-live="polite">
       Páginas <span data-carrusel-contador>1–2 de {paginas.length}</span>
     </p>
+    <p class="mt-1 text-center text-sm text-[color:var(--color-ink-muted)]">
+      Pulsa una página para verla en grande.
+    </p>
     </div>
+
+    <!-- Visor: una página a pantalla completa, con zoom. Se abre con
+         `showModal`, así que Esc cierra y el foco queda dentro. -->
+    <dialog class="visor" data-visor aria-label="Página de la carta ampliada">
+      <div class="visor-barra">
+        <button type="button" class="visor-boton" data-visor-prev aria-label="Página anterior">‹</button>
+        <span class="visor-pagina numeracion" aria-live="polite" data-visor-pagina></span>
+        <button type="button" class="visor-boton" data-visor-next aria-label="Página siguiente">›</button>
+        <span class="visor-hueco"></span>
+        <button type="button" class="visor-boton" data-visor-menos aria-label="Reducir">−</button>
+        <span class="visor-zoom numeracion" data-visor-zoom></span>
+        <button type="button" class="visor-boton" data-visor-mas aria-label="Ampliar">+</button>
+        <button type="button" class="visor-boton" data-visor-cerrar aria-label="Cerrar">×</button>
+      </div>
+      <div class="visor-lienzo" data-visor-lienzo>
+        <img data-visor-img alt="" width="1200" height="2134" />
+      </div>
+    </dialog>
   </section>
 </MarketingLayout>
 
@@ -154,6 +189,101 @@ const paginas = Object.entries(
       line-height: 44px;
     }
   }
+  .carta-abrir {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+  }
+  .carta-abrir:focus-visible {
+    outline: 2px solid var(--color-caramelo);
+    outline-offset: -2px;
+  }
+
+  .visor {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--color-leche);
+    color: var(--color-moka);
+  }
+  .visor[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  .visor::backdrop {
+    background: var(--color-moka);
+  }
+  .visor-barra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-bottom: 1px solid var(--color-avellana);
+  }
+  .visor-hueco {
+    flex: 1;
+  }
+  .visor-pagina,
+  .visor-zoom {
+    min-width: 4.5em;
+    text-align: center;
+    font-size: 14px;
+  }
+  .visor-boton {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border: 1px solid var(--color-avellana);
+    background: var(--color-leche);
+    color: var(--color-moka);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .visor-boton:hover {
+    background: var(--color-latte);
+  }
+  .visor-boton:disabled {
+    opacity: 0.35;
+    cursor: default;
+    background: var(--color-leche);
+  }
+  .visor-lienzo {
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 12px;
+  }
+  .visor-lienzo img {
+    display: block;
+    max-width: none;
+    height: auto;
+    margin: 0 auto;
+    border: 1px solid var(--color-avellana);
+    cursor: zoom-in;
+  }
+  .visor-lienzo[data-ampliado] img {
+    cursor: zoom-out;
+  }
+  @media (max-width: 480px) {
+    .visor-barra {
+      gap: 4px;
+      padding: 6px;
+    }
+    .visor-pagina,
+    .visor-zoom {
+      min-width: 3.5em;
+      font-size: 13px;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .carta-pista {
       scroll-behavior: auto;
@@ -163,4 +293,5 @@ const paginas = Object.entries(
 
 <script>
   import "~/scripts/carrusel";
+  import "~/scripts/visor-carta";
 </script>
