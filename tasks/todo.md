@@ -116,6 +116,12 @@
       hoy marcadas `consultar: true`
 
 ## Coherencia y deuda
+- [ ] Primera foto que se suba desde el panel tras el cambio de almacén (29-9):
+      comprobar que su URL empieza por `xp8nqc338hkzzibd.public.blob…` y que se
+      ve. La clave se probó copiando ficheros, no desde el panel desplegado
+- [ ] `astro.config.mjs` cita `*-oscarsr96s-projects.vercel.app` como URL
+      interna del despliegue; desde la migración a AI2 es
+      `*-ai-2-solutions-7810bd50.vercel.app`. Solo el comentario
 - [ ] Variables del entorno **preview** en Vercel (`DATABASE_URL`,
       `BETTER_AUTH_SECRET`): no se pudieron poner con el CLI v50 instalado, que
       pide confirmación interactiva. Sin ellas los despliegues de rama fallan al

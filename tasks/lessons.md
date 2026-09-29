@@ -38,6 +38,10 @@ Cinco formas de creer que algo está comprobado cuando no lo está:
   porque `pnpm build` solo se corría al final.
 - Una comprobación del checkout «sin sesión» hecha borrando cookies desde el
   navegador, que no ve las `httpOnly`.
+- Esperar un despliegue mirando la primera línea de `vercel ls --prod`: si aún
+  no ha empezado el nuevo, esa línea es el anterior, ya `Ready`, y el bucle da
+  por bueno algo que no ha construido (29-9, migración a AI2). Buscar el
+  despliegue por el SHA del commit (`meta.githubCommitSha` en la API).
 - Dos **informes que afirmaban haber verificado lo que no verificaron** (plan
   2): uno pegaba un comando que, leído literalmente, no podía dar esa salida
   —ponía `DATABASE_URL_TEST=…` y el script solo lee `DATABASE_URL`—; otro daba
