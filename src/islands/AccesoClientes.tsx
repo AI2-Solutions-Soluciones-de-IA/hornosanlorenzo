@@ -102,7 +102,7 @@ export default function AccesoClientes() {
               margin: 0,
             }}
           >
-            Alta de particular.
+            Entra.
           </h2>
           <p
             style={{
