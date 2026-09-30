@@ -3,6 +3,7 @@ import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import { agruparSabores } from "~/lib/sabores";
 import CategoryFilter from "~/islands/CategoryFilter.tsx";
 import type { Producto } from "~/lib/db/productos";
+import type { DefinicionPack } from "~/data/packs";
 import { grupoCategories, grupoOfCategory, grupoLabel, type GrupoId, type CategoryId } from "~/data/categories";
 import { secciones, seccionById, isSeccionId } from "~/data/secciones";
 import { stores } from "~/data/stores";
@@ -16,6 +17,8 @@ interface Props {
    * detalle, en `~/lib/lectura-publica.ts`).
    */
   productos: Producto[];
+  /** Las definiciones de los packs, leídas igual: con `definicionesPublicas`. */
+  defsPacks: Map<string, DefinicionPack>;
   grupo?: GrupoId | null;
   eyebrow: string;
   /** Sin título ni entrada, el bloque arranca en la etiqueta (la página ya
@@ -32,6 +35,7 @@ interface Props {
 }
 const {
   productos,
+  defsPacks,
   grupo = null,
   eyebrow,
   title,
@@ -134,7 +138,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
           </div>
           <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {agruparSabores(b.items).map((e) => (
-              <ElementoCatalogo elemento={e} seccionLabel={seccionById(b.seccion.id).label} />
+              <ElementoCatalogo elemento={e} seccionLabel={seccionById(b.seccion.id).label} defsPacks={defsPacks} />
             ))}
           </div>
         </div>
@@ -154,7 +158,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
           </div>
           <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {agruparSabores(sueltos).map((e) => (
-              <ElementoCatalogo elemento={e} />
+              <ElementoCatalogo elemento={e} defsPacks={defsPacks} />
             ))}
           </div>
         </div>
@@ -165,6 +169,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
       {agruparSabores(sueltos).map((e) => (
         <ElementoCatalogo
           elemento={e}
+          defsPacks={defsPacks}
           seccionLabel={seccionLabelDe((e.tipo === "producto" ? e.producto : e.sabores[0]).seccion)}
         />
       ))}

@@ -1,8 +1,8 @@
 /**
  * Vuelca a `pack_definiciones` y `pack_piezas` la composición de los siete
- * packs que hasta ahora vivía en `src/data/packs.ts`. Los datos salen de
- * `scripts/packs-iniciales.json` (generado desde ese array; una prueba de
- * `src/data/packs.test.ts` comprueba que son idénticos).
+ * packs que hasta la Tarea 4 vivía en `src/data/packs.ts`. Los datos salen de
+ * `scripts/packs-iniciales.json` (generado desde ese array antes de
+ * borrarlo; `src/data/packs.test.ts` sigue fijando con él las cifras del pptx).
  *
  * Las fichas (`productos`, categoría `packs`) tienen que existir ya: se crean
  * con `scripts/crear-packs.mjs`. Si falta alguna, o no es un pack, no se

@@ -97,3 +97,39 @@ describe("invalidar", () => {
     errorSpy.mockRestore();
   });
 });
+
+// Foco de revisión 3: una empanada agotada o un precio nuevo en Productos
+// tiene que llegar a las fichas de TODOS los packs, también a los creados
+// desde el panel. La lista sale de la base de datos al guardar, no del código.
+describe("rutasTrasGuardarProducto", () => {
+  it("las del catálogo, las fichas de todos los packs y la del producto", async () => {
+    const { rutasTrasGuardarProducto, RUTAS_CATALOGO } = await import("~/lib/cache");
+    const rutas = await rutasTrasGuardarProducto("empanada-de-carne", async () => [
+      "/catalogo/pack-cumpleanos",
+      "/catalogo/pack-nuevo-del-panel",
+    ]);
+    expect(rutas).toEqual([
+      ...RUTAS_CATALOGO,
+      "/catalogo/pack-cumpleanos",
+      "/catalogo/pack-nuevo-del-panel",
+      "/catalogo/empanada-de-carne",
+    ]);
+  });
+
+  it("RUTAS_CATALOGO ya no lista fichas de pack: salen de la base de datos", async () => {
+    const { RUTAS_CATALOGO } = await import("~/lib/cache");
+    expect(RUTAS_CATALOGO.filter((r) => r.startsWith("/catalogo/pack-"))).toEqual([]);
+    expect(RUTAS_CATALOGO).toContain("/catalogo/packs");
+  });
+
+  it("si no se pueden leer los packs, invalida el resto igualmente y lo registra", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { rutasTrasGuardarProducto, RUTAS_CATALOGO } = await import("~/lib/cache");
+    const rutas = await rutasTrasGuardarProducto("empanada-de-carne", async () => {
+      throw new Error("ECONNRESET");
+    });
+    expect(rutas).toEqual([...RUTAS_CATALOGO, "/catalogo/empanada-de-carne"]);
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+});

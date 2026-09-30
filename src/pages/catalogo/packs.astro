@@ -1,8 +1,7 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import PackCard from "~/components/PackCard.astro";
-import { packPorSlug } from "~/data/packs";
-import { catalogoPublico } from "~/lib/lectura-publica";
+import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
 import { fichaPack } from "~/lib/pack-ficha";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante y el panel
@@ -10,14 +9,18 @@ import { fichaPack } from "~/lib/pack-ficha";
 export const prerender = false;
 
 // Una sola lectura: el catálogo activo trae a la vez los packs y todas sus
-// piezas, que hacen falta para el «comprado suelto» y el ahorro. Si Postgres
-// falla, sale vacío y sin caché (`~/lib/lectura-publica.ts`).
-const catalogo = await catalogoPublico(Astro.response);
+// piezas, que hacen falta para el «comprado suelto» y el ahorro; y, en
+// paralelo, lo que lleva cada pack (lo edita el panel). Si Postgres falla,
+// sale vacío y sin caché (`~/lib/lectura-publica.ts`).
+const [catalogo, defs] = await Promise.all([
+  catalogoPublico(Astro.response),
+  definicionesPublicas(Astro.response),
+]);
 
 // En el orden de la carta. Un pack sin definición no tiene piezas ni ficha
 // (da 404): no se enseña.
 const tarjetas = catalogo.flatMap((pack) => {
-  const def = pack.category === "packs" ? packPorSlug(pack.slug) : undefined;
+  const def = pack.category === "packs" ? defs.get(pack.slug) : undefined;
   return def ? [{ pack, def, ficha: fichaPack(def, pack, catalogo) }] : [];
 });
 ---

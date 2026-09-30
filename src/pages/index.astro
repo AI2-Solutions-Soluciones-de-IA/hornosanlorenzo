@@ -4,8 +4,7 @@ import Hero from "~/components/Hero.astro";
 import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import { agruparSabores } from "~/lib/sabores";
 import SectionLabel from "~/components/SectionLabel.astro";
-import type { Producto } from "~/lib/db/productos";
-import { catalogoPublico } from "~/lib/lectura-publica";
+import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
 import { stores } from "~/data/stores";
 import { site } from "~/data/site";
 
@@ -16,7 +15,12 @@ export const prerender = false;
 // Un fallo de Postgres deja la home sin destacados, no una página rota — y
 // marca la respuesta como `no-store` para que esa home sin destacados no se
 // quede cacheada (`~/lib/lectura-publica.ts`).
-const productsAll: Producto[] = await catalogoPublico(Astro.response);
+// Las definiciones de los packs van igual, en paralelo: un pack destacado
+// sin definición no se pinta.
+const [productsAll, defsPacks] = await Promise.all([
+  catalogoPublico(Astro.response),
+  definicionesPublicas(Astro.response),
+]);
 // `listarProductos` ya devuelve en el orden de la carta.
 const featured = productsAll.filter((p) => p.destacado).slice(0, 6);
 
@@ -93,7 +97,7 @@ const localBizJsonLd = stores.map((s) => ({
     >
       {agruparSabores(featured).map((e) => (
         <div class="carrusel-item snap-start shrink-0">
-          <ElementoCatalogo elemento={e} sinFiltro />
+          <ElementoCatalogo elemento={e} sinFiltro defsPacks={defsPacks} />
         </div>
       ))}
     </div>

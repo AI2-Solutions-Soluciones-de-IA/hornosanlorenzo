@@ -7,12 +7,15 @@ vi.mock("~/lib/db/noticias", () => ({
   borrarNoticia: vi.fn(),
   NoticiaError: class extends Error {},
 }));
-vi.mock("~/lib/cache", () => ({
+vi.mock("~/lib/cache", async (original) => ({
+  // `rutasTrasGuardarProducto` es la de verdad: lo que se prueba abajo es
+  // que el endpoint le pasa la lectura de los packs de la base de datos.
+  ...(await original<typeof import("~/lib/cache")>()),
   invalidar: vi.fn(),
   RUTAS_NOTICIAS: ["/"],
-  // El endpoint de productos también importa esto: sin extenderlo aquí
-  // quedaría `undefined` y `[...RUTAS_CATALOGO, ...]` del PUT reventaría.
-  RUTAS_CATALOGO: ["/", "/catalogo"],
+}));
+vi.mock("~/lib/db/packs", () => ({
+  rutasDePacks: vi.fn().mockResolvedValue(["/catalogo/pack-del-panel"]),
 }));
 vi.mock("~/lib/storage", () => ({
   guardarImagen: vi.fn(),
@@ -211,6 +214,36 @@ describe("guardia y validación de /api/admin/productos", () => {
     expect(r.status).toBe(400);
     const cuerpo = await r.json();
     expect(cuerpo.error).toMatch(/identificador/i);
+  });
+});
+
+describe("PUT /api/admin/productos invalida las fichas de los packs", () => {
+  it("las lee de la base de datos, también las de packs creados desde el panel", async () => {
+    const { actualizarProducto } = await import("~/lib/db/productos");
+    vi.mocked(actualizarProducto).mockResolvedValueOnce({ slug: "empanada-de-carne" } as never);
+    const { PUT } = await import("~/pages/api/admin/productos");
+    const r = await PUT({
+      request: new Request("https://x.test/api/admin/productos", {
+        method: "PUT",
+        body: JSON.stringify({
+          id: "p1",
+          name: "Empanada de carne",
+          category: "salado",
+          shortDescription: "Una empanada.",
+          priceCents: 1380,
+          consultar: false,
+          allergens: [],
+          variantes: [],
+        }),
+      }),
+      locals: { usuario: admin },
+    } as never);
+    expect(r.status).toBe(200);
+    const { invalidar } = await import("~/lib/cache");
+    const rutas = vi.mocked(invalidar).mock.calls.at(-1)![0];
+    expect(rutas).toContain("/catalogo/pack-del-panel");
+    expect(rutas).toContain("/catalogo/empanada-de-carne");
+    expect(rutas).toContain("/catalogo/packs");
   });
 });
 

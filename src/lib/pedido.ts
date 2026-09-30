@@ -13,14 +13,25 @@ import {
 } from "~/lib/entrega";
 import { stores, type StoreId } from "~/data/stores";
 import { productosParaPedido } from "~/lib/db/productos";
+import { definicionesPorSlugs } from "~/lib/db/packs";
 import {
-  packPorSlug,
   resolverPack,
   slugsFijos,
   PackError,
+  type DefinicionPack,
   type PiezaResuelta,
 } from "~/data/packs";
 import { esFotoDePedido } from "~/lib/storage/fotos-pedido";
+
+/** ¿Las claves de `opciones` son exactamente los huecos de la definición actual? */
+function mismosHuecos(
+  def: DefinicionPack,
+  opciones: Readonly<Record<string, string>>,
+): boolean {
+  const ids = def.piezas.flatMap((x) => (x.tipo === "eleccion" ? [x.id] : []));
+  const claves = Object.keys(opciones);
+  return claves.length === new Set(ids).size && claves.every((k) => ids.includes(k));
+}
 
 /**
  * Modelo de pedido del lado del servidor.
@@ -147,7 +158,12 @@ export async function priceOrder(
   // Un pack necesita leer sus piezas, no solo su ficha: las fijas y las
   // elegidas van por slug. Las opciones de un hueco NO se piden por sección:
   // `resolverPack` valida la elegida contra la sección de su propia ficha.
-  const defs = payload.items.map((i) => packPorSlug(i.slug));
+  // Las definiciones de pack salen de Postgres (las edita el panel): una sola
+  // consulta con los slugs del carrito, que devuelve solo los que son pack.
+  const definiciones = await definicionesPorSlugs([
+    ...new Set(payload.items.map((i) => i.slug)),
+  ]);
+  const defs = payload.items.map((i) => definiciones.get(i.slug));
   const slugs = new Set(payload.items.map((i) => i.slug));
   for (const [n, def] of defs.entries()) {
     if (!def) continue;
@@ -197,6 +213,13 @@ export async function priceOrder(
     if (esPack && item.variantId) throw new OrderError("Elección no válida.");
     let detalle: PiezaResuelta[] | undefined;
     if (def) {
+      // El pack se editó desde el panel después de meterlo en el carrito: sus
+      // huecos ya no son los que trae la línea. Se dice qué hacer en vez de
+      // un «Elección no válida» que no explica nada (foco de revisión 1).
+      if (!mismosHuecos(def, item.opciones ?? {}))
+        throw new OrderError(
+          `«${product.name}» ha cambiado desde que lo añadiste: quítalo del carrito y vuelve a elegirlo.`,
+        );
       try {
         detalle = resolverPack(def, bySlug, item.opciones ?? {});
       } catch (err) {

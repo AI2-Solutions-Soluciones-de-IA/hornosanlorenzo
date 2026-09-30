@@ -1,5 +1,3 @@
-import { packs } from "~/data/packs";
-
 /**
  * Invalidación de la caché de Vercel (ISR).
  *
@@ -31,12 +29,36 @@ export const RUTAS_CATALOGO = [
   "/catalogo/salado",
   "/catalogo/top-ventas",
   "/catalogo/packs",
-  // La ficha de un pack enseña opciones y «comprado suelto» de OTROS
-  // productos: una empanada agotada o un precio nuevo en la carta tiene que
-  // llegar a ellas, no solo a la ficha del producto que se editó.
-  ...packs.map((d) => `/catalogo/${d.slug}`),
   SITEMAP,
 ];
+
+/**
+ * Lo que hay que refrescar al guardar un producto: el catálogo, su propia
+ * ficha y las fichas de TODOS los packs. La ficha de un pack enseña opciones
+ * y «comprado suelto» de OTROS productos: una empanada agotada o un precio
+ * nuevo en la carta tiene que llegar a ellas, también a las de los packs
+ * creados desde el panel, así que la lista se lee de la base de datos al
+ * guardar (`rutasDePacks`, que se recibe para que este módulo no la importe).
+ *
+ * Si esa lectura falla no lanza: se invalida el resto igualmente y queda
+ * registrado. Las fichas de pack se pondrán al día al caducar su caché.
+ */
+export async function rutasTrasGuardarProducto(
+  slug: string,
+  rutasDePacks: () => Promise<string[]>,
+): Promise<string[]> {
+  let packs: string[] = [];
+  try {
+    packs = await rutasDePacks();
+  } catch (err) {
+    console.error(
+      "[cache] no se pudieron leer los packs: sus fichas no se invalidan",
+      err instanceof Error ? err.message : err,
+    );
+  }
+  // Sin repetir: si lo guardado es un pack, su ficha ya viene en la lista.
+  return [...new Set([...RUTAS_CATALOGO, ...packs, `/catalogo/${slug}`])];
+}
 
 export async function invalidar(rutas: string[]): Promise<void> {
   const token = import.meta.env.VERCEL_BYPASS_TOKEN;

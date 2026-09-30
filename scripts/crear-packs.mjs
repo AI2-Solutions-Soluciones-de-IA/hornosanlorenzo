@@ -3,7 +3,8 @@
  * septiembre de 2026) en la tabla `productos`.
  *
  * Un pack es un producto más, en la categoría y sección `packs`: lo que lleva
- * dentro vive en `src/data/packs.ts`, no aquí. Este script solo da de alta la
+ * dentro vive en `pack_definiciones`/`pack_piezas` (`scripts/volcar-packs.mjs`),
+ * no aquí. Este script solo da de alta la
  * ficha (nombre, precio, descriptor) para que salga en el catálogo y el panel
  * pueda gestionarla.
  *

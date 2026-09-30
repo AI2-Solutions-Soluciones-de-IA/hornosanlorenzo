@@ -1,5 +1,7 @@
 import { listarProductos, type Producto } from "~/lib/db/productos";
 import { listarNoticias, type Noticia } from "~/lib/db/noticias";
+import { todasLasDefiniciones } from "~/lib/db/packs";
+import type { DefinicionPack } from "~/data/packs";
 
 /**
  * Lecturas públicas que se degradan sin quedarse cacheadas.
@@ -59,5 +61,21 @@ export async function noticiasPublicas(
   } catch (error) {
     degrada(respuesta, "No se pudieron cargar las noticias:", error);
     return [];
+  }
+}
+
+/**
+ * Las definiciones de los packs (lo que lleva cada uno), por slug, o vacío y
+ * sin cachear. Con el mapa vacío, un pack no tiene definición y las páginas
+ * lo tratan como hoy: la tarjeta no se pinta y la ficha sale «No disponible».
+ */
+export async function definicionesPublicas(
+  respuesta: ConCabeceras,
+): Promise<Map<string, DefinicionPack>> {
+  try {
+    return await todasLasDefiniciones();
+  } catch (error) {
+    degrada(respuesta, "No se pudieron cargar los packs:", error);
+    return new Map();
   }
 }

@@ -1,8 +1,5 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  packs,
-  packPorSlug,
   opcionesDeHueco,
   resolverPack,
   precioSueltoCents,
@@ -15,6 +12,7 @@ import {
   type ProductoPieza,
   type HuecoEleccion,
 } from "~/data/packs";
+import { packsIniciales, packInicial } from "~/tests/packs-iniciales";
 
 const p = (
   slug: string,
@@ -74,6 +72,8 @@ const CARTA: ProductoPieza[] = [
 ];
 const MAPA = new Map(CARTA.map((x) => [x.slug, x]));
 
+// Los siete packs con los que se arrancó, tal y como se volcaron a la base de
+// datos (`scripts/packs-iniciales.json`): las cifras del pptx siguen fijadas.
 describe("los siete packs del pptx", () => {
   // slug, precio pack, suelto, ahorro, €/persona — tabla del plan.
   const TABLA: [string, number, number, number, number][] = [
@@ -87,11 +87,11 @@ describe("los siete packs del pptx", () => {
   ];
 
   it("son siete y en este orden", () => {
-    expect(packs.map((d) => d.slug)).toEqual(TABLA.map((t) => t[0]));
+    expect(packsIniciales.map((d) => d.slug)).toEqual(TABLA.map((t) => t[0]));
   });
 
   it.each(TABLA)("%s: suelto, ahorro y €/persona cuadran con el pptx", (slug, precio, suelto, ahorro, porPersona) => {
-    const def = packPorSlug(slug)!;
+    const def = packInicial(slug);
     expect(precioSueltoCents(def, CARTA)).toBe(suelto);
     expect(ahorroPct(precio, suelto)).toBe(ahorro);
     expect(precioPorPersonaCents(precio, def)).toBe(porPersona);
@@ -99,7 +99,7 @@ describe("los siete packs del pptx", () => {
 });
 
 describe("opcionesDeHueco", () => {
-  const empanadaEntera = packPorSlug("pack-cumpleanos")!.piezas.find(
+  const empanadaEntera = packInicial("pack-cumpleanos").piezas.find(
     (x): x is HuecoEleccion => x.tipo === "eleccion" && x.id === "empanada",
   )!;
 
@@ -121,7 +121,7 @@ describe("opcionesDeHueco", () => {
 });
 
 describe("resolverPack", () => {
-  const cumple = packPorSlug("pack-cumpleanos")!;
+  const cumple = packInicial("pack-cumpleanos");
   const buenas = { empanada: "empanada-de-carne", plancha: "plancha-oreo" };
 
   it("devuelve el desglose con las elecciones", () => {
@@ -165,7 +165,7 @@ describe("resolverPack", () => {
   });
 
   it("Reunión: la elección es de la lista cerrada, no de la sección", () => {
-    const reunion = packPorSlug("pack-reunion-oficina")!;
+    const reunion = packInicial("pack-reunion-oficina");
     const mapa = new Map(MAPA);
     mapa.set("napolitana", p("napolitana", "bizcochos", 1350));
     expect(() =>
@@ -177,7 +177,7 @@ describe("resolverPack", () => {
   });
 
   it("Gran Celebración admite la misma quiche en los dos huecos", () => {
-    const gran = packPorSlug("pack-gran-celebracion")!;
+    const gran = packInicial("pack-gran-celebracion");
     const r = resolverPack(gran, MAPA, {
       empanada: "empanada-de-bonito",
       quiche1: "quiche-carbonara",
@@ -201,7 +201,7 @@ describe("ahorroPct (foco de revisión 5)", () => {
 
 describe("slugsFijos y seccionesDeHuecos", () => {
   it("Reunión: la pieza fija más la lista cerrada del hueco", () => {
-    expect(slugsFijos(packPorSlug("pack-reunion-oficina")!).sort()).toEqual(
+    expect(slugsFijos(packInicial("pack-reunion-oficina")).sort()).toEqual(
       [
         "mini-croissants-surtido-salado",
         "la-bayonesa",
@@ -213,13 +213,13 @@ describe("slugsFijos y seccionesDeHuecos", () => {
   });
 
   it("Cumpleaños: solo las fijas, sin empanada ni plancha (son de sección)", () => {
-    expect(slugsFijos(packPorSlug("pack-cumpleanos")!).sort()).toEqual(
+    expect(slugsFijos(packInicial("pack-cumpleanos")).sort()).toEqual(
       ["los-prenaos-de-la-casa", "tarta-retrato"].sort(),
     );
   });
 
   it("Gran Celebración: las secciones de sus huecos, sin repetir", () => {
-    expect(seccionesDeHuecos(packPorSlug("pack-gran-celebracion")!)).toEqual(["empanadas", "quiches"]);
+    expect(seccionesDeHuecos(packInicial("pack-gran-celebracion"))).toEqual(["empanadas", "quiches"]);
   });
 });
 
@@ -232,18 +232,7 @@ describe("etiquetaPieza", () => {
 
 describe("requiereFoto", () => {
   it("solo el Pack Cumpleaños la lleva", () => {
-    const con = packs.filter((d) => d.piezas.some((x) => x.tipo === "fija" && x.requiereFoto));
+    const con = packsIniciales.filter((d) => d.piezas.some((x) => x.tipo === "fija" && x.requiereFoto));
     expect(con.map((d) => d.slug)).toEqual(["pack-cumpleanos"]);
-  });
-});
-
-// Se borra con `packs` en la Tarea 4: mientras tanto garantiza que el volcado
-// que lee `scripts/volcar-packs.mjs` es fiel al código.
-describe("scripts/packs-iniciales.json", () => {
-  it("es idéntico al array `packs`", () => {
-    const json = JSON.parse(
-      readFileSync(new URL("../../scripts/packs-iniciales.json", import.meta.url), "utf8"),
-    );
-    expect(json).toEqual(packs);
   });
 });

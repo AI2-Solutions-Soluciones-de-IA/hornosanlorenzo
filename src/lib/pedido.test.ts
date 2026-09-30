@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { earliestDate } from "~/lib/entrega";
 import type { ProductoVendible } from "~/lib/db/productos";
+import type { DefinicionPack } from "~/data/packs";
 
 /**
  * `priceOrder` es la pieza del dinero: el checkout entero se apoya en que
@@ -18,6 +19,18 @@ vi.mock("~/lib/db/productos", () => ({
   productosParaPedido,
   productosDeSecciones,
 }));
+// Las definiciones de pack viven en Postgres (`~/lib/db/packs`): se doblan
+// con los siete packs reales del volcado, devolviendo solo los slugs que se
+// piden, como la consulta de verdad.
+const definicionesPorSlugs = vi.fn();
+vi.mock("~/lib/db/packs", () => ({ definicionesPorSlugs }));
+const { packsIniciales, packInicial } = await import("~/tests/packs-iniciales");
+const conDefiniciones = (defs: readonly DefinicionPack[] = packsIniciales) =>
+  definicionesPorSlugs.mockImplementation(
+    async (slugs: string[]) =>
+      new Map(defs.filter((d) => slugs.includes(d.slug)).map((d) => [d.slug, d])),
+  );
+conDefiniciones();
 // La foto se comprueba contra Vercel Blob: aquí se dobla, y su lógica real
 // se prueba en su propio fichero.
 const esFotoDePedido = vi.fn();
@@ -460,6 +473,7 @@ describe("priceOrder con packs", () => {
 
   beforeEach(() => {
     conCatalogo();
+    conDefiniciones();
     productosDeSecciones.mockReset();
     esFotoDePedido.mockReset().mockResolvedValue(true);
   });
@@ -601,6 +615,56 @@ describe("priceOrder con packs", () => {
     await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
       name: "OrderError",
       message: "«Pack Cumpleaños» no está disponible ahora mismo.",
+    });
+  });
+
+  it("lee las definiciones una sola vez, solo las de los slugs del carrito", async () => {
+    definicionesPorSlugs.mockClear();
+    await priceOrder(cumple(), { now: AHORA });
+    expect(definicionesPorSlugs).toHaveBeenCalledOnce();
+    expect(definicionesPorSlugs).toHaveBeenCalledWith(["pack-cumpleanos"]);
+  });
+
+  // Foco de revisión 1: Oscar edita el pack desde el panel mientras alguien
+  // lo tiene en el carrito. Las elecciones guardadas ya no casan con los
+  // huecos: se rechaza diciendo qué hacer, y nunca se cobra a medias.
+  describe("un pack editado con el carrito abierto", () => {
+    const cumpleCon = (piezas: DefinicionPack["piezas"]) =>
+      conDefiniciones([{ ...packInicial("pack-cumpleanos"), piezas }]);
+    const CAMBIADO =
+      "«Pack Cumpleaños» ha cambiado desde que lo añadiste: quítalo del carrito y vuelve a elegirlo.";
+    const [empanada, prenaos, plancha, foto] = packInicial("pack-cumpleanos").piezas;
+
+    it("un hueco renombrado (plancha → sabor) pide volver a elegir", async () => {
+      cumpleCon([empanada, prenaos, { ...plancha, id: "sabor" } as typeof plancha, foto]);
+      await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
+        name: "OrderError",
+        message: CAMBIADO,
+      });
+    });
+
+    it("un hueco borrado también", async () => {
+      cumpleCon([empanada, prenaos, foto]);
+      await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
+        name: "OrderError",
+        message: CAMBIADO,
+      });
+    });
+
+    it("y uno nuevo que el carrito no trae", async () => {
+      cumpleCon([empanada, prenaos, plancha, { ...plancha, id: "otra" } as typeof plancha, foto]);
+      await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
+        name: "OrderError",
+        message: CAMBIADO,
+      });
+    });
+
+    it("con los mismos huecos, una elección inválida sigue siendo «Elección no válida»", async () => {
+      await expect(
+        priceOrder(cumple({ opciones: { empanada: "plancha-oreo", plancha: "plancha-oreo" } }), {
+          now: AHORA,
+        }),
+      ).rejects.toMatchObject({ name: "OrderError", message: "«Pack Cumpleaños»: Elección no válida." });
     });
   });
 

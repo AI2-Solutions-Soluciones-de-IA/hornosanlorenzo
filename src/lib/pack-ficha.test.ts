@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { packPorSlug, type ProductoPieza } from "~/data/packs";
+import type { ProductoPieza } from "~/data/packs";
+import { packInicial } from "~/tests/packs-iniciales";
 import { fichaPack, seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 
 const p = (
@@ -38,7 +39,7 @@ const CARTA: ProductoPieza[] = [
   p("tarta-retrato", "detalles-celebracion", 600, [["pequena", "Pequeña", 1500]]),
 ];
 
-const cumple = packPorSlug("pack-cumpleanos")!;
+const cumple = packInicial("pack-cumpleanos");
 const PACK = { priceCents: 7100, consultar: false, agotado: false };
 
 describe("fichaPack", () => {
@@ -73,7 +74,7 @@ describe("fichaPack", () => {
   });
 
   it("solo el Cumpleaños lleva foto", () => {
-    expect(fichaPack(packPorSlug("pack-futbolero")!, PACK, CARTA).conFoto).toBe(false);
+    expect(fichaPack(packInicial("pack-futbolero"), PACK, CARTA).conFoto).toBe(false);
   });
 
   it("agotado si un hueco se queda sin opciones", () => {

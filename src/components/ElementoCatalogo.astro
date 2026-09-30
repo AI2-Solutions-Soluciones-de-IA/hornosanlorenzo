@@ -10,7 +10,7 @@ import PackCard from "~/components/PackCard.astro";
 import ProductCard from "~/components/ProductCard.astro";
 import ProductoSaboresCard from "~/components/ProductoSaboresCard.astro";
 import { grupoOfCategory, type CategoryId } from "~/data/categories";
-import { packPorSlug } from "~/data/packs";
+import type { DefinicionPack } from "~/data/packs";
 import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 import type { Producto } from "~/lib/db/productos";
 import type { ElementoCatalogo } from "~/lib/sabores";
@@ -20,9 +20,14 @@ interface Props {
   seccionLabel?: string;
   /** Sin `data-*` de filtro: el carrusel de la home no filtra. */
   sinFiltro?: boolean;
+  /**
+   * Las definiciones de los packs, leídas una vez por la página con
+   * `definicionesPublicas` (no aquí: el porqué, en `~/lib/lectura-publica.ts`).
+   */
+  defsPacks: Map<string, DefinicionPack>;
 }
 
-const { elemento, seccionLabel, sinFiltro = false } = Astro.props;
+const { elemento, seccionLabel, sinFiltro = false, defsPacks } = Astro.props;
 
 function imagenDe(p: Producto) {
   if (!p.imageUrl || !p.imageWidth || !p.imageHeight) return null;
@@ -33,7 +38,7 @@ const primero = elemento.tipo === "producto" ? elemento.producto : elemento.sabo
 // Un pack no lleva compra rápida (hay que elegir): tarjeta propia. Uno sin
 // definición no se puede vender y su ficha da 404, así que no se pinta.
 const esPack = seCompraDesdeLaFicha(primero);
-const defPack = esPack ? packPorSlug(primero.slug) : undefined;
+const defPack = esPack ? defsPacks.get(primero.slug) : undefined;
 const search =
   elemento.tipo === "producto"
     ? `${primero.name} ${primero.shortDescription} ${seccionLabel ?? ""}`

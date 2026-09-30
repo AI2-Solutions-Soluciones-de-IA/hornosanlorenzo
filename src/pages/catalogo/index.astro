@@ -1,7 +1,7 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import CatalogoGrid from "~/components/CatalogoGrid.astro";
-import { catalogoPublico } from "~/lib/lectura-publica";
+import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
 import { tiendaOnlineNav } from "~/data/navigation";
 
 // Lee el catálogo de la base de datos: bajo demanda, con la caché ISR delante
@@ -12,7 +12,12 @@ export const prerender = false;
 // que marcar la respuesta como `no-store` para que la página vacía no se
 // quede guardada en la caché, y eso solo funciona desde el frontmatter de la
 // página (el porqué, en `~/lib/lectura-publica.ts`).
-const productos = await catalogoPublico(Astro.response);
+// Las definiciones de los packs, igual y en paralelo: con ellas la rejilla
+// sabe qué pack se puede pintar.
+const [productos, defsPacks] = await Promise.all([
+  catalogoPublico(Astro.response),
+  definicionesPublicas(Astro.response),
+]);
 ---
 <MarketingLayout
   title="Tienda Online"
@@ -48,6 +53,7 @@ const productos = await catalogoPublico(Astro.response);
 
   <CatalogoGrid
     productos={productos}
+    defsPacks={defsPacks}
     porGrupo
     eyebrow="Todo el catálogo"
   />

@@ -6,7 +6,8 @@ import {
   actualizarProducto,
   ProductoError,
 } from "~/lib/db/productos";
-import { invalidar, RUTAS_CATALOGO } from "~/lib/cache";
+import { invalidar, rutasTrasGuardarProducto } from "~/lib/cache";
+import { rutasDePacks } from "~/lib/db/packs";
 import { esAdmin } from "~/lib/auth/guardia";
 import { categoryIds } from "~/data/categories";
 import { seccionIds } from "~/data/secciones";
@@ -167,7 +168,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // También su propia página, igual que en el PUT: alguien pudo pedir esa
     // URL antes de que la ficha existiera y dejar un 404 cacheado que
     // sobreviviría a su creación.
-    await invalidar([...RUTAS_CATALOGO, `/catalogo/${producto.slug}`]);
+    // Y las fichas de todos los packs, leídas de la base de datos: enseñan
+    // opciones y precios de otros productos (`rutasTrasGuardarProducto`).
+    await invalidar(await rutasTrasGuardarProducto(producto.slug, rutasDePacks));
     return json({ producto }, 201);
   } catch (error) {
     if (error instanceof ProductoError)
@@ -192,7 +195,9 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const producto = await actualizarProducto(id, parsed.data);
     if (!producto) return json({ error: "Esa ficha ya no existe." }, 404);
     // También su propia página, no solo los listados.
-    await invalidar([...RUTAS_CATALOGO, `/catalogo/${producto.slug}`]);
+    // Y las fichas de todos los packs, leídas de la base de datos: enseñan
+    // opciones y precios de otros productos (`rutasTrasGuardarProducto`).
+    await invalidar(await rutasTrasGuardarProducto(producto.slug, rutasDePacks));
     return json({ producto });
   } catch (error) {
     if (error instanceof ProductoError)
