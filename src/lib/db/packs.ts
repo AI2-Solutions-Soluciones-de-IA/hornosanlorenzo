@@ -229,7 +229,7 @@ export async function crearPack(
     await cliente.query("commit");
     return datos.slug;
   } catch (err) {
-    await cliente.query("rollback");
+    await cliente.query("rollback").catch(() => {});
     throw err;
   } finally {
     cliente.release();
@@ -248,7 +248,10 @@ export async function actualizarPack(
       `update productos set
          name = $1, price_cents = $2, short_description = $3, image_url = $4,
          image_alt = $5, image_width = $6, image_height = $7, activo = $8,
-         agotado = $9, orden = $10, updated_at = now()
+         agotado = $9, orden = $10, updated_at = now(),
+         category = 'packs', seccion = 'packs', consultar = false, unit = null,
+         cuerpo = '', allergens = '{}', destacado = false, temporada = false,
+         especialidad = null
        where slug = $11 and category = 'packs'
        returning id`,
       [...VALORES(datos), slug],
@@ -259,7 +262,7 @@ export async function actualizarPack(
     await guardaDefinicion(cliente, rows[0].id, datos.definicion);
     await cliente.query("commit");
   } catch (err) {
-    await cliente.query("rollback");
+    await cliente.query("rollback").catch(() => {});
     throw err;
   } finally {
     cliente.release();

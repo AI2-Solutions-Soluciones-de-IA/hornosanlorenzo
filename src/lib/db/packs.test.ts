@@ -176,4 +176,33 @@ describeSiHayBD("repositorio de definiciones de pack", () => {
     expect(todas.has(slug)).toBe(true);
     expect(todas.has("test-packdb-suelto")).toBe(false);
   });
+
+  it("actualizarPack devuelve a su valor las columnas no editables", async () => {
+    const slug = "test-packdb-fuerza";
+    await repo.crearPack(datos(slug));
+    await pool.query(
+      `update productos set consultar=true, seccion=null, destacado=true,
+         temporada=true, unit='x', cuerpo='c', allergens='{gluten}',
+         especialidad='e' where slug=$1`,
+      [slug],
+    );
+    await repo.actualizarPack(slug, datos(slug));
+    const { rows } = await pool.query(
+      `select category, seccion, consultar, unit, cuerpo, allergens,
+              destacado, temporada, especialidad
+         from productos where slug=$1`,
+      [slug],
+    );
+    expect(rows[0]).toEqual({
+      category: "packs",
+      seccion: "packs",
+      consultar: false,
+      unit: null,
+      cuerpo: "",
+      allergens: [],
+      destacado: false,
+      temporada: false,
+      especialidad: null,
+    });
+  });
 });
