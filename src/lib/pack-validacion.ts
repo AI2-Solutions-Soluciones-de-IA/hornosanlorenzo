@@ -32,8 +32,8 @@ const texto = (max: number) => z.string().max(max, `Máximo ${max} caracteres.`)
 
 const piezaFija = z.object({
   tipo: z.literal("fija"),
-  slug: z.string().min(1),
-  variantId: z.string().min(1).optional(),
+  slug: z.string().min(1).max(120),
+  variantId: z.string().min(1).max(40).optional(),
   titulo: texto(200),
   descripcion: texto(300),
   requiereFoto: z.literal(true).optional(),
@@ -44,31 +44,31 @@ const piezaFija = z.object({
 // ninguno lo cuenta `comprobarPack` con un mensaje claro, no un fallo de esquema.
 const piezaHueco = z.object({
   tipo: z.literal("eleccion"),
-  id: z.string(),
+  id: z.string().max(40),
   titulo: texto(200),
   descripcion: texto(300),
   etiqueta: texto(100),
-  variantId: z.string().min(1).optional(),
-  seccion: z.string().optional(),
-  slugs: z.array(z.string()).optional(),
+  variantId: z.string().min(1).max(40).optional(),
+  seccion: z.string().max(40).optional(),
+  slugs: z.array(z.string().max(120)).max(50).optional(),
 });
 
 const esquema = z.object({
   name: texto(120),
-  priceCents: z.number().int(),
+  priceCents: z.number().int().max(1_000_000),
   shortDescription: texto(200),
-  imageUrl: z.string().nullable(),
-  imageAlt: z.string().nullable(),
-  imageWidth: z.number().int().nullable(),
-  imageHeight: z.number().int().nullable(),
+  imageUrl: z.string().max(500).nullable(),
+  imageAlt: z.string().max(200).nullable(),
+  imageWidth: z.number().int().max(20000).nullable(),
+  imageHeight: z.number().int().max(20000).nullable(),
   activo: z.boolean(),
   agotado: z.boolean(),
-  orden: z.number().int(),
+  orden: z.number().int().max(9999),
   definicion: z.object({
     ocasion: texto(120),
     personas: z.object({
-      min: z.number().int(),
-      max: z.number().int(),
+      min: z.number().int().min(1).max(1000),
+      max: z.number().int().max(1000),
       texto: texto(80),
     }),
     paraQuien: z.array(texto(400)).max(10),
@@ -99,7 +99,8 @@ export function comprobarPack(
   if (!(datos.priceCents > 0)) error("precio", "El precio tiene que ser mayor que 0 €.");
 
   const { min, max } = datos.definicion.personas;
-  if (min > max) error("personas", "El mínimo de personas no puede ser mayor que el máximo.");
+  if (!(min >= 1)) error("personas", "El mínimo de personas tiene que ser al menos 1.");
+  else if (min > max) error("personas", "El mínimo de personas no puede ser mayor que el máximo.");
 
   const piezas = datos.definicion.piezas as readonly PiezaCruda[];
   if (piezas.length === 0) error("piezas", "El pack necesita al menos una pieza.");
@@ -114,12 +115,14 @@ export function comprobarPack(
     const n = i + 1;
     if (pieza.tipo === "fija") {
       const donde = `pieza ${n}`;
+      if (pieza.titulo.trim() === "") error(donde, `La pieza ${n} necesita un título: es lo que se lee en la ficha.`);
       if (pieza.requiereFoto) fotos.push(n);
       const x = porSlug.get(pieza.slug);
       if (!x) {
         error(donde, `La pieza ${n} usa el producto «${pieza.slug}», que no existe en la carta o es otro pack.`);
         return;
       }
+      const errAntes = errores.length;
       const tieneTamanos = x.variantes.length > 0;
       if (!pieza.variantId) {
         if (tieneTamanos) {
@@ -131,6 +134,9 @@ export function comprobarPack(
           error(donde, `La pieza ${n} pide el tamaño ${comillas(pieza.variantId)} y ${comillas(x.name)} no lo tiene.`);
         }
       }
+      if (errores.length === errAntes && (x.consultar || (!tieneTamanos && x.priceCents === null))) {
+        error(donde, `${comillas(x.name)} no tiene precio de venta online: no se puede incluir en un pack.`);
+      }
       if (!x.activo || x.agotado) avisadas.push(x.name);
       return;
     }
@@ -138,6 +144,8 @@ export function comprobarPack(
     huecos++;
     const et = pieza.etiqueta.trim();
     const donde = et ? `hueco ${comillas(et)}` : `hueco ${n}`;
+    if (et === "") error(donde, `El hueco de la pieza ${n} necesita una etiqueta: es el nombre del desplegable («Sabor de la empanada»).`);
+    if (pieza.titulo.trim() === "") error(donde, `El hueco ${et ? comillas(et) : `de la pieza ${n}`} necesita un título: es lo que se lee en la ficha.`);
     const nombreHueco = et ? comillas(et) : `de la pieza ${n}`;
     if (!ID_HUECO.test(pieza.id)) {
       error(donde, `El hueco ${nombreHueco} tiene un identificador no válido (solo minúsculas, números y guiones, hasta 40).`);

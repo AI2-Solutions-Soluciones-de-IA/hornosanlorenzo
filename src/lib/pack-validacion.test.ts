@@ -117,17 +117,25 @@ describe("comprobarPack", () => {
     d.shortDescription = "ab";
     d.priceCents = 0;
     d.definicion.personas = { min: 8, max: 4, texto: "x" };
-    expect(errores(d).map((e) => e.donde)).toEqual([
-      "nombre",
-      "descriptor",
-      "precio",
-      "personas",
+    expect(errores(d)).toEqual([
+      { donde: "nombre", mensaje: "El nombre del pack necesita al menos 2 letras." },
+      { donde: "descriptor", mensaje: expect.stringContaining("mínimo 3 letras") },
+      { donde: "precio", mensaje: "El precio tiene que ser mayor que 0 €." },
+      { donde: "personas", mensaje: expect.stringContaining("no puede ser mayor que el máximo") },
+    ]);
+  });
+
+  it("personas: el mínimo tiene que ser al menos 1", () => {
+    const d = valido();
+    d.definicion.personas = { min: 0, max: 4, texto: "x" };
+    expect(errores(d)).toEqual([
+      { donde: "personas", mensaje: "El mínimo de personas tiene que ser al menos 1." },
     ]);
   });
 
   it("sin piezas", () => {
     expect(errores(conPiezas([]))).toEqual([
-      expect.objectContaining({ donde: "piezas" }),
+      { donde: "piezas", mensaje: "El pack necesita al menos una pieza." },
     ]);
   });
 
@@ -147,64 +155,115 @@ describe("comprobarPack", () => {
       ]),
     );
     expect(e.map((x) => x.donde)).toEqual(["pieza 1", "pieza 2", "pieza 3"]);
-    expect(e[1].mensaje).toBe(
-      "La pieza 2 pide el tamaño «XL» y «Plancha de Oreo» no lo tiene.",
-    );
+    expect(e[0].mensaje).toBe("La pieza 1 es «Bollos», que tiene varios tamaños: elige uno.");
+    expect(e[1].mensaje).toBe("La pieza 2 pide el tamaño «XL» y «Plancha de Oreo» no lo tiene.");
+    expect(e[2].mensaje).toBe("La pieza 3 pide el tamaño «XL» y «Quiche» no lo tiene.");
   });
 
   it("solo una pieza con foto; rótulo sin foto vale", () => {
     expect(
-      errores(
-        conPiezas([
-          fija({ requiereFoto: true }),
-          fija({ slug: "foto", requiereFoto: true }),
-        ]),
-      ),
-    ).toHaveLength(1);
+      errores(conPiezas([fija({ requiereFoto: true }), fija({ slug: "foto", requiereFoto: true })])),
+    ).toEqual([
+      { donde: "pieza 2", mensaje: "Solo una pieza del pack puede pedir la foto del cliente." },
+    ]);
     expect(errores(conPiezas([fija({ rotulo: "Algo" })]))).toEqual([]);
   });
 
   it("hueco: sección y slugs a la vez, o ninguno", () => {
-    expect(errores(conPiezas([hueco({ slugs: ["quiche"] })]))).toHaveLength(1);
-    expect(errores(conPiezas([hueco({ seccion: undefined })]))).toHaveLength(1);
+    expect(errores(conPiezas([hueco({ slugs: ["quiche"] })]))).toEqual([
+      {
+        donde: "hueco «Sabor de la empanada»",
+        mensaje: expect.stringContaining("una sección y una lista de productos"),
+      },
+    ]);
+    expect(errores(conPiezas([hueco({ seccion: undefined })]))).toEqual([
+      {
+        donde: "hueco «Sabor de la empanada»",
+        mensaje: expect.stringContaining("no dice entre qué productos se elige"),
+      },
+    ]);
   });
 
   it("hueco: lista vacía, sección desconocida, slug inexistente", () => {
+    expect(errores(conPiezas([hueco({ seccion: undefined, slugs: [] })]))).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("está vacía") },
+    ]);
+    expect(errores(conPiezas([hueco({ seccion: "inventada" })]))).toEqual([
+      {
+        donde: "hueco «Sabor de la empanada»",
+        mensaje: expect.stringContaining("La sección «inventada»"),
+      },
+    ]);
     expect(
-      errores(conPiezas([hueco({ seccion: undefined, slugs: [] })])),
-    ).toHaveLength(1);
-    expect(errores(conPiezas([hueco({ seccion: "inventada" })]))).toHaveLength(
-      1,
-    );
-    const e = errores(
-      conPiezas([hueco({ seccion: undefined, slugs: ["quiche", "nada"] })]),
-    );
-    expect(e).toHaveLength(1);
-    expect(e[0].donde).toBe("hueco «Sabor de la empanada»");
+      errores(conPiezas([hueco({ seccion: undefined, slugs: ["quiche", "nada"] })])),
+    ).toEqual([
+      {
+        donde: "hueco «Sabor de la empanada»",
+        mensaje: expect.stringContaining("El producto «nada»"),
+      },
+    ]);
   });
 
   it("hueco: id repetido o mal formado", () => {
-    expect(errores(conPiezas([hueco(), hueco()]))).toHaveLength(1);
-    expect(errores(conPiezas([hueco({ id: "Mal Id" })]))).toHaveLength(1);
-    expect(errores(conPiezas([hueco({ id: "a".repeat(41) })]))).toHaveLength(1);
+    expect(errores(conPiezas([hueco(), hueco()]))).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("repite el identificador «emp»") },
+    ]);
+    for (const id of ["Mal Id", "a".repeat(41), ""]) {
+      expect(errores(conPiezas([hueco({ id })]))).toEqual([
+        { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("identificador no válido") },
+      ]);
+    }
   });
 
   it("más de 8 huecos", () => {
     const huecos = Array.from({ length: 9 }, (_, i) => hueco({ id: `h${i}` }));
-    const e = errores(conPiezas(huecos));
-    expect(e).toEqual([expect.objectContaining({ donde: "piezas" })]);
+    expect(errores(conPiezas(huecos))).toEqual([
+      { donde: "piezas", mensaje: expect.stringContaining("como máximo 8 huecos") },
+    ]);
   });
 
   it("hueco sin ninguna opción vendible hoy", () => {
     const e = errores(conPiezas([hueco({ seccion: "quiches" })]));
-    expect(e).toHaveLength(1);
-    expect(e[0].mensaje).toContain("Hoy no se puede vender");
+    expect(e).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("Hoy no se puede vender") },
+    ]);
   });
 
   it("hueco con variante que ninguna opción tiene", () => {
-    expect(errores(conPiezas([hueco({ variantId: "entera" })]))).toHaveLength(
-      1,
-    );
+    expect(errores(conPiezas([hueco({ variantId: "entera" })]))).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("Hoy no se puede vender") },
+    ]);
+  });
+
+  it("título y etiqueta no pueden quedar vacíos; la descripción sí", () => {
+    expect(errores(conPiezas([fija({ titulo: "  " })]))).toEqual([
+      { donde: "pieza 1", mensaje: expect.stringContaining("necesita un título") },
+    ]);
+    expect(errores(conPiezas([hueco({ etiqueta: " " })]))).toEqual([
+      { donde: "hueco 1", mensaje: expect.stringContaining("necesita una etiqueta") },
+    ]);
+    expect(errores(conPiezas([hueco({ titulo: "" })]))).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("necesita un título") },
+    ]);
+    expect(errores(conPiezas([fija({ descripcion: "" }), hueco({ descripcion: "" })]))).toEqual([]);
+  });
+
+  it("producto a consultar o sin precio: pieza fija es error; en un hueco no cuenta", () => {
+    const c = [
+      ...carta,
+      prod("consulta", { name: "Tarta a medida", consultar: true, priceCents: 5000 }),
+      prod("sin-precio", { name: "Sin precio", priceCents: null as never, seccion: "tartas-obrador" }),
+      prod("consulta2", { name: "Otra", consultar: true, seccion: "tartas-obrador" }),
+    ];
+    const r = comprobarPack(conPiezas([fija({ slug: "consulta" }), fija({ slug: "sin-precio" })]), c);
+    expect(r.errores).toEqual([
+      { donde: "pieza 1", mensaje: "«Tarta a medida» no tiene precio de venta online: no se puede incluir en un pack." },
+      { donde: "pieza 2", mensaje: "«Sin precio» no tiene precio de venta online: no se puede incluir en un pack." },
+    ]);
+    const h = comprobarPack(conPiezas([hueco({ seccion: "tartas-obrador" })]), c);
+    expect(h.errores).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("Hoy no se puede vender") },
+    ]);
   });
 
   it("aviso: precio igual o mayor que el suelto", () => {
@@ -212,24 +271,19 @@ describe("comprobarPack", () => {
     d.priceCents = 3900; // 1500 + 2400
     const r = comprobarPack(d, carta);
     expect(r.errores).toEqual([]);
-    expect(r.avisos).toEqual([expect.objectContaining({ donde: "precio" })]);
+    expect(r.avisos).toEqual([
+      { donde: "precio", mensaje: expect.stringContaining("no ahorra nada") },
+    ]);
   });
 
   it("aviso: pieza fija agotada o desactivada", () => {
-    const r = comprobarPack(
-      conPiezas([fija({ slug: "viejo" }), fija({ slug: "agot" })]),
-      carta,
-    );
+    const r = comprobarPack(conPiezas([fija({ slug: "viejo" }), fija({ slug: "agot" })]), carta);
     expect(r.errores).toEqual([]);
-    expect(
-      r.avisos.filter((a) => a.mensaje.includes("no disponible")),
-    ).toHaveLength(2);
+    expect(r.avisos.filter((a) => a.mensaje.includes("no disponible"))).toHaveLength(2);
   });
 
   it("hueco válido con opciones vendibles", () => {
-    expect(comprobarPack(conPiezas([hueco(), fija()]), carta).errores).toEqual(
-      [],
-    );
+    expect(comprobarPack(conPiezas([hueco(), fija()]), carta).errores).toEqual([]);
   });
 });
 
@@ -238,9 +292,7 @@ describe("esquemaPack", () => {
     expect(esquemaPack.safeParse(valido()).success).toBe(true);
   });
   it("rechaza precios con decimales y campos que faltan", () => {
-    expect(
-      esquemaPack.safeParse({ ...valido(), priceCents: 12.5 }).success,
-    ).toBe(false);
+    expect(esquemaPack.safeParse({ ...valido(), priceCents: 12.5 }).success).toBe(false);
     const { name: _n, ...sin } = valido();
     expect(esquemaPack.safeParse(sin).success).toBe(false);
   });
@@ -249,8 +301,24 @@ describe("esquemaPack", () => {
     expect(r.success && "slug" in r.data).toBe(false);
   });
   it("acepta un hueco sin sección ni lista (lo dice comprobarPack)", () => {
-    expect(
-      esquemaPack.safeParse(conPiezas([hueco({ seccion: undefined })])).success,
-    ).toBe(true);
+    expect(esquemaPack.safeParse(conPiezas([hueco({ seccion: undefined })])).success).toBe(true);
+  });
+  it("rechaza personas.min menor que 1", () => {
+    const d = valido();
+    d.definicion.personas = { min: 0, max: 4, texto: "x" };
+    expect(esquemaPack.safeParse(d).success).toBe(false);
+  });
+  it("acota la entrada hostil", () => {
+    const ok = (d: unknown) => esquemaPack.safeParse(d).success;
+    const slugs = (n: number) => Array.from({ length: n }, (_, i) => `s${i}`);
+    expect(ok(conPiezas([hueco({ seccion: undefined, slugs: slugs(50) })]))).toBe(true);
+    expect(ok(conPiezas([hueco({ seccion: undefined, slugs: slugs(51) })]))).toBe(false);
+    expect(ok(conPiezas([hueco({ seccion: undefined, slugs: ["a".repeat(121)] })]))).toBe(false);
+    expect(ok({ ...valido(), priceCents: 2 ** 31 })).toBe(false);
+    expect(ok({ ...valido(), orden: 10000 })).toBe(false);
+    expect(ok({ ...valido(), imageUrl: "a".repeat(501) })).toBe(false);
+    expect(ok({ ...valido(), imageWidth: 20001 })).toBe(false);
+    expect(ok(conPiezas([fija({ slug: "a".repeat(121) })]))).toBe(false);
+    expect(ok(conPiezas([hueco({ id: "a".repeat(41) })]))).toBe(false);
   });
 });
