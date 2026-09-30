@@ -23,7 +23,7 @@ vi.mock("~/lib/db/productos", () => ({
 const esFotoDePedido = vi.fn();
 vi.mock("~/lib/storage/fotos-pedido", () => ({ esFotoDePedido }));
 
-const { priceOrder } = await import("~/lib/pedido");
+const { priceOrder, orderPayloadSchema } = await import("~/lib/pedido");
 type OrderPayload = import("~/lib/pedido").OrderPayload;
 
 /** Un producto sencillo, sin variantes, con precio de venta online. */
@@ -576,5 +576,60 @@ describe("priceOrder con packs", () => {
   it("no lee secciones: la elección se valida con la sección del producto elegido", async () => {
     await priceOrder(cumple(), { now: AHORA });
     expect(productosDeSecciones).not.toHaveBeenCalled();
+  });
+
+  it("rechaza un pack de categoría packs sin definición (se vendería sin desglose)", async () => {
+    conCatalogo();
+    const base = CATALOGO_PACKS[0];
+    productosParaPedido.mockImplementation(async (slugs: string[]) =>
+      catalogo(
+        ...[...CATALOGO_PACKS, { ...base, slug: "pack-sin-definir", name: "Pack Sin Definir" }].filter(
+          (p) => slugs.includes(p.slug),
+        ),
+      ),
+    );
+    await expect(
+      priceOrder(pedidoPack({ slug: "pack-sin-definir", qty: 1 }), { now: AHORA }),
+    ).rejects.toMatchObject({
+      name: "OrderError",
+      message: "«Pack Sin Definir» no está disponible ahora mismo.",
+    });
+  });
+
+  it("rechaza una definición de pack cuya fila no es de la categoría packs", async () => {
+    conCatalogo({ "pack-cumpleanos": { category: "tartas" } });
+    await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
+      name: "OrderError",
+      message: "«Pack Cumpleaños» no está disponible ahora mismo.",
+    });
+  });
+
+  it("rechaza un pack con variantId", async () => {
+    await expect(
+      priceOrder(cumple({ variantId: "grande" }), { now: AHORA }),
+    ).rejects.toMatchObject({
+      name: "OrderError",
+      message: "Elección no válida.",
+    });
+  });
+});
+
+describe("orderPayloadSchema: opciones de un pack", () => {
+  const con = (n: number) => ({
+    ...pedidoBase(),
+    items: [
+      {
+        slug: "pack-cumpleanos",
+        qty: 1,
+        opciones: Object.fromEntries(
+          Array.from({ length: n }, (_, i) => [`h${i}`, "empanada-de-carne"]),
+        ),
+      },
+    ],
+  });
+
+  it("admite hasta 8 huecos y rechaza 9", () => {
+    expect(orderPayloadSchema.safeParse(con(8)).success).toBe(true);
+    expect(orderPayloadSchema.safeParse(con(9)).success).toBe(false);
   });
 });

@@ -94,7 +94,7 @@ export default function CartPage({ prefill }: Props) {
                   {item.variantLabel}
                 </p>
               )}
-              {item.detalle && item.detalle.length > 0 && (
+              {Array.isArray(item.detalle) && item.detalle.length > 0 && (
                 <ul
                   style={{
                     fontSize: 13,

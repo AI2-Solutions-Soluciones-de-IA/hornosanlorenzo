@@ -31,8 +31,6 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   { header: "Correo", key: "email", width: 28 },
   { header: "Producto", key: "producto", width: 30 },
   { header: "Tamaño", key: "tamano", width: 16 },
-  { header: "Lleva", key: "detalle", width: 50 },
-  { header: "Foto", key: "foto", width: 40 },
   { header: "Cantidad", key: "cantidad", width: 10 },
   { header: "Precio unidad (€)", key: "precio", width: 16 },
   { header: "Importe línea (€)", key: "importe", width: 16 },
@@ -41,6 +39,10 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   { header: "Estado", key: "estado", width: 18 },
   { header: "Notas", key: "notas", width: 40 },
   { header: "Referencia", key: "id", width: 38 },
+  // Al final a propósito: quien lea el Excel por posición no ve desplazadas
+  // las columnas de siempre.
+  { header: "Lleva", key: "detalle", width: 50 },
+  { header: "Foto", key: "foto", width: 40 },
 ];
 
 const EUROS = '#,##0.00 "€"';

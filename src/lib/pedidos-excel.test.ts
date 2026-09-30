@@ -114,6 +114,8 @@ describe("pedidosAExcel", () => {
     const cabecera = ws.getRow(1).values as string[];
     const val = (fila: number, col: string) =>
       ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
+    // Al final, para no desplazar las columnas de quien lee por posición.
+    expect(cabecera.slice(-2)).toEqual(["Lleva", "Foto"]);
     expect(val(2, "Tamaño") ?? "").toBe("");
     expect(val(2, "Lleva")).toBe("Cebra · 6 unidades · Glaseadas");
     expect(val(2, "Foto")).toBe("https://blob.example/foto.jpg");

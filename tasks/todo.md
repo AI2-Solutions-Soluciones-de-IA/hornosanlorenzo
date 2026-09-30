@@ -1,6 +1,16 @@
 # Pendientes — Horno San Lorenzo
 
 ## Bloquea encender los cobros
+- [ ] **Packs con Stripe: el obrador no vería el desglose.** Hoy no pasa (Stripe
+      sin claves y los pedidos `sin_pago` no mandan correo), pero al encender
+      los cobros: (1) el correo al obrador (`src/pages/api/webhook.ts`, ~185-189)
+      se construye con `listLineItems(...).description`, que es solo el nombre
+      del producto: sin sabores ni aviso de foto; (2) la reconstrucción cuando
+      Postgres cae (~102-123) guarda el pack con `detalle` null, y la hoja de
+      producción listaría «Pack Cumpleaños» como algo a hornear. Arreglo
+      propuesto: construir el correo desde la fila de `pedidos` cuando exista
+      (ahí sí están `detalle` y `foto_url`); en la reconstrucción, una nota
+      «pack sin desglose: ver en Stripe»
 - [ ] **RGPD de las cuentas.** La política de privacidad dice literalmente que
       solo regula el formulario de contacto, y ese formulario recoge menos datos
       y tiene más garantías que el alta de cuenta (que no tiene ni casilla de

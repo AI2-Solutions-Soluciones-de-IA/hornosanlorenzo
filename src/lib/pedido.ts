@@ -40,6 +40,8 @@ export const orderPayloadSchema = z.object({
         /** Solo en un pack: hueco → slug elegido (`{ empanada: "…" }`). */
         opciones: z
           .record(z.string().min(1).max(40), z.string().min(1).max(120))
+          // Ningún pack tiene más de 3 huecos: 8 sobra y acota el trabajo.
+          .refine((o) => Object.keys(o).length <= 8, "Demasiadas elecciones.")
           .optional(),
         /** Solo en un pack con foto: la URL que devolvió la subida. */
         fotoUrl: z.string().url().max(500).optional(),
@@ -185,6 +187,14 @@ export async function priceOrder(
     // que las elecciones sean legales. Va antes de las variantes: un pack no
     // tiene, y así un `variantId` colado no cambia el importe.
     const def = defs[index];
+    // La categoría y la definición tienen que coincidir: un pack sin
+    // definición se vendería sin desglose, y una definición con una fila de
+    // otra categoría pinta la ficha normal (con AddToCart) de algo que aquí
+    // no se puede pedir.
+    const esPack = product.category === "packs";
+    if (esPack !== Boolean(def))
+      throw new OrderError(`«${product.name}» no está disponible ahora mismo.`);
+    if (esPack && item.variantId) throw new OrderError("Elección no válida.");
     let detalle: PiezaResuelta[] | undefined;
     if (def) {
       try {

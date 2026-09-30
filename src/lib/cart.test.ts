@@ -100,3 +100,40 @@ describe("carrito con packs", () => {
     expect(cart.loadCart().items).toHaveLength(1);
   });
 });
+
+describe("loadCart con un localStorage manipulado", () => {
+  const guarda = (items: unknown[]) =>
+    almacen.set("hsl-cart-v1", JSON.stringify({ items, updatedAt: "x" }));
+  const base = { slug: "pack-cumpleanos", name: "P", qty: 1, unitPriceCents: 3000 };
+
+  it("quita detalle y fotoUrl mal formados sin tirar la línea", () => {
+    guarda([
+      { ...base, opciones: { a: "b" }, detalle: "no soy array", fotoUrl: 5 },
+      { ...base, slug: "b", opciones: { a: "b" }, detalle: [1, "a"] },
+    ]);
+    const c = cart.loadCart();
+    expect(c.items).toHaveLength(2);
+    for (const i of c.items) {
+      expect(i.detalle).toBeUndefined();
+      expect(i.fotoUrl).toBeUndefined();
+    }
+  });
+
+  it("conserva lo bien formado", () => {
+    guarda([{ ...base, detalle: ["a"], opciones: { a: "b" }, fotoUrl: "https://x/1.jpg" }]);
+    const [i] = cart.loadCart().items;
+    expect(i.detalle).toEqual(["a"]);
+    expect(i.opciones).toEqual({ a: "b" });
+    expect(i.fotoUrl).toBe("https://x/1.jpg");
+  });
+
+  it("descarta un pack cuyas opciones no son un objeto de strings (el checkout lo rechazaría)", () => {
+    guarda([
+      { ...base, opciones: "roto" },
+      { ...base, slug: "b", opciones: ["x"] },
+      { ...base, slug: "c", opciones: { a: 1 } },
+      { ...base, slug: "tarta" },
+    ]);
+    expect(cart.loadCart().items.map((i) => i.slug)).toEqual(["tarta"]);
+  });
+});

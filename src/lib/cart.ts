@@ -27,6 +27,15 @@ function emptyCart(): Cart {
   return { items: [], updatedAt: new Date().toISOString() };
 }
 
+function esOpciones(o: unknown): o is Record<string, string> {
+  return (
+    typeof o === "object" &&
+    o !== null &&
+    !Array.isArray(o) &&
+    Object.values(o).every((v) => typeof v === "string")
+  );
+}
+
 export function loadCart(): Cart {
   if (!isBrowser) return emptyCart();
   try {
@@ -34,14 +43,31 @@ export function loadCart(): Cart {
     if (!raw) return emptyCart();
     const parsed = JSON.parse(raw) as Cart;
     if (!Array.isArray(parsed.items)) return emptyCart();
-    parsed.items = parsed.items.filter(
-      (i) =>
-        typeof i.slug === "string" &&
-        typeof i.qty === "number" &&
-        i.qty > 0 &&
-        typeof i.unitPriceCents === "number" &&
-        i.unitPriceCents > 0,
-    );
+    // El almacenamiento del navegador lo puede manipular cualquiera: lo que
+    // no tenga la forma esperada se quita, sin tirar la línea entera.
+    const items: CartItem[] = [];
+    for (const i of parsed.items) {
+      if (
+        !i ||
+        typeof i.slug !== "string" ||
+        typeof i.qty !== "number" ||
+        !(i.qty > 0) ||
+        typeof i.unitPriceCents !== "number" ||
+        !(i.unitPriceCents > 0)
+      )
+        continue;
+      // Un pack con opciones que no son un objeto plano de strings no es
+      // arreglable (no sabemos qué eligió) y el checkout lo rechazaría igual.
+      if (i.opciones !== undefined && !esOpciones(i.opciones)) continue;
+      if (
+        i.detalle !== undefined &&
+        !(Array.isArray(i.detalle) && i.detalle.every((d) => typeof d === "string"))
+      )
+        delete i.detalle;
+      if (i.fotoUrl !== undefined && typeof i.fotoUrl !== "string") delete i.fotoUrl;
+      items.push(i);
+    }
+    parsed.items = items;
     return parsed;
   } catch {
     return emptyCart();

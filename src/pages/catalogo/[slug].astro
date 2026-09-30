@@ -48,6 +48,9 @@ if (!product) return new Response("No encontrado", { status: 404, headers: cabec
 const def = packPorSlug(product.slug);
 const esPack = product.category === "packs";
 if (esPack && !def) return new Response("No encontrado", { status: 404 });
+// Y al revés: con definición pero fila de otra categoría, el checkout la
+// rechaza (`priceOrder`), así que no se pinta una ficha normal comprable.
+if (def && !esPack) return new Response("No encontrado", { status: 404 });
 
 let ficha: FichaPack | null = null;
 if (esPack && def) {
