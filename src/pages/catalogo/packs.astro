@@ -25,24 +25,13 @@ const tarjetas = catalogo.flatMap((pack) => {
   title="Packs"
   description="Siete ocasiones resueltas, con precio cerrado y el ahorro a la vista."
 >
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
-    <p class="numeracion">Nuestros productos</p>
-    <h1 class="text-4xl sm:text-5xl mt-2">Nuestras cajitas para cada ocasión.</h1>
-    <p class="text-[color:var(--color-ink-muted)] mt-4 max-w-2xl text-lg">
-      Siete ocasiones resueltas, con precio cerrado y el ahorro a la vista.
-    </p>
-    <div class="mt-7 flex flex-wrap gap-3">
-      <a href="/catalogo" class="btn btn-primario">
-        Pedir online
-      </a>
-      <a href="/a-quien-servimos" class="btn btn-secundario">
-        Packs para empresa
-      </a>
-    </div>
-  </section>
+  <!-- Sin cabecera a la vista: desde el menú se llega directo a los packs
+       (petición de Oscar, 30-9-2026). El h1 se queda para lectores de
+       pantalla y buscadores. -->
+  <h1 class="sr-only">Packs San Lorenzo</h1>
 
-  <section class="border-t border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
+  <section>
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
       {tarjetas.length > 0 ? (
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {tarjetas.map(({ pack, def, ficha }) => (
