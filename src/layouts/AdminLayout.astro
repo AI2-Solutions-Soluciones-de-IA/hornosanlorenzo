@@ -17,40 +17,53 @@ Astro.response.headers.set("Cache-Control", "private, no-store");
 const secciones = [
   { href: "/admin/resumen", label: "Resumen" },
   { href: "/admin/produccion", label: "Producción" },
+  { href: "/admin/pedidos", label: "Pedidos" },
   { href: "/admin/productos", label: "Productos" },
   { href: "/admin/packs", label: "Packs" },
-  { href: "/admin/pedidos", label: "Pedidos" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/noticias", label: "Este mes" },
 ];
 const actual = Astro.url.pathname;
 ---
 <BaseLayout title={`${titulo} — Panel`} description="Panel de administración" noindex>
-  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-    <header class="filete pb-4 flex items-end justify-between gap-4">
+  <!-- Móvil: cabecera, fila de secciones con scroll horizontal y contenido, en ese orden.
+       Desde md: columna a la izquierda (Panel, secciones, Salir) y título + contenido a la derecha. -->
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-8">
+    <header class="filete pb-4 flex items-end justify-between gap-4 md:col-start-2 md:row-start-1">
       <div>
-        <p class="numeracion">Panel</p>
+        <p class="numeracion md:hidden">Panel</p>
         <h1 class="font-[family-name:var(--font-display)] text-3xl sm:text-4xl mt-1">{titulo}</h1>
       </div>
-      <AdminSalir client:load />
+      <div class="md:hidden"><AdminSalir client:load /></div>
     </header>
 
-    <nav class="mt-6 flex flex-wrap gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)]">
-      {secciones.map((s) => (
-        <a
-          href={s.href}
-          class:list={[
-            "px-4 py-2 text-sm font-semibold bg-[color:var(--color-leche)] hover:bg-[color:var(--color-latte)] transition-colors",
-            actual === s.href && "bg-[color:var(--color-latte)] text-[color:var(--color-moka)]",
-          ]}
-          aria-current={actual === s.href ? "page" : undefined}
-        >
-          {s.label}
-        </a>
-      ))}
-    </nav>
+    <aside class="mt-6 md:mt-0 md:col-start-1 md:row-start-1 md:row-span-2 md:flex md:flex-col md:bg-[color:var(--color-leche)] md:border-r md:border-[color:var(--color-avellana)] md:min-h-[calc(100vh-5rem)]">
+      <p class="numeracion hidden md:block md:px-4 md:pb-4">Panel</p>
+      <nav
+        aria-label="Secciones del panel"
+        class="flex overflow-x-auto [scrollbar-width:thin] gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] md:flex-col md:overflow-x-visible md:border-0 md:bg-transparent md:gap-0"
+      >
+        {secciones.map((s) => (
+          <a
+            href={s.href}
+            class:list={[
+              "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-semibold hover:bg-[color:var(--color-latte)] transition-colors",
+              actual === s.href
+                ? "bg-[color:var(--color-latte)] text-[color:var(--color-moka)]"
+                : "bg-[color:var(--color-leche)]",
+            ]}
+            aria-current={actual === s.href ? "page" : undefined}
+          >
+            {s.label}
+          </a>
+        ))}
+      </nav>
+      <div class="hidden md:block md:mt-auto md:px-4 md:pt-6">
+        <AdminSalir client:load />
+      </div>
+    </aside>
 
-    <div class="mt-8">
+    <div class="mt-8 min-w-0 md:col-start-2 md:row-start-2">
       <slot />
     </div>
   </div>
