@@ -243,6 +243,13 @@
       («cero mejorantes, conservantes y colorantes»): el manual prohíbe las
       promesas de salud, pero puede ser un argumento de venta real
 
+## Panel: rangos y paginación (30-9-2026)
+- [ ] Mirar en producción, con cuenta de admin, Pedidos (desde/hasta,
+      paginación, botón «Marcar como cobrado»), Producción (rango, páginas e
+      imprimir), Productos y Clientes: solo se verificó en local contra la
+      rama de pruebas
+- [ ] Resumen y «Este mes» no están paginados: no se pidió; mirar si crecen
+
 ## Más adelante
 - [ ] **Llevar el cómputo a Cloud Run** cuando el proyecto esté asentado. Del
       análisis de costes del 9 de septiembre de 2026: Vercel Pro son ~20 €/mes

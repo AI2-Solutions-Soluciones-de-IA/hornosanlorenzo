@@ -41,7 +41,9 @@ Cinco formas de creer que algo está comprobado cuando no lo está:
 - Esperar un despliegue mirando la primera línea de `vercel ls --prod`: si aún
   no ha empezado el nuevo, esa línea es el anterior, ya `Ready`, y el bucle da
   por bueno algo que no ha construido (29-9, migración a AI2). Buscar el
-  despliegue por el SHA del commit (`meta.githubCommitSha` en la API).
+  despliegue por el SHA del commit (`meta.githubCommitSha` en la API). Lo más
+  corto: `gh api repos/AI2-Solutions-Soluciones-de-IA/hornosanlorenzo/commits/<SHA>/status`
+  (el `vercel` CLI de este equipo mira otro scope y no ve los despliegues).
 - Dos **informes que afirmaban haber verificado lo que no verificaron** (plan
   2): uno pegaba un comando que, leído literalmente, no podía dar esa salida
   —ponía `DATABASE_URL_TEST=…` y el script solo lee `DATABASE_URL`—; otro daba
@@ -112,7 +114,13 @@ seguir (una consulta a cada rama), no dar por hecho que fue a la de pruebas.
 Un agente que arranque un servidor lo mata al terminar, y la instrucción se
 lo tiene que decir. Y para redirigir el `dev` a otra base no vale exportar la
 variable: `pool.ts` lee `import.meta.env.DATABASE_URL`, que Vite rellena
-desde `.env`.
+desde `.env`. Lo que sí funciona (30-9): un worktree en el scratchpad con su
+propio `.env` (solo `DATABASE_URL` = rama de pruebas, `BETTER_AUTH_SECRET` y
+`PUBLIC_SITE_URL=http://localhost:PUERTO`, o Better Auth da `INVALID_ORIGIN`),
+`pnpm install --offline` (un `node_modules` enlazado rompe Astro), alta por
+`/api/auth/sign-up/email` con `telefono` y `scripts/hacer-admin.mjs` contra
+esa `.env`. Al acabar: borrar datos sembrados y usuario, matar el `dev`,
+quitar el worktree.
 
 ## Migración antes que el código que la lee
 
@@ -142,5 +150,22 @@ la parte de abajo del menú (Entrar / Regístrate) inalcanzable.
 
 **How to apply:** en cambios de cabecera, menú o layout, medir
 `document.documentElement.scrollWidth <= innerWidth` a 375, 768, 1024 y 1280, con
-los menús cerrados Y abiertos.
+los menús cerrados Y abiertos. Y probar también una página **corta**: en el
+panel, la barra lateral `h-screen` repartía su alto entre las filas del grid y
+el título caía 250 px solo en Producción vacía (arreglado con
+`grid-rows-[auto_1fr]`).
+
+## `hidden` no se deja deshacer al imprimir
+
+Tailwind v4 pone `[hidden] { display: none !important }` en su capa `base`, y
+un `!important` en capa gana a cualquier `!important` sin capa: la regla
+`@media print { [hidden] { display: table-row !important } }` no hacía nada y
+la hoja de producción paginada imprimía solo la página a la vista.
+
+**Why:** con `!important` el orden de capas se invierte; no hay especificidad
+que lo salve.
+
+**How to apply:** para ocultar algo solo en pantalla, un atributo propio
+(`data-fuera`) con la regla dentro de `@media screen`, nunca `hidden`. Y
+comprobarlo con `page.emulateMedia({ media: "print" })` contando lo visible.
 
