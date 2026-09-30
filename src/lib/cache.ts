@@ -1,3 +1,5 @@
+import { packs } from "~/data/packs";
+
 /**
  * Invalidación de la caché de Vercel (ISR).
  *
@@ -28,6 +30,11 @@ export const RUTAS_CATALOGO = [
   "/catalogo/dulce",
   "/catalogo/salado",
   "/catalogo/top-ventas",
+  "/catalogo/packs",
+  // La ficha de un pack enseña opciones y «comprado suelto» de OTROS
+  // productos: una empanada agotada o un precio nuevo en la carta tiene que
+  // llegar a ellas, no solo a la ficha del producto que se editó.
+  ...packs.map((d) => `/catalogo/${d.slug}`),
   SITEMAP,
 ];
 

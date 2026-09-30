@@ -1,0 +1,116 @@
+---
+/**
+ * El cuerpo de la ficha de un pack, dentro de `/catalogo/[slug]`. No lee de
+ * la base de datos: la página le pasa ya calculada la `FichaPack`, porque un
+ * fallo de Postgres tiene que poder marcar la respuesta como `no-store` y eso
+ * solo funciona desde el frontmatter de la página (`~/lib/lectura-publica.ts`).
+ *
+ * Sin precios por pieza: el pptx los enseña, pero en la web el precio es el
+ * del pack y el ahorro se resume en «Comprado suelto».
+ */
+import { Image } from "astro:assets";
+import PackPedido from "~/islands/PackPedido.tsx";
+import type { DefinicionPack } from "~/data/packs";
+import type { Producto } from "~/lib/db/productos";
+import type { FichaPack } from "~/lib/pack-ficha";
+import { formatPriceCents } from "~/lib/format";
+
+interface Props {
+  pack: Producto;
+  def: DefinicionPack;
+  ficha: FichaPack;
+}
+
+const { pack, def, ficha } = Astro.props;
+
+const imagen =
+  pack.imageUrl && pack.imageWidth && pack.imageHeight
+    ? { url: pack.imageUrl, alt: pack.imageAlt ?? pack.name, ancho: pack.imageWidth, alto: pack.imageHeight }
+    : null;
+---
+<section class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <nav aria-label="Breadcrumb" class="text-xs text-[color:var(--color-ink-muted)] uppercase tracking-widest mb-6">
+    <a href="/">Inicio</a> · <a href="/catalogo">Catálogo</a> · <a href="/catalogo/packs">Packs</a> ·
+    <span>{pack.name}</span>
+  </nav>
+
+  <div class={imagen ? "grid gap-10 md:grid-cols-2" : "max-w-2xl"}>
+    {imagen && (
+      <div class="self-start overflow-hidden border border-[color:var(--color-line)]">
+        <Image
+          quality={80}
+          src={imagen.url}
+          alt={imagen.alt}
+          width={imagen.ancho}
+          height={imagen.alto}
+          widths={[600, 900, 1200]}
+          sizes="(min-width:768px) 600px, 100vw"
+          class="w-full h-auto"
+        />
+      </div>
+    )}
+
+    <div>
+      <p class="numeracion">{def.ocasion}</p>
+      <h1 class="text-4xl sm:text-5xl mt-2">{pack.name}</h1>
+      <p class="font-[family-name:var(--font-display)] italic text-xl mt-3 text-[color:var(--color-ink-muted)]">
+        {pack.shortDescription}
+      </p>
+
+      {pack.priceCents !== null && (
+        <div class="mt-6">
+          <p class="font-[family-name:var(--font-display)] text-4xl sm:text-5xl leading-none">
+            {formatPriceCents(pack.priceCents)}
+          </p>
+          {ficha.ahorro !== null && ficha.sueltoCents !== null && (
+            <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">
+              Comprado suelto <s>{formatPriceCents(ficha.sueltoCents)}</s>
+              {/* El único acento teja de la ficha. */}
+              <span class="ml-2 font-semibold text-[color:var(--color-teja)]">−{ficha.ahorro}&nbsp;%</span>
+            </p>
+          )}
+          <p class="mt-2 text-sm text-[color:var(--color-ink-muted)]">
+            Para {def.personas.texto}
+            {ficha.porPersonaCents !== null && <> · unos {formatPriceCents(ficha.porPersonaCents)} por persona</>}
+          </p>
+        </div>
+      )}
+
+      <h2 class="numeracion mt-10">Qué incluye</h2>
+      <ul class="mt-2 border-t border-[color:var(--color-avellana)]">
+        {def.piezas.map((p) => (
+          <li class="filete py-3">
+            <p class="font-medium">{p.titulo}</p>
+            <p class="text-sm text-[color:var(--color-ink-muted)] mt-0.5">{p.descripcion}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div class="mt-8">
+        <PackPedido
+          client:visible
+          slug={pack.slug}
+          name={pack.name}
+          priceCents={pack.priceCents ?? 0}
+          piezas={ficha.piezas}
+          conFoto={ficha.conFoto}
+          agotado={ficha.agotado}
+        />
+      </div>
+
+      <h2 class="numeracion mt-10">Para quién</h2>
+      <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-[color:var(--color-avellana)]">
+        {def.paraQuien.map((linea) => <li>{linea}</li>)}
+      </ul>
+
+      {def.consejo && (
+        <div class="mt-8 border border-[color:var(--color-avellana)] bg-[color:var(--color-latte)] p-5">
+          <p class="numeracion">Consejo del obrador</p>
+          <p class="mt-2 text-sm">{def.consejo}</p>
+        </div>
+      )}
+
+      <a href="/catalogo" class="btn btn-secundario mt-10">Completa tu pedido</a>
+    </div>
+  </div>
+</section>

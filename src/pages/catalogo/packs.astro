@@ -1,37 +1,35 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
-import SectionLabel from "~/components/SectionLabel.astro";
+import PackCard from "~/components/PackCard.astro";
+import { packPorSlug } from "~/data/packs";
+import { catalogoPublico } from "~/lib/lectura-publica";
+import { fichaPack } from "~/lib/pack-ficha";
 
-// Tarea 8 la reescribe: las gamas antiguas salieron de `~/data/packs`.
-type PackRange = { id: string; title: string; claim: string; body: string };
-const packsSalado: readonly PackRange[] = [];
-const packsDulce: readonly PackRange[] = [];
+// Lee de la base de datos: bajo demanda, con la caché ISR delante y el panel
+// invalidándola al guardar (`RUTAS_CATALOGO`).
+export const prerender = false;
 
-const gamas: { label: string; number: string; intro: string; items: readonly PackRange[] }[] = [
-  {
-    label: "Salado",
-    number: "01",
-    intro: "40 años demostrando que comer bien empieza en el obrador.",
-    items: packsSalado,
-  },
-  {
-    label: "Dulce",
-    number: "02",
-    intro: "Repostería artesana elaborada con la misma receta tradicional desde 1986.",
-    items: packsDulce,
-  },
-];
+// Una sola lectura: el catálogo activo trae a la vez los packs y todas sus
+// piezas, que hacen falta para el «comprado suelto» y el ahorro. Si Postgres
+// falla, sale vacío y sin caché (`~/lib/lectura-publica.ts`).
+const catalogo = await catalogoPublico(Astro.response);
+
+// En el orden de la carta. Un pack sin definición no tiene piezas ni ficha
+// (da 404): no se enseña.
+const tarjetas = catalogo.flatMap((pack) => {
+  const def = pack.category === "packs" ? packPorSlug(pack.slug) : undefined;
+  return def ? [{ pack, def, ficha: fichaPack(def, pack, catalogo) }] : [];
+});
 ---
 <MarketingLayout
   title="Packs"
-  description="Nuestras cajitas para cada ocasión: salado y dulce de obrador, listos para llevar a cualquier mesa."
+  description="Siete ocasiones resueltas, con precio cerrado y el ahorro a la vista."
 >
   <section class="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
     <p class="numeracion">Nuestros productos</p>
     <h1 class="text-4xl sm:text-5xl mt-2">Nuestras cajitas para cada ocasión.</h1>
     <p class="text-[color:var(--color-ink-muted)] mt-4 max-w-2xl text-lg">
-      El aperitivo deja de improvisarse. Cajitas listas para llevar a cualquier mesa:
-      la de casa y la de la empresa.
+      Siete ocasiones resueltas, con precio cerrado y el ahorro a la vista.
     </p>
     <div class="mt-7 flex flex-wrap gap-3">
       <a href="/catalogo" class="btn btn-primario">
@@ -43,43 +41,36 @@ const gamas: { label: string; number: string; intro: string; items: readonly Pac
     </div>
   </section>
 
-  {gamas.map((gama) => (
-    <section class="border-t border-[color:var(--color-avellana)]">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
-        <SectionLabel number={gama.number} label={gama.label} />
-        <h2 class="text-3xl sm:text-4xl mt-2">{gama.intro}</h2>
-        <div class="mt-10 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-          {gama.items.map((item) => (
-            <article class="border-t border-[color:var(--color-avellana)] pt-5">
-              <h3 class="font-[family-name:var(--font-display)] text-xl">{item.title}</h3>
-              <p class="mt-2 font-[family-name:var(--font-display)] italic text-[color:var(--color-caramelo)]">
-                {item.claim}
-              </p>
-              <p class="mt-2 text-sm leading-relaxed text-[color:var(--color-ink-muted)]">
-                {item.body}
-              </p>
-            </article>
+  <section class="border-t border-[color:var(--color-avellana)]">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
+      {tarjetas.length > 0 ? (
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {tarjetas.map(({ pack, def, ficha }) => (
+            <PackCard
+              pack={pack}
+              def={def}
+              sueltoCents={ficha.sueltoCents}
+              ahorro={ficha.ahorro}
+              agotado={ficha.agotado}
+            />
           ))}
         </div>
-      </div>
-    </section>
-  ))}
+      ) : (
+        <p class="text-lg text-[color:var(--color-ink-muted)]">
+          Estamos preparando los packs. Mientras tanto,
+          <a href="/catalogo" class="underline underline-offset-4 text-[color:var(--color-ink)]">pide desde la carta</a>.
+        </p>
+      )}
+    </div>
+  </section>
 
   <section class="bg-[color:var(--color-leche)] border-t border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20 grid gap-10 md:grid-cols-2 items-start">
-      <div>
-        <SectionLabel number="03" label="Promos del mes" />
-        <h2 class="text-3xl sm:text-4xl mt-2">Lo que sale este mes del obrador.</h2>
-        <p class="mt-4 text-[color:var(--color-ink-muted)] max-w-md">
-          Cada mes seleccionamos una gama con condiciones especiales. Consúltanos la
-          promoción vigente y las condiciones antes de hacer tu pedido.
-        </p>
-      </div>
-      <div class="border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
+      <div class="max-w-xl border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
         <p class="numeracion">Premium packs</p>
-        <h3 class="mt-2 font-[family-name:var(--font-display)] text-2xl">
+        <h2 class="mt-2 font-[family-name:var(--font-display)] text-2xl">
           Para cuando la mesa importa.
-        </h3>
+        </h2>
         <p class="mt-3 text-sm leading-relaxed text-[color:var(--color-ink-muted)]">
           Selección ampliada de salado y dulce, presentación cuidada y formatos grandes.
           Disponibles también en versión XL para empresa, con descuento por volumen.

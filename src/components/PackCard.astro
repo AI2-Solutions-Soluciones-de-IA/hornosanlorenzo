@@ -1,0 +1,79 @@
+---
+/**
+ * La tarjeta de un pack. Sin compra rápida: un pack no se puede pedir sin
+ * elegir sus sabores, así que la tarjeta lleva a la ficha.
+ *
+ * El ahorro necesita el precio de todas las piezas. En la rejilla del
+ * catálogo no se pasa (sería una consulta por tarjeta): ahí sale solo precio,
+ * personas y €/persona. `/catalogo/packs` sí lo calcula, con una sola lectura,
+ * y lo pasa.
+ */
+import { Image } from "astro:assets";
+import { precioPorPersonaCents, type DefinicionPack } from "~/data/packs";
+import type { Producto } from "~/lib/db/productos";
+import { formatPriceCents } from "~/lib/format";
+
+interface Props {
+  pack: Producto;
+  def: DefinicionPack;
+  sueltoCents?: number | null;
+  ahorro?: number | null;
+  /** Solo lo sabe quien ha leído las piezas; sin él, lo que diga el pack. */
+  agotado?: boolean;
+}
+
+const { pack, def, sueltoCents = null, ahorro = null } = Astro.props;
+const agotado = Astro.props.agotado ?? pack.agotado;
+const href = `/catalogo/${pack.slug}`;
+const precio = pack.consultar ? null : pack.priceCents;
+
+const imagen =
+  pack.imageUrl && pack.imageWidth && pack.imageHeight
+    ? { url: pack.imageUrl, alt: pack.imageAlt ?? pack.name, ancho: pack.imageWidth, alto: pack.imageHeight }
+    : null;
+---
+<article class="flex flex-col bg-[color:var(--color-paper)] border border-[color:var(--color-line)] overflow-hidden">
+  {imagen && (
+    <a href={href} class="block aspect-[4/3] overflow-hidden" tabindex="-1" aria-hidden="true">
+      <Image
+        quality={80}
+        src={imagen.url}
+        alt=""
+        width={imagen.ancho}
+        height={imagen.alto}
+        widths={[300, 600, 900]}
+        sizes="(min-width:1024px) 360px, (min-width:640px) 50vw, 100vw"
+        class="w-full h-full object-cover"
+      />
+    </a>
+  )}
+  <div class="flex flex-1 flex-col p-4 sm:p-5">
+    <p class="numeracion">{def.ocasion}</p>
+    <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">
+      <a href={href} class="hover:text-[color:var(--color-accent-dark)]">{pack.name}</a>
+    </h3>
+    <p class="text-sm text-[color:var(--color-ink-muted)] mt-1 line-clamp-3">{pack.shortDescription}</p>
+
+    <div class="mt-auto pt-4">
+      {precio !== null && (
+        <>
+          <p class="font-[family-name:var(--font-display)] text-2xl">
+            {formatPriceCents(precio)}
+            {ahorro !== null && sueltoCents !== null && (
+              <span class="ml-2 font-[family-name:var(--font-body)] text-sm text-[color:var(--color-ink-muted)]">
+                <s>{formatPriceCents(sueltoCents)}</s>
+                {/* El único acento teja de la tarjeta. */}
+                <span class="ml-1 font-semibold text-[color:var(--color-teja)]">−{ahorro}&nbsp;%</span>
+              </span>
+            )}
+          </p>
+          <p class="mt-1 text-sm text-[color:var(--color-ink-muted)]">
+            Para {def.personas.texto} · unos {formatPriceCents(precioPorPersonaCents(precio, def))} por persona
+          </p>
+        </>
+      )}
+      {agotado && <p class="numeracion mt-2">No disponible ahora mismo</p>}
+      <a href={href} class="btn btn-secundario mt-4 w-full justify-center">Ver el pack</a>
+    </div>
+  </div>
+</article>

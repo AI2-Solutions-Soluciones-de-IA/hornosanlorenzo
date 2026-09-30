@@ -2,9 +2,12 @@
 import { Image } from "astro:assets";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import AddToCart from "~/islands/AddToCart.tsx";
+import PackFicha from "~/components/PackFicha.astro";
 import { categoryById, isCategoryId } from "~/data/categories";
 import { seccionById, isSeccionId } from "~/data/secciones";
-import { obtenerProducto } from "~/lib/db/productos";
+import { obtenerProducto, productosDeSecciones, productosParaPedido } from "~/lib/db/productos";
+import { packPorSlug, seccionesDeHuecos, slugsFijos } from "~/data/packs";
+import { fichaPack, type FichaPack } from "~/lib/pack-ficha";
 import { SIN_CACHE } from "~/lib/lectura-publica";
 import { aHtml } from "~/lib/markdown";
 
@@ -38,6 +41,35 @@ try {
 // aviso. El resumen de `pnpm check` sigue en 0 errores y 0 avisos.
 const cabeceras404 = fallo ? SIN_CACHE : undefined;
 if (!product) return new Response("No encontrado", { status: 404, headers: cabeceras404 });
+
+// Un pack es un producto más, pero lo que lleva dentro vive en
+// `~/data/packs`. Uno de categoría `packs` sin definición (creado desde el
+// panel) no tiene piezas y no se puede vender: 404, como si no existiera.
+const def = packPorSlug(product.slug);
+const esPack = product.category === "packs";
+if (esPack && !def) return new Response("No encontrado", { status: 404 });
+
+let ficha: FichaPack | null = null;
+if (esPack && def) {
+  try {
+    const [fijos, deSecciones] = await Promise.all([
+      productosParaPedido(slugsFijos(def)),
+      productosDeSecciones(seccionesDeHuecos(def)),
+    ]);
+    // Un mismo producto puede llegar por las dos vías: una sola copia.
+    const piezas = new Map([...deSecciones.map((x) => [x.slug, x] as const), ...fijos]);
+    ficha = fichaPack(def, product, [...piezas.values()]);
+  } catch (error) {
+    // Sin la carta no se sabe qué se puede elegir: la ficha sale como «No
+    // disponible ahora mismo» y sin caché, por lo mismo que el 404 de arriba.
+    console.error(
+      "No se pudieron cargar las piezas del pack:",
+      error instanceof Error ? error.message : error,
+    );
+    Astro.response.headers.set("cache-control", SIN_CACHE["cache-control"]);
+    ficha = fichaPack(def, product, []);
+  }
+}
 
 const cuerpo = await aHtml(product.cuerpo);
 // `category`/`seccion` son texto libre en la base de datos (sin CHECK ni FK):
@@ -85,7 +117,7 @@ const jsonLd = {
           // Lo que Google enseña en los resultados de búsqueda: una ficha
           // agotada no puede decir «en stock» aunque siga a la venta en el
           // sitio (se ve, pero sin botón de añadir).
-          availability: product.agotado
+          availability: product.agotado || ficha?.agotado
             ? "https://schema.org/OutOfStock"
             : "https://schema.org/InStock",
         },
@@ -109,6 +141,9 @@ const breadcrumbs = {
   type="product"
   jsonLd={[jsonLd, breadcrumbs]}
 >
+  {ficha && def ? (
+    <PackFicha pack={product} def={def} ficha={ficha} />
+  ) : (
   <section class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
     <nav aria-label="Breadcrumb" class="text-xs text-[color:var(--color-ink-muted)] uppercase tracking-widest mb-6">
       <a href="/">Inicio</a> · <a href="/catalogo">Catálogo</a> · <span>{product.name}</span>
@@ -201,4 +236,5 @@ const breadcrumbs = {
       </div>
     </div>
   </section>
+  )}
 </MarketingLayout>

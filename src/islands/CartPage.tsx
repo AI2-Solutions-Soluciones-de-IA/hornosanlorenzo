@@ -104,8 +104,9 @@ export default function CartPage({ prefill }: Props) {
                     margin: 0,
                   }}
                 >
-                  {item.detalle.map((linea) => (
-                    <li key={linea}>{linea}</li>
+                  {/* Por posición: en Gran Celebración las dos quiches pueden ser la misma. */}
+                  {item.detalle.map((linea, i) => (
+                    <li key={`${i}-${linea}`}>{linea}</li>
                   ))}
                 </ul>
               )}
