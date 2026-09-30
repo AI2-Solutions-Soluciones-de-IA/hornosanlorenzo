@@ -3,6 +3,12 @@ export type CartItem = {
   name: string;
   variantId?: string;
   variantLabel?: string;
+  /** Solo packs: hueco → slug elegido. */
+  opciones?: Record<string, string>;
+  /** Solo packs: la foto ya subida. */
+  fotoUrl?: string;
+  /** Solo packs: lo que lleva, ya en texto, para enseñarlo en el carrito. */
+  detalle?: string[];
   qty: number;
   unitPriceCents: number;
 };
@@ -49,17 +55,26 @@ function saveCart(cart: Cart): void {
   window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: cart }));
 }
 
-function sameItem(
-  a: CartItem,
-  b: Pick<CartItem, "slug" | "variantId">,
-): boolean {
-  return a.slug === b.slug && (a.variantId ?? null) === (b.variantId ?? null);
+/**
+ * Identidad de una línea: dos packs iguales con sabores distintos son dos
+ * líneas. Las claves de `opciones` se ordenan para que el orden en que se
+ * eligieron no cree líneas duplicadas.
+ */
+export function claveLinea(
+  i: Pick<CartItem, "slug" | "variantId" | "opciones" | "fotoUrl">,
+): string {
+  const opciones = i.opciones
+    ? Object.keys(i.opciones)
+        .sort()
+        .map((k) => [k, i.opciones![k]])
+    : null;
+  return JSON.stringify([i.slug, i.variantId ?? null, opciones, i.fotoUrl ?? null]);
 }
 
 export function addItem(item: Omit<CartItem, "qty"> & { qty?: number }): Cart {
   const cart = loadCart();
   const qty = item.qty ?? 1;
-  const existing = cart.items.find((i) => sameItem(i, item));
+  const existing = cart.items.find((i) => claveLinea(i) === claveLinea(item));
   if (existing) {
     existing.qty += qty;
   } else {
@@ -69,16 +84,12 @@ export function addItem(item: Omit<CartItem, "qty"> & { qty?: number }): Cart {
   return cart;
 }
 
-export function updateQty(
-  slug: string,
-  variantId: string | undefined,
-  qty: number,
-): Cart {
+export function updateQty(clave: string, qty: number): Cart {
   const cart = loadCart();
-  const item = cart.items.find((i) => sameItem(i, { slug, variantId }));
+  const item = cart.items.find((i) => claveLinea(i) === clave);
   if (!item) return cart;
   if (qty <= 0) {
-    cart.items = cart.items.filter((i) => !sameItem(i, { slug, variantId }));
+    cart.items = cart.items.filter((i) => claveLinea(i) !== clave);
   } else {
     item.qty = qty;
   }
@@ -86,8 +97,8 @@ export function updateQty(
   return cart;
 }
 
-export function removeItem(slug: string, variantId?: string): Cart {
-  return updateQty(slug, variantId, 0);
+export function removeItem(clave: string): Cart {
+  return updateQty(clave, 0);
 }
 
 export function clearCart(): Cart {

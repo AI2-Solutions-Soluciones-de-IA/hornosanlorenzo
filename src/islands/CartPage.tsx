@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCart } from "~/hooks/useCart";
+import { claveLinea } from "~/lib/cart";
 import { formatPriceCents } from "~/lib/format";
 import { MODE_COPY } from "~/lib/entrega";
 import CheckoutFlow, { type Prefill } from "~/islands/CheckoutFlow";
@@ -74,7 +75,7 @@ export default function CartPage({ prefill }: Props) {
       <div style={{ display: "grid", gap: 12, marginTop: 24 }}>
         {cart.items.map((item) => (
           <div
-            key={item.slug + (item.variantId ?? "")}
+            key={claveLinea(item)}
             style={{
               display: "grid",
               gridTemplateColumns: "1fr auto",
@@ -91,6 +92,26 @@ export default function CartPage({ prefill }: Props) {
               {item.variantLabel && (
                 <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>
                   {item.variantLabel}
+                </p>
+              )}
+              {item.detalle && item.detalle.length > 0 && (
+                <ul
+                  style={{
+                    fontSize: 13,
+                    color: "var(--color-ink-muted)",
+                    listStyle: "none",
+                    padding: 0,
+                    margin: 0,
+                  }}
+                >
+                  {item.detalle.map((linea) => (
+                    <li key={linea}>{linea}</li>
+                  ))}
+                </ul>
+              )}
+              {item.fotoUrl && (
+                <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>
+                  Con tu foto
                 </p>
               )}
               <p
@@ -120,7 +141,7 @@ export default function CartPage({ prefill }: Props) {
               >
                 <button
                   onClick={() =>
-                    updateQty(item.slug, item.variantId, item.qty - 1)
+                    updateQty(claveLinea(item), item.qty - 1)
                   }
                   aria-label={`Quitar una unidad de ${item.name}`}
                   style={{
@@ -140,7 +161,7 @@ export default function CartPage({ prefill }: Props) {
                 </span>
                 <button
                   onClick={() =>
-                    updateQty(item.slug, item.variantId, item.qty + 1)
+                    updateQty(claveLinea(item), item.qty + 1)
                   }
                   aria-label={`Añadir una unidad de ${item.name}`}
                   style={{
@@ -164,7 +185,7 @@ export default function CartPage({ prefill }: Props) {
                 {formatPriceCents(item.unitPriceCents * item.qty)}
               </p>
               <button
-                onClick={() => removeItem(item.slug, item.variantId)}
+                onClick={() => removeItem(claveLinea(item))}
                 style={{
                   background: "transparent",
                   border: "none",

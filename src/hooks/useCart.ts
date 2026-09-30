@@ -33,14 +33,14 @@ export function useCart() {
   );
 
   const updateQty = useCallback(
-    (slug: string, variantId: string | undefined, qty: number) => {
-      setCart(_updateQty(slug, variantId, qty));
+    (clave: string, qty: number) => {
+      setCart(_updateQty(clave, qty));
     },
     [],
   );
 
-  const removeItem = useCallback((slug: string, variantId?: string) => {
-    setCart(_removeItem(slug, variantId));
+  const removeItem = useCallback((clave: string) => {
+    setCart(_removeItem(clave));
   }, []);
 
   const clearCart = useCallback(() => {

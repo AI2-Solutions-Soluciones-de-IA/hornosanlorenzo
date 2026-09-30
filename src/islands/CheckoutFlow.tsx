@@ -330,6 +330,8 @@ export default function CheckoutFlow({
           items: cart.items.map((i) => ({
             slug: i.slug,
             variantId: i.variantId,
+            opciones: i.opciones,
+            fotoUrl: i.fotoUrl,
             qty: i.qty,
           })),
           mode,
