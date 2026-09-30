@@ -10,7 +10,7 @@ import { listarProductos, type Producto } from "~/lib/db/productos";
 import { invalidar, rutasTrasGuardarProducto } from "~/lib/cache";
 import { esAdmin } from "~/lib/auth/guardia";
 import { slugify } from "~/lib/slug";
-import { comprobarPack, esquemaPack, type Problema } from "~/lib/pack-validacion";
+import { comprobarPack, esquemaPack, problemasDeEsquema, type Problema } from "~/lib/pack-validacion";
 import { ahorroPct, precioSueltoCents, type DefinicionPack } from "~/data/packs";
 import type {
   PackAdmin,
@@ -53,16 +53,6 @@ const aCarta = (p: Producto): ProductoCarta => ({
     priceCents: v.priceCents,
   })),
 });
-
-/** Los errores de zod, con el mismo formato que los de `comprobarPack`. */
-function problemasDeEsquema(error: {
-  issues: { path: PropertyKey[]; message: string }[];
-}): Problema[] {
-  return error.issues.slice(0, 5).map((i) => ({
-    donde: i.path.length ? i.path.join(".") : "pack",
-    mensaje: `Dato no válido (${i.path.join(".") || "pack"}): ${i.message}`,
-  }));
-}
 
 export const GET: APIRoute = async ({ locals }) => {
   if (!esAdmin(locals.usuario)) return noEncontrado();
@@ -118,7 +108,7 @@ async function validar(
 > {
   const parsed = esquemaPack.safeParse(await cuerpoJSON(request));
   if (!parsed.success) {
-    return { respuesta: json({ errores: problemasDeEsquema(parsed.error) }, 400) };
+    return { respuesta: json({ errores: problemasDeEsquema(parsed.error.issues) }, 400) };
   }
   const carta = productos.filter((p) => !esPack(p)).map(aCarta);
   const { errores, avisos } = comprobarPack(parsed.data, carta);

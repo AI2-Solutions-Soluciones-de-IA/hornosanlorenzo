@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   comprobarPack,
   esquemaPack,
+  problemasDeEsquema,
   type DatosPackEntrada,
 } from "./pack-validacion";
 import type { ProductoPieza } from "~/data/packs";
@@ -320,5 +321,44 @@ describe("esquemaPack", () => {
     expect(ok({ ...valido(), imageWidth: 20001 })).toBe(false);
     expect(ok(conPiezas([fija({ slug: "a".repeat(121) })]))).toBe(false);
     expect(ok(conPiezas([hueco({ id: "a".repeat(41) })]))).toBe(false);
+  });
+});
+
+describe("problemasDeEsquema", () => {
+  const fallos = (d: unknown) => {
+    const r = esquemaPack.safeParse(d);
+    if (r.success) throw new Error("debía fallar");
+    return problemasDeEsquema(r.error.issues);
+  };
+
+  it("nombra el campo y habla en castellano", () => {
+    const d = valido() as unknown as Record<string, unknown>;
+    d.name = "x".repeat(200);
+    d.priceCents = "mucho";
+    d.orden = 99999;
+    (d.definicion as { piezas: Record<string, unknown>[] }).piezas[0].titulo = "y".repeat(300);
+    expect(fallos(d)).toEqual([
+      { donde: "nombre", mensaje: "Es demasiado largo." },
+      { donde: "precio", mensaje: "No es un número válido." },
+      { donde: "orden", mensaje: "Está fuera de rango." },
+      { donde: "pieza 1", mensaje: "Es demasiado largo." },
+    ]);
+  });
+
+  it("un campo ausente es «Falta rellenarlo.» y sin repetir el mismo donde", () => {
+    const f = fallos({ priceCents: 1 });
+    expect(f.find((x) => x.donde === "nombre")).toEqual({ donde: "nombre", mensaje: "Falta rellenarlo." });
+    expect(new Set(f.map((x) => x.donde)).size).toBe(f.length);
+    for (const x of f) expect(x.donde).not.toMatch(/\./);
+  });
+});
+
+describe("nombre sin letras", () => {
+  it("«!!!» se rechaza: saldría como «noticia» en la URL", () => {
+    const d = valido();
+    d.name = "!!!";
+    expect(errores(d)).toEqual([
+      { donde: "nombre", mensaje: "El nombre tiene que llevar alguna letra o número." },
+    ]);
   });
 });

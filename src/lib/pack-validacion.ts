@@ -93,6 +93,7 @@ export function comprobarPack(
   const aviso = (donde: string, mensaje: string) => avisos.push({ donde, mensaje });
 
   if (datos.name.trim().length < 2) error("nombre", "El nombre del pack necesita al menos 2 letras.");
+  else if (!/[\p{L}\p{N}]/u.test(datos.name)) error("nombre", "El nombre tiene que llevar alguna letra o número.");
   if (datos.shortDescription.trim().length < 3) {
     error("descriptor", "Escribe una frase corta que describa el pack (mínimo 3 letras).");
   }
@@ -206,4 +207,75 @@ export function comprobarPack(
   }
 
   return { errores, avisos };
+}
+
+type IssueZod = {
+  code: string;
+  path: readonly PropertyKey[];
+  origin?: string; // zod 4
+  type?: string; // zod 3
+  expected?: string;
+};
+
+const CAMPOS_RAIZ: Record<string, string> = {
+  name: "nombre",
+  priceCents: "precio",
+  shortDescription: "descriptor",
+  orden: "orden",
+  activo: "estado",
+  agotado: "estado",
+  imageUrl: "foto",
+  imageAlt: "foto",
+  imageWidth: "foto",
+  imageHeight: "foto",
+};
+
+const CAMPOS_DEFINICION: Record<string, string> = {
+  ocasion: "ocasión",
+  personas: "personas",
+  paraQuien: "para quién",
+  consejo: "consejo",
+  piezas: "piezas",
+};
+
+/** `donde` de un fallo de esquema, en el formato documentado en `Problema`. */
+function dondeDeIssue(path: readonly PropertyKey[]): string {
+  const [raiz, campo, indice] = path.map(String);
+  if (raiz !== "definicion") return CAMPOS_RAIZ[raiz] ?? "pack";
+  if (campo === "piezas" && indice !== undefined && /^\d+$/.test(indice)) {
+    return `pieza ${Number(indice) + 1}`;
+  }
+  return CAMPOS_DEFINICION[campo] ?? "pack";
+}
+
+function mensajeDeIssue(i: IssueZod): string {
+  const tipo = i.origin ?? i.type;
+  const numero = tipo === "number" || tipo === "int";
+  if (i.code === "too_small") return numero ? "Está fuera de rango." : "Falta rellenarlo.";
+  if (i.code === "too_big") return numero ? "Está fuera de rango." : "Es demasiado largo.";
+  if (i.code === "invalid_type") {
+    if (i.expected === "number" || i.expected === "int") return "No es un número válido.";
+    if (i.expected === "string") return "Falta rellenarlo.";
+  }
+  return "Revisa este dato.";
+}
+
+/**
+ * Los fallos de `esquemaPack` como `Problema[]`: un mensaje en castellano por
+ * cada `donde` (el primero que aparece), como mucho 8.
+ */
+export function problemasDeEsquema(
+  issues: readonly { code: string; path: readonly PropertyKey[] }[],
+): Problema[] {
+  const vistos = new Set<string>();
+  const res: Problema[] = [];
+  for (const crudo of issues) {
+    const i = crudo as IssueZod;
+    const donde = dondeDeIssue(i.path);
+    if (vistos.has(donde)) continue;
+    vistos.add(donde);
+    res.push({ donde, mensaje: mensajeDeIssue(i) });
+    if (res.length === 8) break;
+  }
+  return res;
 }
