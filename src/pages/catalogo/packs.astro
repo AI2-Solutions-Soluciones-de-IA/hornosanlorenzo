@@ -1,7 +1,11 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import SectionLabel from "~/components/SectionLabel.astro";
-import { packsSalado, packsDulce, type PackRange } from "~/data/packs";
+
+// Tarea 8 la reescribe: las gamas antiguas salieron de `~/data/packs`.
+type PackRange = { id: string; title: string; claim: string; body: string };
+const packsSalado: readonly PackRange[] = [];
+const packsDulce: readonly PackRange[] = [];
 
 const gamas: { label: string; number: string; intro: string; items: readonly PackRange[] }[] = [
   {

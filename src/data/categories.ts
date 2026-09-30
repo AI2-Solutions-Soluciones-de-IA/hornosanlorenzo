@@ -3,6 +3,7 @@ export const categoryIds = [
   "tartas",
   "salado",
   "temporada",
+  "packs",
 ] as const;
 
 export type CategoryId = (typeof categoryIds)[number];
@@ -22,6 +23,11 @@ export const categories: readonly Category[] = [
   { id: "tartas", label: "Tartas", short: "Para celebrar o capricho diario" },
   { id: "salado", label: "Salado", short: "Empanadas, quiches, hojaldres" },
   { id: "temporada", label: "Temporada", short: "Roscón, torrijas, panettone" },
+  {
+    id: "packs",
+    label: "Packs",
+    short: "Ocasiones resueltas, con precio cerrado",
+  },
 ] as const;
 
 export const categoryById = (id: CategoryId): Category =>
@@ -41,7 +47,7 @@ export type GrupoId = (typeof grupoIds)[number];
 export const grupoCategories: Record<GrupoId, readonly CategoryId[]> = {
   dulce: ["bolleria", "tartas", "temporada"],
   salado: ["salado"],
-  packs: [],
+  packs: ["packs"],
 };
 
 export const grupoLabel: Record<GrupoId, string> = {

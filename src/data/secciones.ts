@@ -21,6 +21,7 @@ export const seccionIds = [
   "tartas-saladas",
   "para-compartir",
   "las-lorenzas-salado",
+  "packs",
 ] as const;
 
 export type SeccionId = (typeof seccionIds)[number];
@@ -159,6 +160,13 @@ export const secciones: readonly Seccion[] = [
     eyebrow: "Salado · Mini Croissants",
     nota: "Rellenos · cajas de 6, 12 y 24 unidades",
     order: 1700,
+  },
+  {
+    id: "packs",
+    label: "Packs San Lorenzo",
+    eyebrow: "Packs · Ocasiones",
+    nota: "Precio cerrado, por debajo de su suma en carta",
+    order: 50,
   },
 ] as const;
 
