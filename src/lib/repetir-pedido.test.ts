@@ -9,6 +9,8 @@ import type { ProductoVendible } from "~/lib/db/productos";
 const producto = (extra: Partial<ProductoVendible> = {}): ProductoVendible => ({
   slug: "tarta-de-queso",
   name: "Tarta de queso",
+  category: "tartas",
+  seccion: null,
   priceCents: 1850,
   consultar: false,
   activo: true,

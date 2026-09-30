@@ -22,6 +22,8 @@ type OrderPayload = import("~/lib/pedido").OrderPayload;
 const SENCILLO: ProductoVendible = {
   slug: "tarta-de-queso",
   name: "Tarta de queso",
+  category: "tartas",
+  seccion: null,
   priceCents: 1850,
   consultar: false,
   activo: true,
@@ -38,6 +40,8 @@ const SENCILLO: ProductoVendible = {
 const CON_TAMANOS: ProductoVendible = {
   slug: "bombon-noir",
   name: "Bombón Noir",
+  category: "tartas",
+  seccion: null,
   priceCents: 1650,
   consultar: false,
   activo: true,

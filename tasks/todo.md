@@ -116,6 +116,11 @@
       hoy marcadas `consultar: true`
 
 ## Coherencia y deuda
+- [ ] Descriptor de **Pack Reunión en Oficina**: la diapositiva dice «La reunión
+      resuelta antes de las 10:30: salado serio, croissants rellenos y el dulce
+      para el café». Se publicó sin «antes de las 10:30» porque esa franja de
+      reparto no existe en el checkout (dice «antes de las 14:30»). Recuperar la
+      frase cuando entre la franja
 - [ ] Primera foto que se suba desde el panel tras el cambio de almacén (29-9):
       comprobar que su URL empieza por `xp8nqc338hkzzibd.public.blob…` y que se
       ve. La clave se probó copiando ficheros, no desde el panel desplegado

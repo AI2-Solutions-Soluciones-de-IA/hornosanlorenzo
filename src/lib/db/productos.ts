@@ -56,6 +56,9 @@ export type Producto = {
 export type ProductoVendible = {
   slug: string;
   name: string;
+  /** Categoría y sección: los packs eligen «una empanada» por sección. */
+  category: string;
+  seccion: string | null;
   priceCents: number | null;
   consultar: boolean;
   activo: boolean;
@@ -133,6 +136,25 @@ export async function obtenerProducto(
 }
 
 /**
+ * Proyección de `ProductoVendible`, compartida por `productosParaPedido` y
+ * `productosDeSecciones` para que las dos devuelvan exactamente lo mismo.
+ */
+const SELECT_VENDIBLE = `
+  select p.slug, p.name, p.category, p.seccion,
+         p.price_cents as "priceCents",
+         p.consultar, p.activo, p.agotado,
+         coalesce(
+           (select json_agg(json_build_object(
+                     'variantId', v.variant_id,
+                     'label', v.label,
+                     'priceCents', v.price_cents)
+                   order by v.orden)
+              from variantes v where v.producto_id = p.id),
+           '[]'::json
+         ) as variantes
+    from productos p`;
+
+/**
  * Lo que necesita el checkout: solo los productos pedidos, no el catálogo
  * entero. Devuelve también `activo` y `agotado` **sin filtrar por ellos** a
  * propósito: `priceOrder` tiene que poder decir «"X" ya no está disponible»
@@ -144,24 +166,32 @@ export async function productosParaPedido(
   if (slugs.length === 0) return new Map();
 
   const { rows } = await pool.query<ProductoVendible>(
-    `select p.slug, p.name,
-            p.price_cents as "priceCents",
-            p.consultar, p.activo, p.agotado,
-            coalesce(
-              (select json_agg(json_build_object(
-                        'variantId', v.variant_id,
-                        'label', v.label,
-                        'priceCents', v.price_cents)
-                      order by v.orden)
-                 from variantes v where v.producto_id = p.id),
-              '[]'::json
-            ) as variantes
-       from productos p
+    `${SELECT_VENDIBLE}
       where p.slug = any($1::text[])`,
     [slugs],
   );
 
   return new Map(rows.map((p) => [p.slug, p]));
+}
+
+/**
+ * Todos los productos de unas secciones, para que un pack ofrezca «una
+ * empanada» o «una quiche» a elegir. Igual que `productosParaPedido`, **no
+ * filtra** por activo ni agotado: eso lo decide `opcionesDeHueco`, que es
+ * quien sabe si un hueco se queda sin opciones. En orden de carta.
+ */
+export async function productosDeSecciones(
+  secciones: string[],
+): Promise<ProductoVendible[]> {
+  if (secciones.length === 0) return [];
+
+  const { rows } = await pool.query<ProductoVendible>(
+    `${SELECT_VENDIBLE}
+      where p.seccion = any($1::text[])
+      order by p.orden, p.name`,
+    [secciones],
+  );
+  return rows;
 }
 
 /**

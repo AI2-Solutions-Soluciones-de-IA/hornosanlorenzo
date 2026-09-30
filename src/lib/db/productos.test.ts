@@ -44,6 +44,45 @@ describeSiHayBD("repositorio de productos", () => {
     await pool.end();
   });
 
+  it("productosParaPedido devuelve la categoría y la sección", async () => {
+    const p = await repo.crearProducto(
+      datos({ name: "Quiche de prueba pedido", category: "salado", seccion: "quiches" }),
+    );
+    const mapa = await repo.productosParaPedido([p.slug]);
+    expect(mapa.get(p.slug)).toMatchObject({
+      category: "salado",
+      seccion: "quiches",
+    });
+  });
+
+  it("productosDeSecciones trae todas las de la sección, agotadas incluidas, y ninguna de otra", async () => {
+    const activa = await repo.crearProducto(
+      datos({ name: "Quiche activa secciones", category: "salado", seccion: "quiches", orden: 301 }),
+    );
+    const agotada = await repo.crearProducto(
+      datos({
+        name: "Quiche agotada secciones",
+        category: "salado",
+        seccion: "quiches",
+        agotado: true,
+        orden: 302,
+      }),
+    );
+    const plancha = await repo.crearProducto(
+      datos({ name: "Plancha secciones", category: "tartas", seccion: "planchas", orden: 303 }),
+    );
+
+    const quiches = await repo.productosDeSecciones(["quiches"]);
+    const slugs = quiches.map((p) => p.slug);
+    expect(slugs).toContain(activa.slug);
+    expect(slugs).toContain(agotada.slug);
+    expect(slugs).not.toContain(plancha.slug);
+    // En orden de carta: `orden` primero.
+    expect(slugs.indexOf(activa.slug)).toBeLessThan(slugs.indexOf(agotada.slug));
+    expect(quiches.every((p) => p.seccion === "quiches")).toBe(true);
+    expect(await repo.productosDeSecciones([])).toEqual([]);
+  });
+
   it("guarda la etiqueta de especialidad y la quita al dejarla en null", async () => {
     const creado = await repo.crearProducto(
       datos({ name: "Flan de Queso", especialidad: "Especialidad desde 1986" }),
