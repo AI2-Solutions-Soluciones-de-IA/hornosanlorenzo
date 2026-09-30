@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { formatDateISO } from "~/lib/format";
+import { etiquetaPieza } from "~/data/packs";
 import {
   MODE_COPY,
   ENTREGA_DOMICILIO_COPY,
@@ -106,6 +107,14 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
           name: line.variantLabel
             ? `${line.name} — ${line.variantLabel}`
             : line.name,
+          // Stripe enseña qué lleva el pack en su página de pago; el límite
+          // de `description` es 500 caracteres.
+          ...(line.detalle && {
+            description: line.detalle
+              .map(etiquetaPieza)
+              .join(" · ")
+              .slice(0, 500),
+          }),
         },
       },
     }));

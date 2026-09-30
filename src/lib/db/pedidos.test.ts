@@ -85,6 +85,37 @@ describeSiHayBD("repositorio de pedidos", () => {
     expect(lineas.rows[1].variante_label).toBe("Grande");
   });
 
+  it("guarda y devuelve el desglose y la foto de una línea de pack; la normal, nulos", async () => {
+    const detalle = [
+      { slug: "cebra", nombre: "Cebra", varianteLabel: "6 unidades", qty: 1 },
+      { slug: "glaseadas", nombre: "Glaseadas", varianteLabel: null, qty: 2 },
+    ];
+    const base = pedidoDePrueba();
+    const pedido = {
+      ...base,
+      lines: [
+        {
+          slug: "pack-desayuno",
+          name: "Pack desayuno",
+          qty: 1,
+          unitPriceCents: 1500,
+          totalCents: 1500,
+          detalle,
+          fotoUrl: "https://blob.example/tarta.jpg",
+        },
+        base.lines[0],
+      ],
+    };
+    const id = await repo.crearPedidoIniciado(pedido as never, {
+      estado: "sin_pago",
+    });
+    const leido = (await repo.listarPedidos(50)).find((p) => p.id === id)!;
+    expect(leido.lineas[0].detalle).toEqual(detalle);
+    expect(leido.lineas[0].fotoUrl).toBe("https://blob.example/tarta.jpg");
+    expect(leido.lineas[1].detalle).toBeNull();
+    expect(leido.lineas[1].fotoUrl).toBeNull();
+  });
+
   it("marcarPagado es idempotente: dos avisos de Stripe no duplican nada", async () => {
     const id = await repo.crearPedidoIniciado(pedidoDePrueba() as never);
     await repo.anotarSesionStripe(id, "cs_test_idem");

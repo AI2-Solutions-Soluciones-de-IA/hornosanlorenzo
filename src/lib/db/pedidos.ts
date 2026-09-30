@@ -1,6 +1,7 @@
 import { pool } from "~/lib/db/pool";
 import { patronBusqueda } from "~/lib/db/busqueda";
 import type { PricedOrder } from "~/lib/pedido";
+import type { PiezaResuelta } from "~/data/packs";
 
 /**
  * Pedidos. Único sitio del proyecto con SQL de pedidos: hacia fuera todo va
@@ -13,6 +14,10 @@ export type LineaPedido = {
   varianteLabel: string | null;
   qty: number;
   unitPriceCents: number;
+  /** Qué lleva un pack, ya resuelto al pedirlo; nulo en una línea normal. */
+  detalle: PiezaResuelta[] | null;
+  /** Foto que subió el cliente (tarta con foto); nulo si no hay. */
+  fotoUrl: string | null;
 };
 
 export type PedidoConLineas = {
@@ -117,8 +122,9 @@ export async function crearPedidoIniciado(
     for (const [i, linea] of order.lines.entries()) {
       await cliente.query(
         `insert into lineas_pedido
-           (pedido_id, slug, nombre, variante_label, qty, unit_price_cents, orden)
-         values ($1,$2,$3,$4,$5,$6,$7)`,
+           (pedido_id, slug, nombre, variante_label, qty, unit_price_cents, orden,
+            detalle, foto_url)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [
           id,
           linea.slug,
@@ -127,6 +133,10 @@ export async function crearPedidoIniciado(
           linea.qty,
           linea.unitPriceCents,
           i,
+          // jsonb: se serializa a mano, `pg` convertiría un array JS en un
+          // array de Postgres y no en JSON.
+          linea.detalle ? JSON.stringify(linea.detalle) : null,
+          linea.fotoUrl ?? null,
         ],
       );
     }
@@ -320,7 +330,9 @@ const PROYECCION_PEDIDO = `
               'nombre', l.nombre,
               'varianteLabel', l.variante_label,
               'qty', l.qty,
-              'unitPriceCents', l.unit_price_cents)
+              'unitPriceCents', l.unit_price_cents,
+              'detalle', l.detalle,
+              'fotoUrl', l.foto_url)
             order by l.orden)
        from lineas_pedido l
       where l.pedido_id = p.id),

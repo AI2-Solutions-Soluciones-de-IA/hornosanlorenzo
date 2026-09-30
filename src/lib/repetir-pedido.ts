@@ -40,6 +40,12 @@ export function resolverRepeticion(
   const noDisponibles: string[] = [];
 
   for (const linea of lineas) {
+    // Un pack exige volver a elegir los sabores (y, en el de la foto,
+    // volver a subirla): no se reconstruyen las elecciones.
+    if (linea.detalle) {
+      noDisponibles.push(`${linea.nombre} (vuelve a elegir los sabores)`);
+      continue;
+    }
     // Sin slug es un pedido reconstruido desde Stripe (migración 008): no
     // hay forma de saber qué ficha era.
     const producto = linea.slug ? productos.get(linea.slug) : undefined;

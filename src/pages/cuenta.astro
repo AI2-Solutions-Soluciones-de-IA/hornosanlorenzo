@@ -10,6 +10,7 @@ import { resolverRepeticion, type Repeticion } from "~/lib/repetir-pedido";
 import { formatDateISO, formatPriceCents } from "~/lib/format";
 import { MODE_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
+import { etiquetaPieza } from "~/data/packs";
 
 // Página protegida: lee la sesión de la petición, así que no puede
 // prerenderizarse. Sin esta línea el middleware serviría la página como
@@ -140,6 +141,11 @@ function destino(p: PedidoConLineas): string {
                 {p.lineas.map((l) => (
                   <li>
                     {l.qty} × {l.nombre}{l.varianteLabel ? ` (${l.varianteLabel})` : ""}
+                    {l.detalle && (
+                      <ul class="text-xs text-[color:var(--color-ink-muted)]">
+                        {l.detalle.map((pieza) => <li>{etiquetaPieza(pieza)}</li>)}
+                      </ul>
+                    )}
                   </li>
                 ))}
               </ul>

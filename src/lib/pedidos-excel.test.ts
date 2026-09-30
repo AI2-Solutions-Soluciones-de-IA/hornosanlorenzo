@@ -24,8 +24,8 @@ const pedido = (extra: Partial<PedidoConLineas> = {}): PedidoConLineas => ({
   reconstruido: false,
   createdAt: new Date("2026-09-11T15:00:35.355Z"),
   lineas: [
-    { slug: "cebra", nombre: "Cebra", varianteLabel: "6 unidades", qty: 1, unitPriceCents: 600 },
-    { slug: "glaseadas", nombre: "Glaseadas", varianteLabel: null, qty: 2, unitPriceCents: 300 },
+    { slug: "cebra", nombre: "Cebra", varianteLabel: "6 unidades", qty: 1, unitPriceCents: 600, detalle: null, fotoUrl: null },
+    { slug: "glaseadas", nombre: "Glaseadas", varianteLabel: null, qty: 2, unitPriceCents: 300, detalle: null, fotoUrl: null },
   ],
   ...extra,
 });
@@ -89,6 +89,36 @@ describe("pedidosAExcel", () => {
     const fila = ws.getRow(2);
     expect(fila.getCell(cabecera.indexOf("Modalidad")).value).toBe("sin datos");
     expect(fila.getCell(cabecera.indexOf("Día de entrega")).value).toBe("sin datos");
+  });
+
+  it("una línea de pack lleva el desglose en «Lleva» y la foto, sin tamaño; una normal deja las dos vacías", async () => {
+    const ws = await hoja([
+      pedido({
+        lineas: [
+          {
+            slug: "pack-desayuno",
+            nombre: "Pack desayuno",
+            varianteLabel: null,
+            qty: 1,
+            unitPriceCents: 1500,
+            detalle: [
+              { slug: "cebra", nombre: "Cebra", varianteLabel: "6 unidades", qty: 1 },
+              { slug: "glaseadas", nombre: "Glaseadas", varianteLabel: null, qty: 2 },
+            ],
+            fotoUrl: "https://blob.example/foto.jpg",
+          },
+          pedido().lineas[1],
+        ],
+      }),
+    ]);
+    const cabecera = ws.getRow(1).values as string[];
+    const val = (fila: number, col: string) =>
+      ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
+    expect(val(2, "Tamaño") ?? "").toBe("");
+    expect(val(2, "Lleva")).toBe("Cebra · 6 unidades · Glaseadas");
+    expect(val(2, "Foto")).toBe("https://blob.example/foto.jpg");
+    expect(val(3, "Lleva") ?? "").toBe("");
+    expect(val(3, "Foto") ?? "").toBe("");
   });
 
   it("sin pedidos, solo la cabecera", async () => {

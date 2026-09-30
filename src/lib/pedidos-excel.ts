@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import type { PedidoConLineas } from "~/lib/db/pedidos";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
+import { etiquetaPieza } from "~/data/packs";
 
 /**
  * Los pedidos del panel en una hoja de cálculo: una fila por línea de
@@ -30,6 +31,8 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   { header: "Correo", key: "email", width: 28 },
   { header: "Producto", key: "producto", width: 30 },
   { header: "Tamaño", key: "tamano", width: 16 },
+  { header: "Lleva", key: "detalle", width: 50 },
+  { header: "Foto", key: "foto", width: 40 },
   { header: "Cantidad", key: "cantidad", width: 10 },
   { header: "Precio unidad (€)", key: "precio", width: 16 },
   { header: "Importe línea (€)", key: "importe", width: 16 },
@@ -106,6 +109,8 @@ export async function pedidosAExcel(pedidos: PedidoConLineas[]): Promise<Buffer>
         email: p.email,
         producto: l.nombre,
         tamano: l.varianteLabel ?? "",
+        detalle: l.detalle?.map(etiquetaPieza).join(" · ") ?? "",
+        foto: l.fotoUrl ?? "",
         cantidad: l.qty,
         precio: l.unitPriceCents / 100,
         reparto: p.envioCents / 100,

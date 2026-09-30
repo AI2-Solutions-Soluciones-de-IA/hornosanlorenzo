@@ -25,6 +25,8 @@ const linea = (extra: Partial<LineaPedido> = {}): LineaPedido => ({
   varianteLabel: null,
   qty: 2,
   unitPriceCents: 1600,
+  detalle: null,
+  fotoUrl: null,
   ...extra,
 });
 
@@ -48,6 +50,22 @@ describe("resolverRepeticion", () => {
         unitPriceCents: 1850,
       },
     ]);
+  });
+
+  it("una línea de pack no vuelve al carrito: hay que volver a elegir los sabores", () => {
+    const { items, noDisponibles } = resolverRepeticion(
+      [
+        linea({
+          slug: "pack-desayuno",
+          nombre: "Pack desayuno",
+          detalle: [{ slug: "cebra", nombre: "Cebra", varianteLabel: null, qty: 2 }],
+        }),
+      ],
+      // Aunque el pack siga en la carta, no se reconstruyen sus elecciones.
+      catalogo(producto({ slug: "pack-desayuno", name: "Pack desayuno" })),
+    );
+    expect(items).toEqual([]);
+    expect(noDisponibles).toEqual(["Pack desayuno (vuelve a elegir los sabores)"]);
   });
 
   it("un producto que ya no existe en el catálogo se lista como no disponible", () => {

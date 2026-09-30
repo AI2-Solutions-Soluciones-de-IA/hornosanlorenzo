@@ -6,6 +6,7 @@ import { listarPedidos, type PedidoConLineas } from "~/lib/db/pedidos";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
+import { etiquetaPieza } from "~/data/packs";
 
 export const prerender = false;
 
@@ -157,6 +158,16 @@ function franja(p: PedidoConLineas): string {
             <li>
               {l.qty}× {l.nombre}{l.varianteLabel ? ` — ${l.varianteLabel}` : ""}
               <span class="text-[color:var(--color-ink-muted)]"> · {formatPriceCents(l.unitPriceCents)}/ud</span>
+              {l.detalle && (
+                <ul class="text-xs text-[color:var(--color-ink-muted)]">
+                  {l.detalle.map((pieza) => <li>{etiquetaPieza(pieza)}</li>)}
+                </ul>
+              )}
+              {l.fotoUrl && (
+                <a href={l.fotoUrl} target="_blank" rel="noopener" class="text-xs underline">
+                  Ver la foto del cliente
+                </a>
+              )}
             </li>
           ))}
         </ul>

@@ -179,6 +179,8 @@ describeSiHayBD("pedidos de un cliente (historial de /cuenta)", () => {
         varianteLabel: null,
         qty: 2,
         unitPriceCents: 1850,
+        detalle: null,
+        fotoUrl: null,
       },
       {
         slug: "croissant",
@@ -186,6 +188,8 @@ describeSiHayBD("pedidos de un cliente (historial de /cuenta)", () => {
         varianteLabel: "Grande",
         qty: 3,
         unitPriceCents: 190,
+        detalle: null,
+        fotoUrl: null,
       },
     ]);
   });
