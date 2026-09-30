@@ -75,31 +75,23 @@ function mensajeDeError(error: { code?: string } | null): string {
   return MENSAJES_ERROR[error.code] ?? MENSAJE_GENERICO;
 }
 
-/**
- * Título y entrada de `/acceso`, según el modo: «Entrar» de la cabecera abre
- * «Entra.»; «Regístrate aquí» (`?modo=registro`) abre el alta. Van aquí y no
- * en la página porque el modo cambia también con los enlaces del propio
- * formulario («¿No tienes cuenta? Regístrate»), y el título tiene que seguirlo.
- */
-const CABECERA: Record<Modo, { titulo: string; texto: string }> = {
-  entrar: {
-    titulo: "Entra.",
-    texto:
-      "Entra con tu correo y tu contraseña. No hace falta cuenta para comprar: en la tienda online puedes pagar directamente, sin registrarte.",
-  },
-  registro: {
-    titulo: "Alta de particular.",
-    texto:
-      "Déjanos tu contacto y te damos de alta. No hace falta cuenta para comprar: en la tienda online puedes pagar directamente, sin registrarte.",
-  },
-};
+export type { Modo as ModoAcceso };
 
+/**
+ * El formulario de entrar o darse de alta. Si la página le pasa `modo` y
+ * `onCambiarModo`, el modo lo lleva la página (en `/acceso`, «Entrar» y
+ * «Regístrate» enseñan cosas distintas alrededor del formulario); si no, lo
+ * lleva el propio formulario, como antes.
+ */
 export default function AccesoForm({
-  cabecera = false,
+  modo: modoFuera,
+  onCambiarModo,
 }: {
-  cabecera?: boolean;
-}) {
-  const [modo, setModo] = useState<Modo>("entrar");
+  modo?: Modo;
+  onCambiarModo?: (m: Modo) => void;
+} = {}) {
+  const [modoPropio, setModoPropio] = useState<Modo>("entrar");
+  const modo = modoFuera ?? modoPropio;
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -116,12 +108,14 @@ export default function AccesoForm({
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     if (p.get("recuperada") === "1") setContrasenaRecuperada(true);
-    // El botón «Regístrate aquí» de la cabecera abre directamente el alta.
-    if (p.get("modo") === "registro") setModo("registro");
+    // El botón «Regístrate aquí» de la cabecera abre directamente el alta
+    // (si el modo lo lleva la página, lo lee ella).
+    if (!modoFuera && p.get("modo") === "registro") setModoPropio("registro");
   }, []);
 
   function cambiarModo(m: Modo) {
-    setModo(m);
+    if (onCambiarModo) onCambiarModo(m);
+    else setModoPropio(m);
     setErrores({});
     setErrorServidor(null);
   }
@@ -179,14 +173,6 @@ export default function AccesoForm({
 
   return (
     <>
-      {cabecera && (
-        <div style={{ marginBottom: 32 }}>
-          <h1 className="text-4xl sm:text-5xl">{CABECERA[modo].titulo}</h1>
-          <p className="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">
-            {CABECERA[modo].texto}
-          </p>
-        </div>
-      )}
       <form onSubmit={onSubmit} noValidate style={{ maxWidth: "28rem" }}>
         {!esRegistro && contrasenaRecuperada && (
           <p

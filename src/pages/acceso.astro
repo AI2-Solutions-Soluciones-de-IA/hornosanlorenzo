@@ -2,18 +2,15 @@
 export const prerender = false;
 
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
-import AccesoForm from "~/islands/AccesoForm.tsx";
+import Acceso from "~/islands/Acceso.tsx";
 
 if (Astro.locals.usuario) return Astro.redirect("/cuenta");
 ---
 <MarketingLayout
   title="Acceso clientes"
-  description="Entra con tu cuenta o date de alta para pedir sin repetir tus datos cada vez."
+  description="Entra con tu cuenta o date de alta como particular o como empresa."
 >
-  <!-- Solo el acceso de particulares (petición de Oscar, 30-9-2026): se
-       quitaron «¿Cómo nos compras?» y la elección Particulares / Empresas.
-       El alta de empresas sigue por el formulario de /contacto. -->
   <section class="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
-    <AccesoForm cabecera client:load />
+    <Acceso client:load />
   </section>
 </MarketingLayout>
