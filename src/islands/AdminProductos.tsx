@@ -281,7 +281,11 @@ export default function AdminProductos({ productosIniciales }: Props) {
       if (!respuesta.ok) {
         setErrorServidor(cuerpo?.error ?? MENSAJE_GENERICO);
       } else {
-        setProductos(cuerpo?.productos ?? []);
+        setProductos(
+          ((cuerpo?.productos ?? []) as Producto[]).filter(
+            (p) => p.category !== "packs",
+          ),
+        );
       }
     } catch {
       setErrorServidor("No hemos podido conectar. Comprueba tu conexión.");
@@ -776,7 +780,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
                 }
                 style={field}
               >
-                {categories.map((c) => (
+                {categories.filter((c) => c.id !== "packs").map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.label}
                   </option>

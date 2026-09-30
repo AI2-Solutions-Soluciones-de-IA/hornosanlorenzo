@@ -20,6 +20,8 @@ const json = (body: unknown, status = 200) =>
     headers: { "content-type": "application/json" },
   });
 
+const SOLO_EN_PACKS = "Los packs se crean y editan en la sección Packs.";
+
 const noEncontrado = () => new Response("No encontrado", { status: 404 });
 
 const ALERGENOS = [
@@ -162,6 +164,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const parsed = esquema.safeParse(await cuerpoJSON(request));
   if (!parsed.success) return json({ error: primerError(parsed.error) }, 400);
+  if (parsed.data.category === "packs") return json({ error: SOLO_EN_PACKS }, 400);
 
   try {
     const producto = await crearProducto(parsed.data);
@@ -191,7 +194,15 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   const parsed = esquema.safeParse(bruto);
   if (!parsed.success) return json({ error: primerError(parsed.error) }, 400);
 
+  if (parsed.data.category === "packs") return json({ error: SOLO_EN_PACKS }, 400);
+
   try {
+    // Un pack no se edita aquí aunque el cuerpo diga otra categoría: la fila
+    // actual manda, o quedaría un producto sin definición ni piezas.
+    const actual = (await listarProductos({ soloActivos: false })).find(
+      (p) => p.id === id,
+    );
+    if (actual?.category === "packs") return json({ error: SOLO_EN_PACKS }, 400);
     const producto = await actualizarProducto(id, parsed.data);
     if (!producto) return json({ error: "Esa ficha ya no existe." }, 404);
     // También su propia página, no solo los listados.

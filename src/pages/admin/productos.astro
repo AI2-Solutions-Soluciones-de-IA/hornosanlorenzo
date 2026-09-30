@@ -8,7 +8,10 @@ export const prerender = false;
 
 let productosIniciales: Producto[] = [];
 try {
-  productosIniciales = await listarProductos({ soloActivos: false });
+  // Los packs se editan en su propia sección: aquí no se ven.
+  productosIniciales = (await listarProductos({ soloActivos: false })).filter(
+    (p) => p.category !== "packs",
+  );
 } catch (error) {
   // La isla sabe recargar la lista por su cuenta: mejor entrar con la lista
   // vacía y poder reintentar que ver un 500 al abrir el panel.
