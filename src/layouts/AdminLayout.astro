@@ -37,11 +37,11 @@ const actual = Astro.url.pathname;
       <div class="md:hidden"><AdminSalir client:load /></div>
     </header>
 
-    <aside class="mt-6 md:mt-0 md:col-start-1 md:row-start-1 md:row-span-2 md:flex md:flex-col md:bg-[color:var(--color-leche)] md:border-r md:border-[color:var(--color-avellana)] md:min-h-[calc(100vh-5rem)]">
+    <aside class="mt-6 md:mt-0 md:col-start-1 md:row-start-1 md:row-span-2 md:flex md:flex-col md:bg-[color:var(--color-leche)] md:border-r md:border-[color:var(--color-avellana)] md:sticky md:top-0 md:self-start md:h-screen md:min-h-0">
       <p class="numeracion hidden md:block md:px-4 md:pb-4">Panel</p>
       <nav
         aria-label="Secciones del panel"
-        class="flex overflow-x-auto [scrollbar-width:thin] gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] md:flex-col md:overflow-x-visible md:border-0 md:bg-transparent md:gap-0"
+        class="flex overflow-x-auto [scrollbar-width:thin] gap-px md:min-h-0 md:overflow-y-auto bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] md:flex-col md:overflow-x-visible md:border-0 md:bg-transparent md:gap-0"
       >
         {secciones.map((s) => (
           <a
@@ -58,7 +58,7 @@ const actual = Astro.url.pathname;
           </a>
         ))}
       </nav>
-      <div class="hidden md:block md:mt-auto md:px-4 md:pt-6">
+      <div class="hidden md:block md:mt-auto md:px-4 md:py-6">
         <AdminSalir client:load />
       </div>
     </aside>

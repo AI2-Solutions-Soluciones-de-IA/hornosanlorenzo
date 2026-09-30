@@ -128,7 +128,7 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
           {datos.topProductos.length === 0 ? (
             <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Nada vendido en el rango.</p>
           ) : (
-            <table class="mt-3 w-full text-sm">
+            <div class="mt-3 overflow-x-auto"><table class="w-full text-sm">
               <thead>
                 <tr class="text-left numeracion">
                   <th class="py-2 font-medium">Producto</th>
@@ -145,7 +145,7 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </section>
 
@@ -182,7 +182,7 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
         {datos.porDia.length === 0 ? (
           <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Ningún pedido en el rango.</p>
         ) : (
-          <table class="mt-3 w-full max-w-xl text-sm">
+          <div class="mt-3 max-w-xl overflow-x-auto"><table class="w-full text-sm">
             <thead>
               <tr class="text-left numeracion">
                 <th class="py-2 font-medium">Día</th>
@@ -199,7 +199,7 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </section>
     </>
