@@ -237,8 +237,11 @@ const celda = "py-2 text-right tabular-nums";
 
     const pintar = (pedida: number) => {
       const p = paginar(filas.length, porPagina, pedida);
+      // `data-fuera` y no `hidden`: el `[hidden]` de Tailwind lleva
+      // `!important` desde su capa base y ninguna regla de impresión puede
+      // volver a enseñar la fila.
       filas.forEach((f, i) => {
-        f.hidden = i < p.desde - 1 || i >= p.hasta;
+        f.toggleAttribute("data-fuera", i < p.desde - 1 || i >= p.hasta);
       });
       barra.replaceChildren();
       resumen.hidden = p.paginas <= 1;
@@ -280,6 +283,14 @@ const celda = "py-2 text-right tabular-nums";
 </script>
 
 <style is:global>
+  /* Solo en pantalla: en papel va la hoja entera, no la página que se
+     estuviera viendo. */
+  @media screen {
+    [data-fila][data-fuera] {
+      display: none;
+    }
+  }
+
   /* La hoja se imprime y se cuelga en el obrador: fuera la navegación, el
      formulario y los botones; queda el título, la fecha y las tablas. */
   @media print {
@@ -291,9 +302,6 @@ const celda = "py-2 text-right tabular-nums";
     body {
       background: #fff;
     }
-    /* En papel va la hoja entera, no la página que se estuviera viendo. */
-    [data-fila][hidden] {
-      display: table-row !important;
-    }
+
   }
 </style>
