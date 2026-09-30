@@ -226,18 +226,37 @@ describeSiHayBD("repositorio de pedidos", () => {
       const hoy = new Date().toISOString().slice(0, 10);
       const ayer = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
 
-      const porEntrega = await repo.listarPedidos(50, { fechaEntrega: "2031-01-05" });
+      const porEntrega = await repo.listarPedidos(50, {
+        entregaDesde: "2031-01-05",
+        entregaHasta: "2031-01-05",
+      });
       expect(porEntrega.map((p) => p.id)).toEqual([entregaHoy]);
 
-      const porEntrada = await repo.listarPedidos(50, { fechaEntrada: ayer });
+      const porEntrada = await repo.listarPedidos(50, { entradaDesde: ayer, entradaHasta: ayer });
       expect(porEntrada.map((p) => p.id)).toContain(entregaOtro);
       expect(porEntrada.map((p) => p.id)).not.toContain(entregaHoy);
 
       const combinado = await repo.listarPedidos(50, {
-        fechaEntrega: "2031-01-06",
-        fechaEntrada: hoy,
+        entregaDesde: "2031-01-06",
+        entregaHasta: "2031-01-06",
+        entradaDesde: hoy,
+        entradaHasta: hoy,
       });
       expect(combinado).toEqual([]);
+
+      // Un rango de entrega coge los dos días; solo `desde`, de ahí en adelante.
+      const rango = { entregaDesde: "2031-01-05", entregaHasta: "2031-01-06" };
+      const enRango = (await repo.listarPedidos(50, rango)).map((p) => p.id);
+      expect(enRango).toEqual(expect.arrayContaining([entregaHoy, entregaOtro]));
+      expect(await repo.contarPedidos(rango)).toBe(2);
+      const desde = (await repo.listarPedidos(50, { entregaDesde: "2031-01-06" })).map((p) => p.id);
+      expect(desde).toContain(entregaOtro);
+      expect(desde).not.toContain(entregaHoy);
+
+      // Paginado: dos páginas de uno, sin repetir y sin perder ninguno.
+      const pag1 = await repo.listarPedidos(1, rango, 0);
+      const pag2 = await repo.listarPedidos(1, rango, 1);
+      expect([...pag1, ...pag2].map((p) => p.id).sort()).toEqual([entregaHoy, entregaOtro].sort());
     });
   });
 
@@ -310,12 +329,17 @@ describeSiHayBD("repositorio de pedidos", () => {
 
     it("se combina con el filtro de fecha de entrega", async () => {
       const ids = (
-        await repo.listarPedidos(50, { texto: NOMBRE, fechaEntrega: "2034-02-01" })
+        await repo.listarPedidos(50, {
+          texto: NOMBRE,
+          entregaDesde: "2034-02-01",
+          entregaHasta: "2034-02-01",
+        })
       ).map((p) => p.id);
       expect(ids).toContain(idBuscado);
       const ninguno = await repo.listarPedidos(50, {
         texto: NOMBRE,
-        fechaEntrega: "2034-02-02",
+        entregaDesde: "2034-02-02",
+        entregaHasta: "2034-02-02",
       });
       expect(ninguno.filter((p) => p.email === CORREO_BUSQUEDA)).toEqual([]);
     });

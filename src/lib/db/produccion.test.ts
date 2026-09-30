@@ -132,7 +132,8 @@ describeSiHayBD("hoja de producción", () => {
 
   it("suma las unidades del mismo producto y variante entre pedidos, y cuenta en cuántos sale", async () => {
     const h = await produccion.hojaProduccion(DIA);
-    expect(h.fechaEntrega).toBe(DIA);
+    expect(h.desde).toBe(DIA);
+    expect(h.hasta).toBe(DIA);
     // Pagado + 2 sin pagar + el reconstruido; ni el abandonado ni el de otro día.
     expect(h.totalPedidos).toBe(4);
     const mediana = h.lineas.find(
@@ -188,6 +189,16 @@ describeSiHayBD("hoja de producción", () => {
     expect(otro.lineas.find((l) => l.slug === "cebra")?.unidades).toBe(40);
   });
 
+  it("con un rango suma todos sus días, y un rango al revés se da la vuelta", async () => {
+    const h = await produccion.hojaProduccion(DIA, OTRO_DIA);
+    expect(h.totalPedidos).toBe(5);
+    // 1 + 3 del primer día y 40 del segundo.
+    expect(h.lineas.find((l) => l.slug === "cebra")?.unidades).toBe(44);
+
+    const alReves = await produccion.hojaProduccion(OTRO_DIA, DIA);
+    expect(alReves).toMatchObject({ desde: DIA, hasta: OTRO_DIA, totalPedidos: 5 });
+  });
+
   it("avisa de los pedidos sin modalidad en vez de inventarles destino", async () => {
     const h = await produccion.hojaProduccion(DIA);
     expect(h.sinDatos).toBe(1);
@@ -202,7 +213,8 @@ describeSiHayBD("hoja de producción", () => {
   it("un día sin pedidos devuelve ceros y listas vacías", async () => {
     const h = await produccion.hojaProduccion("2032-05-09");
     expect(h).toEqual({
-      fechaEntrega: "2032-05-09",
+      desde: "2032-05-09",
+      hasta: "2032-05-09",
       totalPedidos: 0,
       lineas: [],
       porDestino: [],

@@ -2,7 +2,8 @@
 // src/pages/admin/pedidos.astro
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import PedidoEstado from "~/islands/PedidoEstado.tsx";
-import { listarPedidos, type PedidoConLineas } from "~/lib/db/pedidos";
+import { listarPedidos, contarPedidos, type PedidoConLineas } from "~/lib/db/pedidos";
+import { leerFiltrosPedidos, queryFiltros } from "~/lib/filtros-pedidos";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
@@ -10,34 +11,29 @@ import { etiquetaPieza } from "~/data/packs";
 
 export const prerender = false;
 
-// Filtros por URL (`?entrega=YYYY-MM-DD&entrada=YYYY-MM-DD&q=texto`). Esta
-// página se sirve en servidor y fuera de la caché (está excluida del ISR en
-// `astro.config.mjs`), así que aquí sí se pueden leer parámetros; en las
-// páginas públicas no, que son estáticas. Solo se acepta la forma de fecha:
-// cualquier otra cosa se ignora en vez de llegar a la consulta.
-const FECHA = /^\d{4}-\d{2}-\d{2}$/;
-const leeFecha = (clave: string): string | undefined => {
-  const v = Astro.url.searchParams.get(clave) ?? "";
-  return FECHA.test(v) ? v : undefined;
-};
-const filtroEntrega = leeFecha("entrega");
-const filtroEntrada = leeFecha("entrada");
-// La búsqueda va parametrizada en la consulta, así que no hay que
-// desconfiar de su contenido; el tope de 80 solo evita que una URL
-// manipulada arrastre un patrón kilométrico hasta Postgres.
-const filtroTexto = (Astro.url.searchParams.get("q") ?? "").slice(0, 80).trim();
-const hayFiltro = Boolean(filtroEntrega || filtroEntrada || filtroTexto);
+// Filtros por URL (`?fecha=entrega|entrada&desde=&hasta=&q=&pagina=`, ver
+// `leerFiltrosPedidos`). Esta página se sirve en servidor y fuera de la
+// caché (está excluida del ISR en `astro.config.mjs`), así que aquí sí se
+// pueden leer parámetros; en las páginas públicas no, que son estáticas.
+const leidos = leerFiltrosPedidos(Astro.url.searchParams);
+const { tipo, desde, hasta, texto: filtroTexto, hayFiltro } = leidos;
+
+// De 20 en 20: con cada pedido desplegado con sus líneas, más que eso ya es
+// un scroll que nadie recorre.
+const POR_PAGINA = 20;
 
 // Igual que en `cuenta.astro`: un fallo de Postgres no puede dejar el panel
 // en un 500. Se enseña el aviso y el resto del panel sigue navegable.
 let pedidos: PedidoConLineas[] = [];
+let total = 0;
+let pagina = 1;
 let fallo = false;
 try {
-  pedidos = await listarPedidos(100, {
-    fechaEntrega: filtroEntrega,
-    fechaEntrada: filtroEntrada,
-    texto: filtroTexto || undefined,
-  });
+  // Primero la cuenta: una `?pagina=` más allá de la última se queda en la
+  // última en vez de enseñar una página vacía.
+  total = await contarPedidos(leidos.filtros);
+  pagina = Math.min(leidos.pagina, Math.max(1, Math.ceil(total / POR_PAGINA)));
+  pedidos = await listarPedidos(POR_PAGINA, leidos.filtros, (pagina - 1) * POR_PAGINA);
 } catch (error) {
   fallo = true;
   console.error(
@@ -45,6 +41,23 @@ try {
     error instanceof Error ? error.message : error,
   );
 }
+
+const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+const query = queryFiltros(leidos);
+const enlacePagina = (n: number) => {
+  const q = new URLSearchParams(query);
+  if (n > 1) q.set("pagina", String(n));
+  return `/admin/pedidos?${q}`;
+};
+// Números a enseñar: la primera, la última y las vecinas de la actual; el
+// resto se resume en «…».
+const numeros: (number | "…")[] = [];
+for (let n = 1; n <= paginas; n++) {
+  if (n === 1 || n === paginas || Math.abs(n - pagina) <= 1) numeros.push(n);
+  else if (numeros.at(-1) !== "…") numeros.push("…");
+}
+const primero = total === 0 ? 0 : (pagina - 1) * POR_PAGINA + 1;
+const ultimo = Math.min(pagina * POR_PAGINA, total);
 
 const SLOT_LABEL = { morning: "mañana", afternoon: "tarde" } as const;
 
@@ -83,12 +96,19 @@ function franja(p: PedidoConLineas): string {
 
   <form method="get" class="mb-6 flex flex-wrap items-end gap-4 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-4">
     <div>
-      <label for="f-entrega" class="numeracion block">Día de entrega</label>
-      <input id="f-entrega" type="date" name="entrega" value={filtroEntrega ?? ""} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <label for="f-fecha" class="numeracion block">Fecha de</label>
+      <select id="f-fecha" name="fecha" class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm">
+        <option value="entrega" selected={tipo === "entrega"}>Entrega</option>
+        <option value="entrada" selected={tipo === "entrada"}>Entrada del pedido</option>
+      </select>
     </div>
     <div>
-      <label for="f-entrada" class="numeracion block">Día en que entró</label>
-      <input id="f-entrada" type="date" name="entrada" value={filtroEntrada ?? ""} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <label for="f-desde" class="numeracion block">Desde</label>
+      <input id="f-desde" type="date" name="desde" value={desde ?? ""} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label for="f-hasta" class="numeracion block">Hasta</label>
+      <input id="f-hasta" type="date" name="hasta" value={hasta ?? ""} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
@@ -98,9 +118,9 @@ function franja(p: PedidoConLineas): string {
     {hayFiltro && (
       <a href="/admin/pedidos" class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">Quitar filtros</a>
     )}
-    {/* Descarga los mismos pedidos que se ven, con los mismos filtros. */}
+    {/* Descarga los pedidos que casan con los filtros: todas las páginas. */}
     <a
-      href={`/api/admin/pedidos/exportar?entrega=${filtroEntrega ?? ""}&entrada=${filtroEntrada ?? ""}&q=${encodeURIComponent(filtroTexto)}`}
+      href={`/api/admin/pedidos/exportar?${query}`}
       class="btn btn-secundario ml-auto"
       download
     >
@@ -108,12 +128,18 @@ function franja(p: PedidoConLineas): string {
     </a>
   </form>
 
+  {!fallo && total > 0 && (
+    <p class="mb-3 text-sm text-[color:var(--color-ink-muted)]">
+      {total === 1 ? "1 pedido" : `${primero}–${ultimo} de ${total} pedidos`}
+    </p>
+  )}
+
   {!fallo && pedidos.length === 0 && (
     <p class="text-[color:var(--color-ink-muted)]">
       {filtroTexto
         ? "No hay pedidos que casen con esa búsqueda."
         : hayFiltro
-          ? "No hay pedidos para esas fechas."
+          ? "No hay pedidos entre esas fechas."
           : "Todavía no ha entrado ningún pedido por la web."}
     </p>
   )}
@@ -193,4 +219,35 @@ function franja(p: PedidoConLineas): string {
       </li>
     ))}
   </ul>
+
+  {paginas > 1 && (
+    <nav aria-label="Páginas de pedidos" class="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
+      {pagina > 1 ? (
+        <a href={enlacePagina(pagina - 1)} class="px-3 py-2 border border-[color:var(--color-avellana)] hover:bg-[color:var(--color-latte)]" rel="prev">← Anterior</a>
+      ) : (
+        <span class="px-3 py-2 border border-[color:var(--color-line)] text-[color:var(--color-ink-muted)]">← Anterior</span>
+      )}
+      {numeros.map((n) =>
+        n === "…" ? (
+          <span class="px-2 text-[color:var(--color-ink-muted)]">…</span>
+        ) : (
+          <a
+            href={enlacePagina(n)}
+            class:list={[
+              "min-w-10 px-3 py-2 text-center border border-[color:var(--color-avellana)] tabular-nums hover:bg-[color:var(--color-latte)]",
+              n === pagina && "bg-[color:var(--color-moka)] text-[color:var(--color-leche)] hover:bg-[color:var(--color-moka)]",
+            ]}
+            aria-current={n === pagina ? "page" : undefined}
+          >
+            {n}
+          </a>
+        ),
+      )}
+      {pagina < paginas ? (
+        <a href={enlacePagina(pagina + 1)} class="px-3 py-2 border border-[color:var(--color-avellana)] hover:bg-[color:var(--color-latte)]" rel="next">Siguiente →</a>
+      ) : (
+        <span class="px-3 py-2 border border-[color:var(--color-line)] text-[color:var(--color-ink-muted)]">Siguiente →</span>
+      )}
+    </nav>
+  )}
 </AdminLayout>

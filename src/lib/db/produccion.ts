@@ -1,7 +1,8 @@
 import { pool } from "~/lib/db/pool";
 
 /**
- * La hoja de producción: qué hornear y cuánto para un día de entrega,
+ * La hoja de producción: qué hornear y cuánto para un día de entrega (o
+ * varios seguidos, `desde`–`hasta`),
  * agrupado por producto y desglosado por destino. Es lo que el obrador mira
  * cada mañana; `/admin/pedidos` lista pedido a pedido, esto suma.
  *
@@ -24,8 +25,9 @@ export type LineaProduccion = {
 };
 
 export type HojaProduccion = {
-  /** `YYYY-MM-DD`, tal cual se pidió. */
-  fechaEntrega: string;
+  /** `YYYY-MM-DD`, tal cual se pidió. Un solo día: `desde === hasta`. */
+  desde: string;
+  hasta: string;
   totalPedidos: number;
   /** Ordenadas por nombre y luego por variante. */
   lineas: LineaProduccion[];
@@ -54,9 +56,9 @@ const DESTINO = `case p.mode
                    when 'recogida'  then 'recogida:' || coalesce(p.store_id, '')
                    when 'domicilio' then 'domicilio'
                  end`;
-/** Los pedidos del día que hay que hornear. */
+/** Los pedidos del día (o de los días del rango) que hay que hornear. */
 const DEL_DIA =
-  "p.fecha_entrega = $1::date and p.estado in ('pagado', 'sin_pago')";
+  "p.fecha_entrega between $1::date and $2::date and p.estado in ('pagado', 'sin_pago')";
 
 /**
  * Lo que hay que hornear: las líneas sueltas tal cual y, de cada pack, sus
@@ -77,10 +79,14 @@ const PIEZAS = `(
 
 const n = (v: unknown): number => Number(v ?? 0);
 
+/** Sin `hasta`, un solo día. Un rango al revés se da la vuelta. */
 export async function hojaProduccion(
-  fechaEntrega: string,
+  desdePedido: string,
+  hastaPedido: string = desdePedido,
 ): Promise<HojaProduccion> {
-  const args = [fechaEntrega];
+  const [desde, hasta] =
+    hastaPedido < desdePedido ? [hastaPedido, desdePedido] : [desdePedido, hastaPedido];
+  const args = [desde, hasta];
 
   const [totales, productos, productoDestino, packs, destinos] = await Promise.all([
     pool.query(
@@ -158,7 +164,8 @@ export async function hojaProduccion(
 
   const t = totales.rows[0];
   return {
-    fechaEntrega,
+    desde,
+    hasta,
     totalPedidos: n(t.total),
     lineas: productos.rows.map((r) => ({
       slug: r.slug,

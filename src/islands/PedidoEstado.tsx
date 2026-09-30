@@ -18,6 +18,21 @@ const etiqueta: React.CSSProperties = {
   letterSpacing: "0.16em",
 };
 
+/**
+ * «Marcar como cobrado»: del mismo tamaño que la etiqueta de al lado. Con
+ * el `.btn` grande, cada pedido sin pagar ocupaba media pantalla de botón.
+ */
+const botonCobrar: React.CSSProperties = {
+  ...etiqueta,
+  margin: 0,
+  border: "1px solid var(--color-moka)",
+  background: "var(--color-moka)",
+  color: "var(--color-leche)",
+  fontFamily: "inherit",
+  lineHeight: "inherit",
+  cursor: "pointer",
+};
+
 const enlace: React.CSSProperties = {
   background: "none",
   border: "none",
@@ -85,10 +100,9 @@ export default function PedidoEstado({ pedidoId, estadoInicial, deStripe }: Prop
           </p>
           <button
             type="button"
-            className="btn btn-primario"
             onClick={() => cambiar("pagado")}
             disabled={ocupado}
-            style={{ opacity: ocupado ? 0.6 : 1 }}
+            style={{ ...botonCobrar, opacity: ocupado ? 0.6 : 1 }}
           >
             {ocupado ? "Guardando…" : "Marcar como cobrado"}
           </button>

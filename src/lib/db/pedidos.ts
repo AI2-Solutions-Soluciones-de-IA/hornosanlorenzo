@@ -341,10 +341,16 @@ const PROYECCION_PEDIDO = `
 `;
 
 export type FiltrosPedidos = {
-  /** Día para el que se quiere el pedido (`YYYY-MM-DD`). */
-  fechaEntrega?: string;
-  /** Día en que entró el pedido (`YYYY-MM-DD`), en hora de Madrid. */
-  fechaEntrada?: string;
+  /**
+   * Días para los que se quiere el pedido (`YYYY-MM-DD`), ambos incluidos.
+   * Cualquiera de los dos puede faltar: solo `desde` es «de ahí en
+   * adelante». Un solo día es `desde === hasta`.
+   */
+  entregaDesde?: string;
+  entregaHasta?: string;
+  /** Días en que entró el pedido, igual que arriba, en hora de Madrid. */
+  entradaDesde?: string;
+  entradaHasta?: string;
   /**
    * Texto libre: lo que el cliente dice por teléfono. Casa con un trozo del
    * nombre, del correo, del teléfono o de la referencia (el uuid), sin
@@ -353,35 +359,67 @@ export type FiltrosPedidos = {
   texto?: string;
 };
 
-export async function listarPedidos(
-  limite = 100,
-  { fechaEntrega, fechaEntrada, texto }: FiltrosPedidos = {},
-): Promise<PedidoConLineas[]> {
-  const busqueda = patronBusqueda(texto);
-  const { rows } = await pool.query<PedidoConLineas>(
-    `select ${PROYECCION_PEDIDO}
-       from pedidos p
+/**
+ * El `where` de los filtros, compartido por la lista y por la cuenta que
+ * pagina: si divergieran, el panel diría «página 3 de 2». Los parámetros
+ * van del $1 al $6; quien lo usa pone los suyos detrás.
+ */
+const WHERE_FILTROS = `
       where p.estado in ('pagado', 'sin_pago')
-        and ($2::date is null or p.fecha_entrega = $2::date)
+        and ($1::date is null or p.fecha_entrega >= $1::date)
+        and ($2::date is null or p.fecha_entrega <= $2::date)
         and ($3::date is null
-             or (p.created_at at time zone 'Europe/Madrid')::date = $3::date)
-        and ($4::text is null
-             or p.nombre ilike $4
-             or p.email ilike $4
-             or p.telefono ilike $4
-             or p.id::text ilike $4
+             or (p.created_at at time zone 'Europe/Madrid')::date >= $3::date)
+        and ($4::date is null
+             or (p.created_at at time zone 'Europe/Madrid')::date <= $4::date)
+        and ($5::text is null
+             or p.nombre ilike $5
+             or p.email ilike $5
+             or p.telefono ilike $5
+             or p.id::text ilike $5
              -- El teléfono se guarda tal como lo escribió el cliente, con o
              -- sin espacios; si lo buscado son solo dígitos se compara sin
              -- separadores por ambos lados.
-             or ($5::text is not null
-                 and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $5 || '%'))
-      order by p.created_at desc
-      limit $1`,
-    [limite, fechaEntrega ?? null, fechaEntrada ?? null, busqueda.patron, busqueda.soloDigitos],
+             or ($6::text is not null
+                 and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $6 || '%'))`;
+
+function argsFiltros(f: FiltrosPedidos): unknown[] {
+  const busqueda = patronBusqueda(f.texto);
+  return [
+    f.entregaDesde ?? null,
+    f.entregaHasta ?? null,
+    f.entradaDesde ?? null,
+    f.entradaHasta ?? null,
+    busqueda.patron,
+    busqueda.soloDigitos,
+  ];
+}
+
+export async function listarPedidos(
+  limite = 100,
+  filtros: FiltrosPedidos = {},
+  /** Cuántos saltarse, para paginar. */
+  desplazamiento = 0,
+): Promise<PedidoConLineas[]> {
+  const { rows } = await pool.query<PedidoConLineas>(
+    `select ${PROYECCION_PEDIDO}
+       from pedidos p
+     ${WHERE_FILTROS}
+      order by p.created_at desc, p.id
+      limit $7 offset $8`,
+    [...argsFiltros(filtros), limite, desplazamiento],
   );
   return rows;
 }
 
+/** Cuántos pedidos casan con los filtros, para saber cuántas páginas hay. */
+export async function contarPedidos(filtros: FiltrosPedidos = {}): Promise<number> {
+  const { rows } = await pool.query<{ total: string }>(
+    `select count(*) as total from pedidos p ${WHERE_FILTROS}`,
+    argsFiltros(filtros),
+  );
+  return Number(rows[0]?.total ?? 0);
+}
 
 /**
  * Lo que ve el cliente en /cuenta: SUS pedidos, del más reciente al más

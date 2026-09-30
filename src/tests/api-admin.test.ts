@@ -304,16 +304,31 @@ describe("guardia de GET /api/admin/pedidos/exportar", () => {
     expect(listarPedidos).not.toHaveBeenCalled();
   });
 
-  it("con admin devuelve un .xlsx y pasa los filtros de fecha; lo que no es fecha se ignora", async () => {
+  it("con admin devuelve un .xlsx y pasa el rango de fechas; lo que no es fecha se ignora", async () => {
     const { GET } = await import("~/pages/api/admin/pedidos/exportar");
-    const r = await GET(ctx(admin, "?entrega=2026-09-16&entrada=ayer") as never);
+    const r = await GET(ctx(admin, "?fecha=entrega&desde=2026-09-16&hasta=2026-09-20") as never);
     expect(r.status).toBe(200);
     expect(r.headers.get("content-type")).toContain("spreadsheetml");
+    expect(r.headers.get("content-disposition")).toContain(
+      "pedidos-entrega-2026-09-16-a-2026-09-20.xlsx",
+    );
+    const { listarPedidos } = await import("~/lib/db/pedidos");
+    expect(listarPedidos).toHaveBeenCalledWith(2000, {
+      entregaDesde: "2026-09-16",
+      entregaHasta: "2026-09-20",
+      texto: undefined,
+    });
+  });
+
+  it("un enlace viejo de un solo día sigue funcionando", async () => {
+    const { GET } = await import("~/pages/api/admin/pedidos/exportar");
+    const r = await GET(ctx(admin, "?entrega=2026-09-16&entrada=ayer") as never);
     expect(r.headers.get("content-disposition")).toContain("pedidos-entrega-2026-09-16.xlsx");
     const { listarPedidos } = await import("~/lib/db/pedidos");
-    expect(listarPedidos).toHaveBeenCalledWith(100, {
-      fechaEntrega: "2026-09-16",
-      fechaEntrada: undefined,
+    expect(listarPedidos).toHaveBeenCalledWith(2000, {
+      entregaDesde: "2026-09-16",
+      entregaHasta: "2026-09-16",
+      texto: undefined,
     });
   });
 });

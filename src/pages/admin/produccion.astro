@@ -22,24 +22,33 @@ function sumaDias(iso: string, dias: number): string {
 
 const hoy = hoyEnMadrid();
 const atajos = [
-  { id: "hoy", label: "Hoy", dia: hoy },
-  { id: "manana", label: "Mañana", dia: sumaDias(hoy, 1) },
+  { id: "hoy", label: "Hoy", desde: hoy, hasta: hoy },
+  { id: "manana", label: "Mañana", desde: sumaDias(hoy, 1), hasta: sumaDias(hoy, 1) },
+  { id: "semana", label: "Próximos 7 días", desde: hoy, hasta: sumaDias(hoy, 6) },
 ] as const;
 
 // Mismo criterio que los filtros de /admin/pedidos: solo se acepta la forma
 // de fecha, y esta página se sirve en servidor fuera del ISR, así que aquí
-// sí se leen parámetros. Por defecto, hoy.
+// sí se leen parámetros. Por defecto, hoy. Sin `hasta`, un solo día; y se
+// sigue entendiendo el `?dia=` de antes del rango.
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
-const pedido = Astro.url.searchParams.get("dia") ?? "";
-const dia = FECHA.test(pedido) ? pedido : hoy;
-const atajoActivo = atajos.find((a) => a.dia === dia)?.id;
+const leeFecha = (clave: string): string | undefined => {
+  const v = Astro.url.searchParams.get(clave) ?? "";
+  return FECHA.test(v) ? v : undefined;
+};
+let desde = leeFecha("desde") ?? leeFecha("dia") ?? hoy;
+let hasta = leeFecha("hasta") ?? desde;
+if (hasta < desde) [desde, hasta] = [hasta, desde];
+const unDia = desde === hasta;
+const atajoActivo = atajos.find((a) => a.desde === desde && a.hasta === hasta)?.id;
+const enlacePedidos = `/admin/pedidos?fecha=entrega&desde=${desde}&hasta=${hasta}`;
 
 // Igual que en el resto del panel: un fallo de Postgres no puede dejar la
 // página en un 500. Se enseña el aviso y el panel sigue navegable.
 let hoja: HojaProduccion | null = null;
 let fallo = false;
 try {
-  hoja = await hojaProduccion(dia);
+  hoja = await hojaProduccion(desde, hasta);
 } catch (error) {
   fallo = true;
   console.error(
@@ -63,14 +72,18 @@ const celda = "py-2 text-right tabular-nums";
 <AdminLayout titulo="Producción">
   <form method="get" class="no-imprimir flex flex-wrap items-end gap-4 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-4">
     <div>
-      <label for="p-dia" class="numeracion block">Día de entrega</label>
-      <input id="p-dia" type="date" name="dia" value={dia} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <label for="p-desde" class="numeracion block">Entrega desde</label>
+      <input id="p-desde" type="date" name="desde" value={desde} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label for="p-hasta" class="numeracion block">Hasta</label>
+      <input id="p-hasta" type="date" name="hasta" value={hasta} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <button type="submit" class="btn btn-primario">Ver</button>
     <div class="flex flex-wrap gap-2 sm:ml-auto">
       {atajos.map((a) => (
         <a
-          href={`/admin/produccion?dia=${a.dia}`}
+          href={`/admin/produccion?desde=${a.desde}&hasta=${a.hasta}`}
           class:list={[
             "px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] border border-[color:var(--color-avellana)] hover:bg-[color:var(--color-latte)] transition-colors",
             atajoActivo === a.id && "bg-[color:var(--color-latte)] text-[color:var(--color-moka)]",
@@ -86,16 +99,18 @@ const celda = "py-2 text-right tabular-nums";
   <div class="mt-6 flex flex-wrap items-end justify-between gap-4 filete pb-3">
     <div>
       <p class="numeracion">Hoja de producción</p>
-      <h2 class="font-[family-name:var(--font-display)] text-2xl mt-1">{formatDateISO(dia)}</h2>
+      <h2 class="font-[family-name:var(--font-display)] text-2xl mt-1">
+        {unDia ? formatDateISO(desde) : `${formatDateISO(desde)} – ${formatDateISO(hasta)}`}
+      </h2>
       {hoja && (
         <p class="mt-1 text-sm text-[color:var(--color-ink-muted)]">
-          {hoja.totalPedidos === 1 ? "1 pedido" : `${hoja.totalPedidos} pedidos`} para este día
+          {hoja.totalPedidos === 1 ? "1 pedido" : `${hoja.totalPedidos} pedidos`} {unDia ? "para este día" : "entre estos días"}
         </p>
       )}
     </div>
     <div class="no-imprimir flex flex-wrap gap-3 items-center">
-      <a href={`/admin/pedidos?entrega=${dia}`} class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">
-        Ver los pedidos de este día
+      <a href={enlacePedidos} class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">
+        {unDia ? "Ver los pedidos de este día" : "Ver los pedidos de estos días"}
       </a>
       <button type="button" class="btn btn-secundario" onclick="window.print()">Imprimir</button>
     </div>
@@ -110,17 +125,17 @@ const celda = "py-2 text-right tabular-nums";
   {hoja && hoja.sinDatos > 0 && (
     <p class="mt-4 border-l-2 border-[color:var(--color-caramelo)] pl-3 py-2 text-sm">
       {hoja.sinDatos === 1
-        ? "1 pedido de este día no dice modalidad"
-        : `${hoja.sinDatos} pedidos de este día no dicen modalidad`}
+        ? `1 pedido ${unDia ? "de este día" : "de estos días"} no dice modalidad`
+        : `${hoja.sinDatos} pedidos ${unDia ? "de este día" : "de estos días"} no dicen modalidad`}
       {" "}(reconstruidos desde Stripe): sus unidades están en la tabla pero no en
       el desglose por destino. Míralos en
-      {" "}<a href={`/admin/pedidos?entrega=${dia}`} class="underline underline-offset-4">Pedidos</a>.
+      {" "}<a href={enlacePedidos} class="underline underline-offset-4">Pedidos</a>.
     </p>
   )}
 
   {hoja && hoja.packs.length > 0 && (
     <section class="mt-6 border border-[color:var(--color-avellana)] p-4">
-      <h3 class="numeracion">Packs del día — montar las cajas</h3>
+      <h3 class="numeracion">{unDia ? "Packs del día" : "Packs de estos días"} — montar las cajas</h3>
       <ul class="mt-3 flex flex-col gap-1 text-sm">
         {hoja.packs.map((p) => (
           <li class="flex justify-between gap-4">
@@ -133,7 +148,7 @@ const celda = "py-2 text-right tabular-nums";
   )}
 
   {hoja && hoja.lineas.length === 0 && !fallo && (
-    <p class="mt-6 text-[color:var(--color-ink-muted)]">Nada que hornear para este día.</p>
+    <p class="mt-6 text-[color:var(--color-ink-muted)]">{unDia ? "Nada que hornear para este día." : "Nada que hornear para estos días."}</p>
   )}
 
   {hoja && hoja.lineas.length > 0 && (

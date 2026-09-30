@@ -2,38 +2,35 @@ import type { APIRoute } from "astro";
 import { listarPedidos } from "~/lib/db/pedidos";
 import { pedidosAExcel } from "~/lib/pedidos-excel";
 import { esAdmin } from "~/lib/auth/guardia";
+import { leerFiltrosPedidos } from "~/lib/filtros-pedidos";
 
 export const prerender = false;
 
 /** 404, no 401 ni 403: mismo criterio que el resto del panel (spec §7). */
 const noEncontrado = () => new Response("No encontrado", { status: 404 });
 
-const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+/**
+ * Tope del Excel. La página pagina; el Excel no, lleva todos los que casan
+ * con los filtros. El tope solo evita que un rango de años entero tumbe la
+ * función.
+ */
+const MAX_EXCEL = 2000;
 
 /**
  * Los mismos pedidos que enseña `/admin/pedidos`, con sus mismos filtros
- * (`?entrega=`, `?entrada=` y la búsqueda `?q=`), en un .xlsx. Lo que no
- * tenga forma de fecha se ignora, igual que en la página.
+ * (rango de fechas y búsqueda, leídos por `leerFiltrosPedidos`), en un
+ * .xlsx. Todas las páginas, no solo la que se está viendo.
  */
 export const GET: APIRoute = async ({ url, locals }) => {
   if (!esAdmin(locals.usuario)) return noEncontrado();
 
-  const lee = (clave: string) => {
-    const v = url.searchParams.get(clave) ?? "";
-    return FECHA.test(v) ? v : undefined;
-  };
-  const fechaEntrega = lee("entrega");
-  const fechaEntrada = lee("entrada");
-  // Mismo recorte que en la página, para que el Excel sea lo que se ve.
-  const texto = (url.searchParams.get("q") ?? "").slice(0, 80).trim() || undefined;
+  const { tipo, desde, hasta, filtros } = leerFiltrosPedidos(url.searchParams);
 
   try {
-    const pedidos = await listarPedidos(100, { fechaEntrega, fechaEntrada, texto });
+    const pedidos = await listarPedidos(MAX_EXCEL, filtros);
     const xlsx = await pedidosAExcel(pedidos);
-    const sufijo = [fechaEntrega && `entrega-${fechaEntrega}`, fechaEntrada && `entrada-${fechaEntrada}`]
-      .filter(Boolean)
-      .join("-");
-    const nombre = `pedidos${sufijo ? `-${sufijo}` : ""}.xlsx`;
+    const rango = desde && hasta && desde !== hasta ? `${desde}-a-${hasta}` : (desde ?? (hasta && `hasta-${hasta}`));
+    const nombre = `pedidos${rango ? `-${tipo}-${rango}` : ""}.xlsx`;
     return new Response(new Uint8Array(xlsx), {
       status: 200,
       headers: {
