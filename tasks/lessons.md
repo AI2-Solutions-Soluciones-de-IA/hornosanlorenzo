@@ -113,3 +113,34 @@ Un agente que arranque un servidor lo mata al terminar, y la instrucción se
 lo tiene que decir. Y para redirigir el `dev` a otra base no vale exportar la
 variable: `pool.ts` lee `import.meta.env.DATABASE_URL`, que Vite rellena
 desde `.env`.
+
+## Migración antes que el código que la lee
+
+Con código que lee una tabla o columna nueva, la migración va a producción
+**antes** del despliegue, no después. El plan de packs en el panel (30-9-2026)
+lo tenía al revés en su primera versión, y la revisión final lo cazó: con el
+código nuevo y sin la tabla, `priceOrder` fallaba en TODOS los carritos, no solo
+en los de packs.
+
+**Why:** una migración aditiva (`add column if not exists`, tabla nueva) no
+rompe el código viejo; el código nuevo sin su migración sí rompe todo lo que
+toca esa lectura.
+
+**How to apply:** orden de salida = comprobaciones de solo lectura → migración →
+datos (volcados) → subir el código → verificar por SHA. Si un plan dice otra
+cosa, el plan está mal.
+
+## Lo invisible también ensancha la página
+
+Un desplegable con `invisible`/`opacity-0` sigue ocupando sitio: el del menú
+«Tienda online» (hasta 864 px, centrado bajo su enlace) daba scroll lateral a
+1024 px sin verse nada. Y una cabecera `sticky` con el menú móvil dentro dejaba
+la parte de abajo del menú (Entrar / Regístrate) inalcanzable.
+
+**Why:** medir solo a 375 y 1280 no lo destapa; los dos fallos vivían en medio
+(768–1024) o en un estado (menú abierto) que no se abre al hacer la captura.
+
+**How to apply:** en cambios de cabecera, menú o layout, medir
+`document.documentElement.scrollWidth <= innerWidth` a 375, 768, 1024 y 1280, con
+los menús cerrados Y abiertos.
+

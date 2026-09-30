@@ -126,6 +126,18 @@
       hoy marcadas `consultar: true`
 
 ## Coherencia y deuda
+- [ ] **Packs en el panel (producción desde el 30-9-2026), comprobar con Oscar:**
+      un pedido de prueba de un pack en la web (no se llegó a probar el
+      checkout de packs en producción tras mover las definiciones a la base de
+      datos) y un guardado en `/admin/packs` (cambiar el orden de un pack y
+      deshacerlo). No relanzar `scripts/volcar-packs.mjs` en producción.
+- [ ] Deuda de packs que la revisión final dejó para después:
+      `productos.test.ts` borra `productos` entero y puede pisar a
+      `packs.test.ts` (corren en paralelo); el «comprado suelto» del listado
+      del panel cuenta piezas fijas desactivadas y la web no; cambiar la
+      sección de un hueco da «Elección no válida» en vez de «ha cambiado»
+- [ ] Tablas de Producción y Resumen en móvil: hoy se desplazan de lado dentro
+      de su recuadro; si Oscar lo pide, pasarlas a tarjetas apiladas
 - [ ] **Packs (en producción desde el 30-9-2026), pendientes del cliente o de Oscar:**
       fotos de los 7 packs (el pptx no trae; se suben desde el panel a cada
       ficha); listado de sabores de los variados en letra pequeña (pendiente de
