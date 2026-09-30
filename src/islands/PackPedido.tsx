@@ -106,6 +106,7 @@ export default function PackPedido({
   const [qty, setQty] = useState(1);
   const [foto, setFoto] = useState<Foto>({ estado: "vacia" });
   const inputFoto = useRef<HTMLInputElement>(null);
+  const [arrastrando, setArrastrando] = useState(false);
   // Si eligen otra foto mientras sube la primera, la respuesta que llegue
   // tarde no puede pisar a la nueva.
   const turno = useRef(0);
@@ -228,57 +229,98 @@ export default function PackPedido({
 
       {conFoto && (
         <div>
-          <label htmlFor="foto-pack" style={etiquetaStyle}>
+          <span id="foto-pack-titulo" style={etiquetaStyle}>
             Tu foto para la plancha
-          </label>
-          <p style={{ ...avisoStyle, marginBottom: 8 }}>
-            Sube la foto en la mejor calidad que tengas: se imprime tal y como
-            nos llega.
-          </p>
-          <input
-            ref={inputFoto}
-            id="foto-pack"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            disabled={!listo || foto.estado === "subiendo"}
-            onChange={(e) => elegirFoto(e.target.files?.[0])}
-            style={{ font: "inherit", fontSize: 13, maxWidth: "100%" }}
-          />
-          <div aria-live="polite" style={{ marginTop: 8 }}>
-            {foto.estado === "subiendo" && <p style={avisoStyle}>Subiendo…</p>}
-            {foto.estado === "error" && (
-              <p style={{ ...avisoStyle, color: "var(--color-ink)" }}>
-                {foto.mensaje}
-              </p>
+          </span>
+          {/* Toda la zona es el `label` del input: se pulsa en cualquier
+              sitio, y además admite arrastrar y soltar. El input va oculto
+              a la vista pero no al teclado: el foco se ve en el recuadro
+              (`.zona-foto:focus-within`, en global.css). */}
+          <label
+            htmlFor="foto-pack"
+            className="zona-foto"
+            data-arrastrando={arrastrando || undefined}
+            data-desactivada={!listo || foto.estado === "subiendo" || undefined}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (listo && foto.estado !== "subiendo") setArrastrando(true);
+            }}
+            onDragLeave={() => setArrastrando(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setArrastrando(false);
+              if (!listo || foto.estado === "subiendo") return;
+              void elegirFoto(e.dataTransfer.files?.[0]);
+            }}
+          >
+            <input
+              ref={inputFoto}
+              id="foto-pack"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              aria-labelledby="foto-pack-titulo"
+              aria-describedby="foto-pack-ayuda"
+              disabled={!listo || foto.estado === "subiendo"}
+              onChange={(e) => elegirFoto(e.target.files?.[0])}
+              className="sr-only"
+            />
+
+            {foto.estado === "lista" ? (
+              <img
+                src={foto.vista}
+                alt="Tu foto, tal y como se ha subido"
+                width={88}
+                height={88}
+                style={{
+                  width: 88,
+                  height: 88,
+                  flex: "none",
+                  objectFit: "cover",
+                  border: "1px solid var(--color-line)",
+                }}
+              />
+            ) : (
+              <IconoFoto />
             )}
-            {foto.estado === "lista" && (
-              <div
-                style={{ display: "flex", gap: 12, alignItems: "flex-start" }}
+
+            <span
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                minWidth: 0,
+              }}
+            >
+              <span
+                aria-live="polite"
+                style={{
+                  fontWeight: 600,
+                  fontSize: 15,
+                  color: "var(--color-ink)",
+                }}
               >
-                <img
-                  src={foto.vista}
-                  alt="Tu foto, tal y como se ha subido"
-                  width={72}
-                  height={72}
-                  style={{
-                    width: 72,
-                    height: 72,
-                    objectFit: "cover",
-                    border: "1px solid var(--color-line)",
-                  }}
-                />
-                <p style={avisoStyle}>
-                  Foto subida.
-                  {foto.pequena && (
-                    <>
-                      <br />
-                      Esta foto es pequeña y puede salir borrosa al imprimirla.
-                    </>
-                  )}
-                </p>
-              </div>
-            )}
-          </div>
+                {foto.estado === "vacia" &&
+                  "Sube la foto que irá impresa en la plancha"}
+                {foto.estado === "subiendo" && "Subiendo tu foto…"}
+                {foto.estado === "lista" && "Foto lista"}
+                {foto.estado === "error" && foto.mensaje}
+              </span>
+              <span id="foto-pack-ayuda" style={avisoStyle}>
+                {foto.estado === "lista" && foto.pequena
+                  ? "Es pequeña y puede salir borrosa al imprimirla. Si tienes otra en más calidad, cámbiala."
+                  : "Se imprime tal y como nos llega: usa la de más calidad que tengas. JPG, PNG o WebP, hasta 20 MB."}
+              </span>
+              {foto.estado !== "subiendo" && (
+                <span
+                  aria-hidden="true"
+                  className="btn zona-foto-boton"
+                  style={{ alignSelf: "flex-start", marginTop: 4 }}
+                >
+                  {foto.estado === "lista" ? "Cambiar foto" : "Elegir foto"}
+                </span>
+              )}
+            </span>
+          </label>
         </div>
       )}
 
@@ -334,6 +376,26 @@ export default function PackPedido({
         )}
       </div>
     </div>
+  );
+}
+
+/** Icono de trazo (la marca no admite iconos rellenos): una foto. */
+function IconoFoto() {
+  return (
+    <svg
+      aria-hidden="true"
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="var(--color-caramelo)"
+      strokeWidth="1.4"
+      style={{ flex: "none", marginTop: 2 }}
+    >
+      <rect x="3" y="4.5" width="18" height="15" />
+      <circle cx="9" cy="10" r="1.8" />
+      <path d="m3.5 17.5 5-5 4 4 3-3 5 5" />
+    </svg>
   );
 }
 

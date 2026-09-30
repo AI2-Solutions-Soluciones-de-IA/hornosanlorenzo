@@ -210,6 +210,51 @@
   color: var(--color-moka);
 }
 
+/* Zona para subir la foto del cliente (Pack Cumpleaños, `PackPedido.tsx`).
+   Es el `label` del input: se pulsa entera. Filete de 1 px y fondo latte,
+   sin sombra ni esquinas; al pasar, arrastrar o enfocar, el filete pasa a
+   caramelo, que es el color de lo que se puede tocar. */
+.zona-foto {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px;
+  background: var(--color-latte);
+  border: 1px solid var(--color-avellana);
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease;
+}
+.zona-foto:hover,
+.zona-foto[data-arrastrando] {
+  border-color: var(--color-caramelo);
+}
+.zona-foto[data-arrastrando] {
+  background: var(--color-leche);
+}
+/* El botón va sobre el latte del recuadro: fondo leche y filete caramelo
+   para que se vea (el secundario, transparente, se perdía en el fondo). */
+.zona-foto-boton {
+  min-height: 42px;
+  padding-inline: 20px;
+  font-size: 14px;
+  background: var(--color-leche);
+  color: var(--color-moka);
+  border-color: var(--color-caramelo);
+}
+.zona-foto:hover .zona-foto-boton {
+  background: var(--color-caramelo);
+  color: var(--color-leche);
+}
+.zona-foto:focus-within {
+  outline: 2px solid var(--color-caramelo);
+  outline-offset: 2px;
+}
+.zona-foto[data-desactivada] {
+  cursor: progress;
+}
+
 /* Móvil (< md): los CTA principales van en el rojo de la paleta.
    Alcanza a «Haz tu pedido» del header y a «Ver el catálogo». */
 @media (max-width: 767.98px) {
