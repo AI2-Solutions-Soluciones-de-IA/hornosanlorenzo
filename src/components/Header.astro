@@ -139,7 +139,11 @@ const isActive = (href: string) => {
     aria-label="Principal"
     class="hidden md:block bg-[color:var(--color-latte)] border-t border-[color:var(--color-avellana)]"
   >
-    <ul class="mx-auto max-w-6xl px-4 sm:px-6 flex items-stretch justify-center gap-8 lg:gap-12 text-[11px] font-medium uppercase tracking-[0.16em]">
+    <!-- `relative` aquí y no en cada <li>: los desplegables se centran en la
+         barra entera, no bajo su enlace. Centrados bajo el enlace, los anchos
+         (hasta 54rem) se salían por la derecha y, aunque estén ocultos
+         (`invisible`), ensanchaban la página: scroll lateral a 1024 px. -->
+    <ul class="relative mx-auto max-w-6xl px-4 sm:px-6 flex items-stretch justify-center gap-8 lg:gap-12 text-[11px] font-medium uppercase tracking-[0.16em]">
       {mainNav.map((item) => {
         const active = isActive(item.href);
         const linkClass = [
@@ -165,7 +169,7 @@ const isActive = (href: string) => {
         }
 
         return (
-          <li class="relative group">
+          <li class="group">
             <a
               href={item.href}
               aria-current={active ? "page" : undefined}
@@ -181,7 +185,7 @@ const isActive = (href: string) => {
             <div
               class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 transition-opacity absolute left-1/2 -translate-x-1/2 top-full z-50 pt-px"
             >
-              <div class:list={["bg-[color:var(--color-leche)] border border-[color:var(--color-avellana)] p-6 grid gap-5", submenuLayout[item.children.length] ?? submenuLayout[3]]}>
+              <div class:list={["bg-[color:var(--color-leche)] border border-[color:var(--color-avellana)] p-6 grid gap-5 max-w-[calc(100vw-2rem)]", submenuLayout[item.children.length] ?? submenuLayout[3]]}>
                 {item.children.map((child) => {
                   const photo = submenuImages[child.label];
                   return (
