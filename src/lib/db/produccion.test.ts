@@ -14,6 +14,8 @@ describeSiHayBD("hoja de producción", () => {
   const CORREO = "produccion@prueba.test";
   const DIA = "2032-05-01";
   const OTRO_DIA = "2032-05-02";
+  // Día propio para los packs: así no mueven las cuentas de los demás casos.
+  const DIA_PACKS = "2032-05-03";
 
   type Linea = {
     slug: string;
@@ -21,6 +23,12 @@ describeSiHayBD("hoja de producción", () => {
     qty: number;
     unitPriceCents: number;
     variantLabel?: string;
+    detalle?: {
+      slug: string;
+      nombre: string;
+      varianteLabel: string | null;
+      qty: number;
+    }[];
   };
   const pedido = (
     lines: Linea[],
@@ -199,6 +207,73 @@ describeSiHayBD("hoja de producción", () => {
       lineas: [],
       porDestino: [],
       sinDatos: 0,
+      packs: [],
     });
+  });
+
+  it("desglosa los packs en piezas, las suma a lo suelto y los lista aparte", async () => {
+    const ENTERA = "Entera · 16–20 rac.";
+    // 2 Packs Cumpleaños, cada uno con 1 empanada de carne entera.
+    const a = await pedidos.crearPedidoIniciado(
+      pedido(
+        [
+          {
+            slug: "pack-cumpleanos",
+            name: "Pack Cumpleaños",
+            qty: 2,
+            unitPriceCents: 4500,
+            detalle: [
+              {
+                slug: "empanada-de-carne",
+                nombre: "Empanada de carne",
+                varianteLabel: ENTERA,
+                qty: 1,
+              },
+            ],
+          },
+        ],
+        { dateISO: DIA_PACKS },
+      ) as never,
+      { estado: "sin_pago" },
+    );
+    expect(a).toBeTruthy();
+    // Y otro pedido con 1 empanada de carne entera suelta, en Pozuelo.
+    await pedidos.crearPedidoIniciado(
+      pedido(
+        [
+          {
+            slug: "empanada-de-carne",
+            name: "Empanada de carne",
+            qty: 1,
+            unitPriceCents: 1800,
+            variantLabel: ENTERA,
+          },
+        ],
+        { dateISO: DIA_PACKS, storeId: "pozuelo" },
+      ) as never,
+      { estado: "sin_pago" },
+    );
+
+    const h = await produccion.hojaProduccion(DIA_PACKS);
+    expect(h.lineas).toHaveLength(1);
+    expect(h.lineas[0]).toMatchObject({
+      slug: "empanada-de-carne",
+      varianteLabel: ENTERA,
+      unidades: 3,
+      pedidos: 2,
+    });
+    expect(h.lineas.map((l) => l.nombre)).not.toContain("Pack Cumpleaños");
+    expect(h.lineas[0].porDestino).toEqual([
+      { destino: "recogida:alcobendas", unidades: 2 },
+      { destino: "recogida:pozuelo", unidades: 1 },
+    ]);
+    expect(h.packs).toEqual([
+      { nombre: "Pack Cumpleaños", unidades: 2, pedidos: 1 },
+    ]);
+    // Los totales por destino cuentan cajas entregadas: un pack es una caja.
+    expect(h.porDestino).toEqual([
+      { destino: "recogida:alcobendas", pedidos: 1, unidades: 2 },
+      { destino: "recogida:pozuelo", pedidos: 1, unidades: 1 },
+    ]);
   });
 });

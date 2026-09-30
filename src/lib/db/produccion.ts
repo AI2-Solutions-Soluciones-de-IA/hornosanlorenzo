@@ -37,6 +37,11 @@ export type HojaProduccion = {
    * mira uno a uno en Pedidos.
    */
   sinDatos: number;
+  /**
+   * Los packs del día, para montar las cajas. Sus piezas ya están sumadas en
+   * `lineas`; aquí solo se dice cuántas cajas de cada pack hay que preparar.
+   */
+  packs: { nombre: string; unidades: number; pedidos: number }[];
 };
 
 /**
@@ -53,6 +58,23 @@ const DESTINO = `case p.mode
 const DEL_DIA =
   "p.fecha_entrega = $1::date and p.estado in ('pagado', 'sin_pago')";
 
+/**
+ * Lo que hay que hornear: las líneas sueltas tal cual y, de cada pack, sus
+ * piezas multiplicadas por las unidades del pack. La línea del pack en sí
+ * no se hornea: sale aparte, en `packs`, para montar las cajas.
+ */
+const PIEZAS = `(
+  select l.pedido_id, l.slug, l.nombre, l.variante_label, l.qty
+    from lineas_pedido l
+   where l.detalle is null
+  union all
+  select l.pedido_id, d.slug, d.nombre, d."varianteLabel", d.qty * l.qty
+    from lineas_pedido l
+   cross join lateral jsonb_to_recordset(l.detalle)
+         as d(slug text, nombre text, "varianteLabel" text, qty int)
+   where l.detalle is not null
+)`;
+
 const n = (v: unknown): number => Number(v ?? 0);
 
 export async function hojaProduccion(
@@ -60,7 +82,7 @@ export async function hojaProduccion(
 ): Promise<HojaProduccion> {
   const args = [fechaEntrega];
 
-  const [totales, productos, productoDestino, destinos] = await Promise.all([
+  const [totales, productos, productoDestino, packs, destinos] = await Promise.all([
     pool.query(
       `select count(*)                                as total,
               count(*) filter (where p.mode is null)  as sin_datos
@@ -75,7 +97,7 @@ export async function hojaProduccion(
       `select l.slug, l.nombre, l.variante_label as "varianteLabel",
               sum(l.qty)                as unidades,
               count(distinct l.pedido_id) as pedidos
-         from lineas_pedido l
+         from ${PIEZAS} l
          join pedidos p on p.id = l.pedido_id
         where ${DEL_DIA}
         group by l.slug, l.nombre, l.variante_label
@@ -86,11 +108,23 @@ export async function hojaProduccion(
       `select l.slug, l.nombre, l.variante_label as "varianteLabel",
               ${DESTINO} as destino,
               sum(l.qty) as unidades
-         from lineas_pedido l
+         from ${PIEZAS} l
          join pedidos p on p.id = l.pedido_id
         where ${DEL_DIA} and p.mode is not null
         group by l.slug, l.nombre, l.variante_label, ${DESTINO}
         order by destino`,
+      args,
+    ),
+    // Las cajas por montar: la línea del pack, no sus piezas.
+    pool.query(
+      `select l.nombre,
+              sum(l.qty)                  as unidades,
+              count(distinct l.pedido_id) as pedidos
+         from lineas_pedido l
+         join pedidos p on p.id = l.pedido_id
+        where ${DEL_DIA} and l.detalle is not null
+        group by l.nombre
+        order by l.nombre`,
       args,
     ),
     // Un pedido sin líneas no existe (se crean en la misma transacción), así
@@ -140,5 +174,10 @@ export async function hojaProduccion(
       unidades: n(r.unidades),
     })),
     sinDatos: n(t.sin_datos),
+    packs: packs.rows.map((r) => ({
+      nombre: r.nombre,
+      unidades: n(r.unidades),
+      pedidos: n(r.pedidos),
+    })),
   };
 }
