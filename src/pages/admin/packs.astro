@@ -1,0 +1,12 @@
+---
+// src/pages/admin/packs.astro
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import AdminPacks from "~/islands/AdminPacks.tsx";
+
+export const prerender = false;
+// La isla carga los packs y la carta de `/api/admin/packs` al arrancar: una
+// sola fuente para leer y para volver a leer tras guardar.
+---
+<AdminLayout titulo="Packs">
+  <AdminPacks client:load />
+</AdminLayout>
