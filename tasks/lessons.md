@@ -1,171 +1,27 @@
 # Lecciones — hornosanlorenzo
 
-## Las cachés de desarrollo dan falsos positivos
+Formato: **regla** — por qué (el caso que la originó) — cómo aplicarla.
 
-Tras `pnpm add`, la caché de Vite falla con `jsxDEV is not a function`, que
-parece un error de React y no lo es. Tras reiniciar, Astro cambia de puerto sin
-avisar y se prueba contra un servidor viejo.
+## Verificar
 
-**Why:** una prueba que pasa —o falla— contra el entorno equivocado cierra la
-investigación en falso.
+- **Una prueba vale si se pone roja al romper lo que protege.** Pruebas saltadas por no cargar `.env`, una que fallaba por el motivo equivocado, un `vi.mock` escrito y sin usar: sumaban en el recuento y no protegían nada. → Romperlo a propósito; contar las saltadas en terminal limpia (`env -i`); afirmar sobre el motivo del fallo, no solo su tipo.
+- **Informe = salida literal, y «no verificado» cuando no lo está.** Dos informes afirmaron de más (un comando que no podía dar esa salida) y volvieron sospechoso todo lo demás. → Pegar la salida tal cual; declarar los huecos.
+- **`pnpm build` en cada tarea y producción en un navegador.** Un `*.test.ts` en `src/pages/` rompía el build con pruebas y tipos en verde; el sitio salió sin imágenes con `curl` dando 200 (fallo que solo existe dentro de Vercel). → Build por tarea; tras desplegar, abrir las páginas.
+- **Recorrer el camino completo, no solo la pieza tocada.** La ficha estaba bien y la rejilla metía la talla más barata; el menú bien y `/catalogo` con la taxonomía vieja. → Tras tocar datos o navegación, abrir las pantallas que derivan de ellos y pulsar el control arreglado.
+- **Layout: medir anchos intermedios, menús abiertos y páginas cortas.** Un desplegable `opacity-0` daba scroll lateral a 1024 px; la cabecera `sticky` dejaba el final del menú móvil inalcanzable; en el panel el título caía 250 px en una página corta (`h-screen` repartido entre filas del grid). → `scrollWidth <= innerWidth` a 375/768/1024/1280, con menús cerrados y abiertos, y una página con poco contenido.
+- **El checkout «sin sesión» no se prueba borrando cookies desde la página**: no ve las `httpOnly`. → Contexto de navegador nuevo.
 
-**How to apply:** vaciar `node_modules/.vite` y `.astro/`, y leer el puerto del
-log (`grep -i local`) en vez de darlo por hecho.
+## Entorno y datos
 
-## Verificar el camino completo, no la pieza que tocaste
+- **El `.env` local es producción y un `astro dev` olvidado escribe en ella.** Un usuario de prueba cayó dos veces en producción: contestaba el `dev` de un agente, no el mío (Astro se muda de puerto sin avisar); había diez huérfanos más. Exportar `DATABASE_URL` no sirve: Vite la lee de `.env`. → `lsof -ti :PUERTO` vacío antes de arrancar; todo agente mata su servidor; tras escribir, comprobar en qué base cayó la fila. Para probar el panel: worktree en el scratchpad con su propio `.env` (`DATABASE_URL` = rama de pruebas, `BETTER_AUTH_SECRET`, `PUBLIC_SITE_URL=http://localhost:PUERTO` o da `INVALID_ORIGIN`), `pnpm install --offline` (un `node_modules` enlazado rompe Astro), alta por `/api/auth/sign-up/email` con `telefono` y `scripts/hacer-admin.mjs`. Al acabar, borrar lo sembrado, matar el `dev` y quitar el worktree.
+- **Las pruebas de base de datos comparten tablas y corren a la vez.** Un `delete` de tabla entera tumbó once pruebas de otros ficheros (un worker por fichero, misma rama de Neon). → Cada fichero limpia solo lo suyo por una marca propia (correo, sufijo, fecha lejana) y afirma con `toContain`; suite completa tres veces antes de dar una prueba por buena.
+- **Cachés de desarrollo dan falsos positivos.** Tras `pnpm add`, `jsxDEV is not a function` parece React y es Vite. → Vaciar `node_modules/.vite` y `.astro/`; leer el puerto del log.
 
-Cargué productos con varios tamaños y comprobé la ficha: la rejilla seguía
-metiendo en el carrito la talla más barata. Añadí «Top Ventas» al submenú y
-comprobé el menú: `/catalogo` seguía pintando la taxonomía vieja.
+## Salida a producción
 
-**Why:** lo editado funcionaba; fallaba la pantalla de al lado que derivaba de
-lo mismo.
+- **Migración antes que el código que la lee.** El plan de packs lo tenía al revés: sin la tabla, `priceOrder` fallaba en todos los carritos. → Solo lectura → migración → datos → código → verificar.
+- **Un despliegue se verifica por su SHA.** La primera línea de `vercel ls` puede ser el anterior ya `Ready`, y el CLI de este equipo mira otro scope. → `gh api repos/AI2-Solutions-Soluciones-de-IA/hornosanlorenzo/commits/<SHA>/status`.
 
-**How to apply:** tras tocar datos o navegación, recorrer en el navegador las
-páginas que derivan de esa estructura. Y al arreglar un control, pulsarlo.
+## CSS
 
-## La verificación que no verifica
-
-Cinco formas de creer que algo está comprobado cuando no lo está:
-
-- Pruebas que **se saltaban** con `pnpm test` porque el comando no cargaba
-  `.env`, con el informe diciendo «4/4 en verde» porque se corrieron con la
-  variable exportada a mano.
-- Una prueba de código postal que seguía pasando con la validación de zona
-  rota: usaba un producto inexistente y solo comprobaba que fallara, no por qué.
-- Dos fallos de build que sobrevivieron cuatro tareas con pruebas y tipos en
-  verde —un `*.test.ts` dentro de `src/pages/`, que Astro trata como ruta—
-  porque `pnpm build` solo se corría al final.
-- Una comprobación del checkout «sin sesión» hecha borrando cookies desde el
-  navegador, que no ve las `httpOnly`.
-- Esperar un despliegue mirando la primera línea de `vercel ls --prod`: si aún
-  no ha empezado el nuevo, esa línea es el anterior, ya `Ready`, y el bucle da
-  por bueno algo que no ha construido (29-9, migración a AI2). Buscar el
-  despliegue por el SHA del commit (`meta.githubCommitSha` en la API). Lo más
-  corto: `gh api repos/AI2-Solutions-Soluciones-de-IA/hornosanlorenzo/commits/<SHA>/status`
-  (el `vercel` CLI de este equipo mira otro scope y no ve los despliegues).
-- Dos **informes que afirmaban haber verificado lo que no verificaron** (plan
-  2): uno pegaba un comando que, leído literalmente, no podía dar esa salida
-  —ponía `DATABASE_URL_TEST=…` y el script solo lee `DATABASE_URL`—; otro daba
-  por cubierta la guardia de un endpoint con una prueba que nunca lo importaba,
-  con el `vi.mock` necesario escrito y sin usar. Los cazó la revisión, no el
-  autor.
-- El plan 2 salió a producción **sin una sola imagen** (11 de septiembre) con
-  129 pruebas, `astro check`, `pnpm build` y `curl` a las rutas en verde: el
-  endpoint `/_image` se leía a sí mismo por la URL interna del despliegue,
-  que está detrás de Vercel Authentication. Ese fallo **solo existe dentro de
-  Vercel**; lo destapó abrir el catálogo en un navegador contra producción.
-
-**Why:** todas aparecían en el recuento y ninguna protegía nada. Es peor que no
-tenerlas: dan tranquilidad falsa y nadie vuelve a mirarlas. Y un informe que
-afirma de más es más caro que un hueco declarado, porque vuelve sospechoso todo
-lo demás que dice ese informe.
-
-**How to apply:** romper a propósito lo que la prueba protege y verla ponerse
-roja. Contar las saltadas en terminal limpia (`env -i`), no en la tuya.
-Afirmar sobre el motivo del fallo, no solo sobre su tipo. Y `pnpm build` en
-cada tarea, que ni las pruebas ni los tipos ven si el sitio se despliega.
-Tras desplegar, mirar producción con un navegador, no solo con `curl`: un 200
-con la página vacía de imágenes sigue siendo un 200. Al escribir un informe,
-pegar la **salida literal**, no un resumen: si el
-comando pegado no puede producir esa salida, alguien lo verá. Un `vi.mock` que
-ninguna prueba usa es una prueba que se pensó y no se escribió, no decoración.
-Y «no verificado» es gratis; decirlo cuesta menos que perder la credibilidad
-del resto del informe.
-
-## Las pruebas de base de datos comparten tablas y corren a la vez
-
-Un `delete from productos` en `noticias.test.ts` pasó tres veces en verde y
-era una carrera con `productos.test.ts`; al añadir `estadisticas.test.ts`,
-que borraba `pedidos` y `user` enteras, cayeron once pruebas de tres
-ficheros que no había tocado.
-
-**Why:** Vitest ejecuta cada fichero en un worker distinto contra la MISMA
-rama de Neon. Un borrado de tabla entera es un borrado de las filas de otro
-fichero en mitad de su prueba; que pase depende del orden de llegada.
-
-**How to apply:** cada fichero limpia solo lo suyo, por una marca propia
-(correo `@stats.test`, nombre con sufijo, día de entrega en 2031, fecha de
-entrada en 2021), y afirma con `toContain`, no con `toEqual` sobre la tabla
-entera. Antes de dar por buena una prueba nueva de base de datos, correr la
-suite completa tres veces seguidas.
-
-## Un `astro dev` olvidado apunta a producción
-
-Al integrar la hoja de producción, el buscador y el historial (12 de
-septiembre de 2026), un usuario de prueba cayó **dos veces en la base de
-producción** aunque yo arrancaba el servidor con `DATABASE_URL` de pruebas y
-luego con `.env.development`. El que respondía en el puerto 4399 no era mi
-servidor: un agente había arrancado `astro dev` en su worktree —con la copia
-de `.env`, o sea, producción— para comprobar que una ruta devolvía 302, y lo
-dejó vivo. Astro, al ver el puerto ocupado, arranca el mío en el siguiente
-sin decir nada. Al mirar había además diez `astro dev` huérfanos de sesiones
-anteriores conectados a producción.
-
-**Why:** un `dev` es un proceso con la cadena de conexión real dentro. Mientras
-`.env` apunte a producción (pendiente del todo «separar la base de datos de
-desarrollo»), cualquier servidor olvidado es una puerta a datos reales, y un
-`curl` a `localhost:PUERTO` no dice qué proceso contesta.
-
-**How to apply:** antes de arrancar un `dev`, `lsof -ti :PUERTO` tiene que
-estar vacío; si no, matar lo que haya, no elegir otro puerto. Después de una
-prueba local que escriba, comprobar **en qué base** ha caído la fila antes de
-seguir (una consulta a cada rama), no dar por hecho que fue a la de pruebas.
-Un agente que arranque un servidor lo mata al terminar, y la instrucción se
-lo tiene que decir. Y para redirigir el `dev` a otra base no vale exportar la
-variable: `pool.ts` lee `import.meta.env.DATABASE_URL`, que Vite rellena
-desde `.env`. Lo que sí funciona (30-9): un worktree en el scratchpad con su
-propio `.env` (solo `DATABASE_URL` = rama de pruebas, `BETTER_AUTH_SECRET` y
-`PUBLIC_SITE_URL=http://localhost:PUERTO`, o Better Auth da `INVALID_ORIGIN`),
-`pnpm install --offline` (un `node_modules` enlazado rompe Astro), alta por
-`/api/auth/sign-up/email` con `telefono` y `scripts/hacer-admin.mjs` contra
-esa `.env`. Al acabar: borrar datos sembrados y usuario, matar el `dev`,
-quitar el worktree.
-
-## Migración antes que el código que la lee
-
-Con código que lee una tabla o columna nueva, la migración va a producción
-**antes** del despliegue, no después. El plan de packs en el panel (30-9-2026)
-lo tenía al revés en su primera versión, y la revisión final lo cazó: con el
-código nuevo y sin la tabla, `priceOrder` fallaba en TODOS los carritos, no solo
-en los de packs.
-
-**Why:** una migración aditiva (`add column if not exists`, tabla nueva) no
-rompe el código viejo; el código nuevo sin su migración sí rompe todo lo que
-toca esa lectura.
-
-**How to apply:** orden de salida = comprobaciones de solo lectura → migración →
-datos (volcados) → subir el código → verificar por SHA. Si un plan dice otra
-cosa, el plan está mal.
-
-## Lo invisible también ensancha la página
-
-Un desplegable con `invisible`/`opacity-0` sigue ocupando sitio: el del menú
-«Tienda online» (hasta 864 px, centrado bajo su enlace) daba scroll lateral a
-1024 px sin verse nada. Y una cabecera `sticky` con el menú móvil dentro dejaba
-la parte de abajo del menú (Entrar / Regístrate) inalcanzable.
-
-**Why:** medir solo a 375 y 1280 no lo destapa; los dos fallos vivían en medio
-(768–1024) o en un estado (menú abierto) que no se abre al hacer la captura.
-
-**How to apply:** en cambios de cabecera, menú o layout, medir
-`document.documentElement.scrollWidth <= innerWidth` a 375, 768, 1024 y 1280, con
-los menús cerrados Y abiertos. Y probar también una página **corta**: en el
-panel, la barra lateral `h-screen` repartía su alto entre las filas del grid y
-el título caía 250 px solo en Producción vacía (arreglado con
-`grid-rows-[auto_1fr]`).
-
-## `hidden` no se deja deshacer al imprimir
-
-Tailwind v4 pone `[hidden] { display: none !important }` en su capa `base`, y
-un `!important` en capa gana a cualquier `!important` sin capa: la regla
-`@media print { [hidden] { display: table-row !important } }` no hacía nada y
-la hoja de producción paginada imprimía solo la página a la vista.
-
-**Why:** con `!important` el orden de capas se invierte; no hay especificidad
-que lo salve.
-
-**How to apply:** para ocultar algo solo en pantalla, un atributo propio
-(`data-fuera`) con la regla dentro de `@media screen`, nunca `hidden`. Y
-comprobarlo con `page.emulateMedia({ media: "print" })` contando lo visible.
-
+- **`hidden` no se puede deshacer en `@media print`.** Tailwind v4 lo pone con `!important` en su capa base y un `!important` en capa gana al que no la tiene: la hoja paginada imprimía solo la página a la vista. → Atributo propio (`data-fuera`) oculto dentro de `@media screen`; comprobar con `emulateMedia({ media: "print" })`.
