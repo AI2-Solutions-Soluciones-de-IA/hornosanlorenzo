@@ -24,9 +24,11 @@ const secciones = [
   { href: "/admin/noticias", label: "Este mes" },
 ];
 const actual = Astro.url.pathname;
+const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel";
 ---
 <BaseLayout title={`${titulo} — Panel`} description="Panel de administración" noindex>
-  <!-- Móvil: cabecera, fila de secciones con scroll horizontal y contenido, en ese orden.
+  <!-- Móvil: cabecera, desplegable de secciones y contenido, en ese orden
+       (sin scroll horizontal: petición de Oscar, 30-9-2026).
        Desde md: columna a la izquierda (Panel, secciones, Salir) y título + contenido a la derecha. -->
   <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-8">
     <header class="filete pb-4 flex items-end justify-between gap-4 md:col-start-2 md:row-start-1">
@@ -39,15 +41,42 @@ const actual = Astro.url.pathname;
 
     <aside class="mt-6 md:mt-0 md:col-start-1 md:row-start-1 md:row-span-2 md:flex md:flex-col md:bg-[color:var(--color-leche)] md:border-r md:border-[color:var(--color-avellana)] md:sticky md:top-0 md:self-start md:h-screen md:min-h-0">
       <p class="numeracion hidden md:block md:px-4 md:pb-4">Panel</p>
+
+      <!-- Móvil: desplegable nativo (<details>), sin JavaScript. Enseña la
+           sección en la que se está y, al tocarlo, la lista entera. -->
+      <details class="md:hidden group border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)]">
+        <summary class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <span><span class="text-[color:var(--color-ink-muted)] font-normal">Sección:</span> {seccionActual}</span>
+          <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" class="transition-transform group-open:rotate-180">
+            <path d="m2 4.5 4 3.5 4-3.5" />
+          </svg>
+        </summary>
+        <nav aria-label="Secciones del panel" class="flex flex-col border-t border-[color:var(--color-avellana)]">
+          {secciones.map((s) => (
+            <a
+              href={s.href}
+              class:list={[
+                "px-4 py-3 text-sm font-semibold border-b border-[color:var(--color-avellana)] last:border-b-0 hover:bg-[color:var(--color-latte)] transition-colors",
+                actual === s.href && "bg-[color:var(--color-latte)] text-[color:var(--color-moka)]",
+              ]}
+              aria-current={actual === s.href ? "page" : undefined}
+            >
+              {s.label}
+            </a>
+          ))}
+        </nav>
+      </details>
+
+      <!-- Escritorio: columna lateral. -->
       <nav
         aria-label="Secciones del panel"
-        class="flex overflow-x-auto [scrollbar-width:thin] gap-px md:min-h-0 md:overflow-y-auto bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] md:flex-col md:overflow-x-visible md:border-0 md:bg-transparent md:gap-0"
+        class="hidden md:flex md:flex-col md:min-h-0 md:overflow-y-auto"
       >
         {secciones.map((s) => (
           <a
             href={s.href}
             class:list={[
-              "shrink-0 whitespace-nowrap px-4 py-2 text-sm font-semibold hover:bg-[color:var(--color-latte)] transition-colors",
+              "px-4 py-2 text-sm font-semibold hover:bg-[color:var(--color-latte)] transition-colors",
               actual === s.href
                 ? "bg-[color:var(--color-latte)] text-[color:var(--color-moka)]"
                 : "bg-[color:var(--color-leche)]",
