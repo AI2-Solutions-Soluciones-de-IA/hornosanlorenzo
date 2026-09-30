@@ -75,7 +75,30 @@ function mensajeDeError(error: { code?: string } | null): string {
   return MENSAJES_ERROR[error.code] ?? MENSAJE_GENERICO;
 }
 
-export default function AccesoForm() {
+/**
+ * Título y entrada de `/acceso`, según el modo: «Entrar» de la cabecera abre
+ * «Entra.»; «Regístrate aquí» (`?modo=registro`) abre el alta. Van aquí y no
+ * en la página porque el modo cambia también con los enlaces del propio
+ * formulario («¿No tienes cuenta? Regístrate»), y el título tiene que seguirlo.
+ */
+const CABECERA: Record<Modo, { titulo: string; texto: string }> = {
+  entrar: {
+    titulo: "Entra.",
+    texto:
+      "Entra con tu correo y tu contraseña. No hace falta cuenta para comprar: en la tienda online puedes pagar directamente, sin registrarte.",
+  },
+  registro: {
+    titulo: "Alta de particular.",
+    texto:
+      "Déjanos tu contacto y te damos de alta. No hace falta cuenta para comprar: en la tienda online puedes pagar directamente, sin registrarte.",
+  },
+};
+
+export default function AccesoForm({
+  cabecera = false,
+}: {
+  cabecera?: boolean;
+}) {
   const [modo, setModo] = useState<Modo>("entrar");
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -155,216 +178,228 @@ export default function AccesoForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate style={{ maxWidth: "28rem" }}>
-      {!esRegistro && contrasenaRecuperada && (
-        <p
-          role="status"
-          style={{
-            marginBottom: 16,
-            padding: "0.75rem 1rem",
-            border: "1px solid var(--color-avellana)",
-            color: "var(--color-ink-muted)",
-            fontSize: 13,
-          }}
-        >
-          Contraseña cambiada. Ya puedes entrar con ella.
-        </p>
-      )}
-
-      {esRegistro && (
-        <div>
-          <label style={label} htmlFor="af-nombre">
-            Nombre
-          </label>
-          <input
-            id="af-nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            aria-invalid={!!errores.nombre}
-            aria-describedby={errores.nombre ? "af-nombre-error" : undefined}
-            placeholder="Cómo te llamamos"
-            style={{
-              ...field,
-              borderColor: errores.nombre
-                ? "var(--color-teja)"
-                : "var(--color-avellana)",
-            }}
-          />
-          {errores.nombre && (
-            <p id="af-nombre-error" role="alert" style={errorTexto}>
-              {errores.nombre}
-            </p>
-          )}
+    <>
+      {cabecera && (
+        <div style={{ marginBottom: 32 }}>
+          <h1 className="text-4xl sm:text-5xl">{CABECERA[modo].titulo}</h1>
+          <p className="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">
+            {CABECERA[modo].texto}
+          </p>
         </div>
       )}
-
-      <div style={{ marginTop: esRegistro ? 16 : 0 }}>
-        <label style={label} htmlFor="af-email">
-          Correo
-        </label>
-        <input
-          id="af-email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          aria-invalid={!!errores.email}
-          aria-describedby={errores.email ? "af-email-error" : undefined}
-          placeholder="tu@correo.com"
-          style={{
-            ...field,
-            borderColor: errores.email
-              ? "var(--color-teja)"
-              : "var(--color-avellana)",
-          }}
-        />
-        {errores.email && (
-          <p id="af-email-error" role="alert" style={errorTexto}>
-            {errores.email}
-          </p>
-        )}
-      </div>
-
-      {esRegistro && (
-        <div style={{ marginTop: 16 }}>
-          <label style={label} htmlFor="af-telefono">
-            Teléfono
-          </label>
-          <input
-            id="af-telefono"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            aria-invalid={!!errores.telefono}
-            aria-describedby={
-              errores.telefono ? "af-telefono-error" : undefined
-            }
-            placeholder="600123456"
+      <form onSubmit={onSubmit} noValidate style={{ maxWidth: "28rem" }}>
+        {!esRegistro && contrasenaRecuperada && (
+          <p
+            role="status"
             style={{
-              ...field,
-              borderColor: errores.telefono
-                ? "var(--color-teja)"
-                : "var(--color-avellana)",
-            }}
-          />
-          {errores.telefono && (
-            <p id="af-telefono-error" role="alert" style={errorTexto}>
-              {errores.telefono}
-            </p>
-          )}
-        </div>
-      )}
-
-      <div style={{ marginTop: 16 }}>
-        <label style={label} htmlFor="af-password">
-          Contraseña
-        </label>
-        <input
-          id="af-password"
-          type="password"
-          autoComplete={esRegistro ? "new-password" : "current-password"}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          aria-invalid={!!errores.password}
-          aria-describedby={errores.password ? "af-password-error" : undefined}
-          placeholder={`Mínimo ${MIN_PASSWORD} caracteres`}
-          style={{
-            ...field,
-            borderColor: errores.password
-              ? "var(--color-teja)"
-              : "var(--color-avellana)",
-          }}
-        />
-        {errores.password && (
-          <p id="af-password-error" role="alert" style={errorTexto}>
-            {errores.password}
-          </p>
-        )}
-      </div>
-
-      {errorServidor && (
-        <p
-          role="alert"
-          style={{
-            marginTop: 16,
-            padding: "0.75rem 1rem",
-            border: "1px solid var(--color-teja)",
-            color: "var(--color-teja)",
-            fontSize: 13,
-          }}
-        >
-          {errorServidor}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        className="btn btn-primario"
-        disabled={enviando}
-        style={{
-          width: "100%",
-          marginTop: 20,
-          border: "none",
-          opacity: enviando ? 0.6 : 1,
-          cursor: enviando ? "not-allowed" : "pointer",
-        }}
-      >
-        {enviando
-          ? esRegistro
-            ? "Creando la cuenta…"
-            : "Entrando…"
-          : esRegistro
-            ? "Crear cuenta"
-            : "Entrar"}
-      </button>
-
-      {!esRegistro && (
-        <p style={{ marginTop: 12, fontSize: 13, textAlign: "center" }}>
-          <a
-            href="/acceso/recuperar"
-            style={{
+              marginBottom: 16,
+              padding: "0.75rem 1rem",
+              border: "1px solid var(--color-avellana)",
               color: "var(--color-ink-muted)",
-              textDecoration: "underline",
+              fontSize: 13,
             }}
           >
-            ¿Has olvidado tu contraseña?
-          </a>
-        </p>
-      )}
-
-      <p
-        style={{
-          marginTop: esRegistro ? 20 : 8,
-          fontSize: 13,
-          textAlign: "center",
-        }}
-      >
-        {esRegistro ? (
-          <>
-            ¿Ya tienes cuenta?{" "}
-            <button
-              type="button"
-              onClick={() => cambiarModo("entrar")}
-              style={enlaceComoBoton}
-            >
-              Entra
-            </button>
-          </>
-        ) : (
-          <>
-            ¿No tienes cuenta?{" "}
-            <button
-              type="button"
-              onClick={() => cambiarModo("registro")}
-              style={enlaceComoBoton}
-            >
-              Regístrate
-            </button>
-          </>
+            Contraseña cambiada. Ya puedes entrar con ella.
+          </p>
         )}
-      </p>
-    </form>
+
+        {esRegistro && (
+          <div>
+            <label style={label} htmlFor="af-nombre">
+              Nombre
+            </label>
+            <input
+              id="af-nombre"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              aria-invalid={!!errores.nombre}
+              aria-describedby={errores.nombre ? "af-nombre-error" : undefined}
+              placeholder="Cómo te llamamos"
+              style={{
+                ...field,
+                borderColor: errores.nombre
+                  ? "var(--color-teja)"
+                  : "var(--color-avellana)",
+              }}
+            />
+            {errores.nombre && (
+              <p id="af-nombre-error" role="alert" style={errorTexto}>
+                {errores.nombre}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div style={{ marginTop: esRegistro ? 16 : 0 }}>
+          <label style={label} htmlFor="af-email">
+            Correo
+          </label>
+          <input
+            id="af-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={!!errores.email}
+            aria-describedby={errores.email ? "af-email-error" : undefined}
+            placeholder="tu@correo.com"
+            style={{
+              ...field,
+              borderColor: errores.email
+                ? "var(--color-teja)"
+                : "var(--color-avellana)",
+            }}
+          />
+          {errores.email && (
+            <p id="af-email-error" role="alert" style={errorTexto}>
+              {errores.email}
+            </p>
+          )}
+        </div>
+
+        {esRegistro && (
+          <div style={{ marginTop: 16 }}>
+            <label style={label} htmlFor="af-telefono">
+              Teléfono
+            </label>
+            <input
+              id="af-telefono"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              aria-invalid={!!errores.telefono}
+              aria-describedby={
+                errores.telefono ? "af-telefono-error" : undefined
+              }
+              placeholder="600123456"
+              style={{
+                ...field,
+                borderColor: errores.telefono
+                  ? "var(--color-teja)"
+                  : "var(--color-avellana)",
+              }}
+            />
+            {errores.telefono && (
+              <p id="af-telefono-error" role="alert" style={errorTexto}>
+                {errores.telefono}
+              </p>
+            )}
+          </div>
+        )}
+
+        <div style={{ marginTop: 16 }}>
+          <label style={label} htmlFor="af-password">
+            Contraseña
+          </label>
+          <input
+            id="af-password"
+            type="password"
+            autoComplete={esRegistro ? "new-password" : "current-password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={!!errores.password}
+            aria-describedby={
+              errores.password ? "af-password-error" : undefined
+            }
+            placeholder={`Mínimo ${MIN_PASSWORD} caracteres`}
+            style={{
+              ...field,
+              borderColor: errores.password
+                ? "var(--color-teja)"
+                : "var(--color-avellana)",
+            }}
+          />
+          {errores.password && (
+            <p id="af-password-error" role="alert" style={errorTexto}>
+              {errores.password}
+            </p>
+          )}
+        </div>
+
+        {errorServidor && (
+          <p
+            role="alert"
+            style={{
+              marginTop: 16,
+              padding: "0.75rem 1rem",
+              border: "1px solid var(--color-teja)",
+              color: "var(--color-teja)",
+              fontSize: 13,
+            }}
+          >
+            {errorServidor}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="btn btn-primario"
+          disabled={enviando}
+          style={{
+            width: "100%",
+            marginTop: 20,
+            border: "none",
+            opacity: enviando ? 0.6 : 1,
+            cursor: enviando ? "not-allowed" : "pointer",
+          }}
+        >
+          {enviando
+            ? esRegistro
+              ? "Creando la cuenta…"
+              : "Entrando…"
+            : esRegistro
+              ? "Crear cuenta"
+              : "Entrar"}
+        </button>
+
+        {!esRegistro && (
+          <p style={{ marginTop: 12, fontSize: 13, textAlign: "center" }}>
+            <a
+              href="/acceso/recuperar"
+              style={{
+                color: "var(--color-ink-muted)",
+                textDecoration: "underline",
+              }}
+            >
+              ¿Has olvidado tu contraseña?
+            </a>
+          </p>
+        )}
+
+        <p
+          style={{
+            marginTop: esRegistro ? 20 : 8,
+            fontSize: 13,
+            textAlign: "center",
+          }}
+        >
+          {esRegistro ? (
+            <>
+              ¿Ya tienes cuenta?{" "}
+              <button
+                type="button"
+                onClick={() => cambiarModo("entrar")}
+                style={enlaceComoBoton}
+              >
+                Entra
+              </button>
+            </>
+          ) : (
+            <>
+              ¿No tienes cuenta?{" "}
+              <button
+                type="button"
+                onClick={() => cambiarModo("registro")}
+                style={enlaceComoBoton}
+              >
+                Regístrate
+              </button>
+            </>
+          )}
+        </p>
+      </form>
+    </>
   );
 }
