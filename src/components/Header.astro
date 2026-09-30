@@ -6,7 +6,7 @@ import SocialLinks from "~/components/SocialLinks.astro";
 import { site } from "~/data/site";
 import { mainNav } from "~/data/navigation";
 
-import logoFirma from "../../public/images/logo-firma-completa.png";
+import logoHsl from "../../public/images/logo-hsl.png";
 import imgDulce from "../../public/images/productos/tarta-tres-chocolates.jpg";
 import imgSalado from "../../public/images/productos/quiche-lorraine.jpg";
 import imgPacks from "../../public/images/productos/bolleria.jpeg";
@@ -70,15 +70,15 @@ const isActive = (href: string) => {
     <div aria-hidden="true"></div>
 
     <a href="/" aria-label={`${site.name} — inicio`} class="justify-self-center">
-      <!-- La firma es moka con acentos teja: sobre el rojo no se lee, así que
-           se invierte a blanco por CSS. Provisional: pendiente de recibir del
-           cliente el PNG de la firma en versión clara. -->
-      <Image quality={80}
-        src={logoFirma}
+      <!-- Logo del cliente en su versión clara, para fondo oscuro (30-9-2026):
+           se lee sobre el rojo teja tal cual, sin invertirlo por CSS como la
+           firma de antes. `alt` vacío: el enlace ya se nombra con aria-label. -->
+      <Image quality={85}
+        src={logoHsl}
         alt=""
-        widths={[220, 320, 480, 640]}
-        sizes="(min-width:1024px) 300px, (min-width:640px) 240px, 190px"
-        class="w-[190px] sm:w-[240px] lg:w-[300px] h-auto [filter:brightness(0)_invert(1)]"
+        widths={[200, 320, 480, 640]}
+        sizes="(min-width:1024px) 210px, (min-width:640px) 190px, 160px"
+        class="w-[160px] sm:w-[190px] lg:w-[210px] h-auto"
       />
     </a>
 
@@ -95,7 +95,7 @@ const isActive = (href: string) => {
           type="search"
           name="q"
           placeholder="Buscar"
-          class="w-32 xl:w-40 bg-transparent py-2 text-sm text-[color:var(--color-leche)] placeholder:text-[color:var(--color-leche)]/65 focus:outline-none"
+          class="w-24 xl:w-32 bg-transparent py-2 text-sm text-[color:var(--color-leche)] placeholder:text-[color:var(--color-leche)]/65 focus:outline-none"
         />
         <button type="submit" class="p-2 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]" aria-label="Buscar">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
