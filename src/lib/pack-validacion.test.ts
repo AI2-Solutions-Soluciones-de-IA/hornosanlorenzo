@@ -62,6 +62,7 @@ const valido = (): DatosPackEntrada => ({
   imageHeight: null,
   activo: true,
   agotado: false,
+  destacado: false,
   orden: 1,
   definicion: {
     ocasion: "Prueba",
@@ -223,17 +224,26 @@ describe("comprobarPack", () => {
     ]);
   });
 
-  it("hueco sin ninguna opción vendible hoy", () => {
-    const e = errores(conPiezas([hueco({ seccion: "quiches" })]));
-    expect(e).toEqual([
-      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("Hoy no se puede vender") },
+  it("hueco sin ninguna opción vendible hoy: aviso, no error", () => {
+    const r = comprobarPack(conPiezas([hueco({ seccion: "quiches" })]), carta);
+    expect(r.errores).toEqual([]);
+    expect(r.avisos).toContainEqual({
+      donde: "hueco «Sabor de la empanada»",
+      mensaje: "Hoy no hay ninguna opción disponible en «Sabor de la empanada»: la ficha saldrá como no disponible hasta que vuelva a haberla.",
+    });
+  });
+
+  it("hueco con un tamaño que NINGÚN producto de su sección tiene: error", () => {
+    expect(errores(conPiezas([hueco({ variantId: "entera" })]))).toEqual([
+      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("no lo tiene ningún producto") },
     ]);
   });
 
-  it("hueco con variante que ninguna opción tiene", () => {
-    expect(errores(conPiezas([hueco({ variantId: "entera" })]))).toEqual([
-      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("Hoy no se puede vender") },
-    ]);
+  it("hueco con un tamaño que solo tiene un producto no vendible hoy: aviso", () => {
+    const c = [...carta, prod("emp-vieja", { seccion: "quiches", activo: false, priceCents: null as never, variantes: [{ variantId: "entera", label: "Entera", priceCents: 900 }] })];
+    const r = comprobarPack(conPiezas([hueco({ seccion: "quiches", variantId: "entera" })]), c);
+    expect(r.errores).toEqual([]);
+    expect(r.avisos.map((a) => a.mensaje).join(" ")).toContain("Hoy no hay ninguna opción disponible");
   });
 
   it("título y etiqueta no pueden quedar vacíos; la descripción sí", () => {
@@ -262,9 +272,8 @@ describe("comprobarPack", () => {
       { donde: "pieza 2", mensaje: "«Sin precio» no tiene precio de venta online: no se puede incluir en un pack." },
     ]);
     const h = comprobarPack(conPiezas([hueco({ seccion: "tartas-obrador" })]), c);
-    expect(h.errores).toEqual([
-      { donde: "hueco «Sabor de la empanada»", mensaje: expect.stringContaining("Hoy no se puede vender") },
-    ]);
+    expect(h.errores).toEqual([]);
+    expect(h.avisos.some((a) => a.mensaje.includes("Hoy no hay ninguna opción"))).toBe(true);
   });
 
   it("aviso: precio igual o mayor que el suelto", () => {
@@ -275,6 +284,16 @@ describe("comprobarPack", () => {
     expect(r.avisos).toEqual([
       { donde: "precio", mensaje: expect.stringContaining("no ahorra nada") },
     ]);
+  });
+
+  it("aviso: el pack sale a menos de la mitad de sus piezas", () => {
+    const d = valido();
+    d.priceCents = 1000; // suelto 3900
+    expect(comprobarPack(d, carta).avisos).toEqual([
+      { donde: "precio", mensaje: "El pack sale a menos de la mitad de lo que cuestan sus piezas: ¿está bien escrito el precio?" },
+    ]);
+    d.priceCents = 1950; // justo la mitad: sin aviso
+    expect(comprobarPack(d, carta).avisos).toEqual([]);
   });
 
   it("aviso: pieza fija agotada o desactivada", () => {
@@ -289,6 +308,19 @@ describe("comprobarPack", () => {
 });
 
 describe("esquemaPack", () => {
+  it("destacado por defecto false; imagen, orden y medidas acotados", () => {
+    const { destacado: _d, ...sin } = valido();
+    const r = esquemaPack.safeParse(sin);
+    expect(r.success && r.data.destacado).toBe(false);
+    const ok = (o: object) => esquemaPack.safeParse({ ...valido(), ...o }).success;
+    expect(ok({ imageUrl: "no es una url" })).toBe(false);
+    expect(ok({ imageUrl: "https://x.test/a.jpg" })).toBe(true);
+    expect(ok({ orden: -1 })).toBe(false);
+    expect(ok({ orden: 0 })).toBe(true);
+    expect(ok({ imageWidth: 0 })).toBe(false);
+    expect(ok({ imageHeight: 0 })).toBe(false);
+  });
+
   it("acepta lo que manda el panel", () => {
     expect(esquemaPack.safeParse(valido()).success).toBe(true);
   });

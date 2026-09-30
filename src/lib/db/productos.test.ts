@@ -214,6 +214,9 @@ describeSiHayBD("repositorio de productos", () => {
     await repo.crearProducto(datos({ name: "Segunda", orden: 200 }));
     await repo.crearProducto(datos({ name: "Primera", orden: 100 }));
     const lista = await repo.listarProductos({ soloActivos: true });
-    expect(lista.map((p) => p.name)).toEqual(["Primera", "Segunda"]);
+    // Otros ficheros comparten la tabla y pueden dejar filas suyas a media
+    // ejecución: solo se mira el orden de las dos propias.
+    const propias = lista.map((p) => p.name).filter((n) => n === "Primera" || n === "Segunda");
+    expect(propias).toEqual(["Primera", "Segunda"]);
   });
 });

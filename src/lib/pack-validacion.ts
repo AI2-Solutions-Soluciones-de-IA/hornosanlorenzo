@@ -57,13 +57,14 @@ const esquema = z.object({
   name: texto(120),
   priceCents: z.number().int().max(1_000_000),
   shortDescription: texto(200),
-  imageUrl: z.string().max(500).nullable(),
+  imageUrl: z.string().max(500).url().nullable(),
   imageAlt: z.string().max(200).nullable(),
-  imageWidth: z.number().int().max(20000).nullable(),
-  imageHeight: z.number().int().max(20000).nullable(),
+  imageWidth: z.number().int().min(1).max(20000).nullable(),
+  imageHeight: z.number().int().min(1).max(20000).nullable(),
   activo: z.boolean(),
   agotado: z.boolean(),
-  orden: z.number().int().max(9999),
+  orden: z.number().int().min(0).max(9999),
+  destacado: z.boolean().default(false),
   definicion: z.object({
     ocasion: texto(120),
     personas: z.object({
@@ -181,8 +182,19 @@ export function comprobarPack(
       }
       if (faltan.length > 0) return;
     }
+    if (pieza.variantId) {
+      // Estructural: un tamaño que ningún producto del hueco tiene (activo o no)
+      // no se arregla esperando; que hoy no haya nada vendible, sí.
+      const admitidos = tieneSeccion
+        ? carta.filter((x) => x.seccion === pieza.seccion)
+        : carta.filter((x) => pieza.slugs!.includes(x.slug));
+      if (!admitidos.some((x) => x.variantes.some((v) => v.variantId === pieza.variantId))) {
+        error(donde, `El tamaño ${comillas(pieza.variantId)} del hueco ${nombreHueco} no lo tiene ningún producto de su sección o lista.`);
+        return;
+      }
+    }
     if (opcionesDeHueco(pieza as HuecoEleccion, carta).length === 0) {
-      error(donde, `Hoy no se puede vender ninguna opción del hueco ${nombreHueco}: todas están agotadas, desactivadas o no tienen el tamaño pedido.`);
+      aviso(donde, `Hoy no hay ninguna opción disponible en ${nombreHueco}: la ficha saldrá como no disponible hasta que vuelva a haberla.`);
     }
   });
 
@@ -203,6 +215,8 @@ export function comprobarPack(
     const suelto = precioSueltoCents(def, carta);
     if (suelto !== null && datos.priceCents >= suelto) {
       aviso("precio", "Este pack no ahorra nada: cuesta lo mismo o más que comprar las piezas sueltas.");
+    } else if (suelto !== null && datos.priceCents * 2 < suelto) {
+      aviso("precio", "El pack sale a menos de la mitad de lo que cuestan sus piezas: ¿está bien escrito el precio?");
     }
   }
 

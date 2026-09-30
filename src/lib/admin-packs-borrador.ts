@@ -57,6 +57,7 @@ export type Borrador = {
   orden: number;
   activo: boolean;
   agotado: boolean;
+  destacado: boolean;
   imageUrl: string | null;
   imageAlt: string;
   imageWidth: number | null;
@@ -133,6 +134,7 @@ export function borradorVacio(): Borrador {
     orden: 100,
     activo: true,
     agotado: false,
+    destacado: false,
     imageUrl: null,
     imageAlt: "",
     imageWidth: null,
@@ -184,6 +186,7 @@ export function borradorDesdePack(p: PackAdmin): Borrador {
     orden: p.orden,
     activo: p.activo,
     agotado: p.agotado,
+    destacado: p.destacado,
     imageUrl: p.imageUrl,
     imageAlt: p.imageAlt ?? "",
     imageWidth: p.imageWidth,
@@ -250,6 +253,7 @@ export function aEntrada(b: Borrador): DatosPackEntrada {
     imageHeight: b.imageUrl ? b.imageHeight : null,
     activo: b.activo,
     agotado: b.agotado,
+    destacado: b.destacado,
     orden: b.orden,
     definicion: {
       ocasion: b.ocasion.trim(),

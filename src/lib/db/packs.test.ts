@@ -65,6 +65,7 @@ describeSiHayBD("repositorio de definiciones de pack", () => {
       imageHeight: null,
       activo: true,
       agotado: false,
+      destacado: false,
       orden: 900,
       definicion: def,
       ...extra,
@@ -144,6 +145,24 @@ describeSiHayBD("repositorio de definiciones de pack", () => {
     expect(d.piezas[0]).toMatchObject({ slug: "y" });
   });
 
+  it("actualizarPack conserva temporada y especialidad y guarda destacado", async () => {
+    const slug = "test-packdb-conserva";
+    await repo.crearPack(datos(slug));
+    await pool.query(
+      "update productos set temporada = true, especialidad = 'A mano' where slug = $1",
+      [slug],
+    );
+    await repo.actualizarPack(slug, datos(slug, { destacado: true }) as never);
+    const { rows } = await pool.query(
+      "select temporada, especialidad, destacado from productos where slug=$1",
+      [slug],
+    );
+    expect(rows[0]).toEqual({ temporada: true, especialidad: "A mano", destacado: true });
+    await repo.actualizarPack(slug, datos(slug, { destacado: false }) as never);
+    const d = await pool.query("select destacado from productos where slug=$1", [slug]);
+    expect(d.rows[0].destacado).toBe(false);
+  });
+
   it("actualizarPack de un slug que no es pack o no existe lanza", async () => {
     const slug = "test-packdb-no-pack";
     await pool.query(
@@ -177,7 +196,7 @@ describeSiHayBD("repositorio de definiciones de pack", () => {
     expect(todas.has("test-packdb-suelto")).toBe(false);
   });
 
-  it("actualizarPack devuelve a su valor las columnas no editables", async () => {
+  it("actualizarPack devuelve a su valor las columnas que el panel no edita, y conserva las que no toca", async () => {
     const slug = "test-packdb-fuerza";
     await repo.crearPack(datos(slug));
     await pool.query(
@@ -200,9 +219,9 @@ describeSiHayBD("repositorio de definiciones de pack", () => {
       unit: null,
       cuerpo: "",
       allergens: [],
-      destacado: false,
-      temporada: false,
-      especialidad: null,
+      destacado: false, // lo manda el panel
+      temporada: true, // se conserva
+      especialidad: "e", // se conserva
     });
   });
 });

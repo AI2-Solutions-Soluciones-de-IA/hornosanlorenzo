@@ -457,6 +457,14 @@ export default function EditorPack({
                 />
                 Agotado (se ve, pero no se puede pedir)
               </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={borrador.destacado}
+                  onChange={(e) => cambiar({ destacado: e.target.checked })}
+                />
+                Destacado (sale en la portada y en Top ventas)
+              </label>
             </div>
             <Problemas {...de("estado")} />
 

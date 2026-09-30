@@ -58,6 +58,7 @@ const packAdmin = (): PackAdmin => ({
   imageHeight: null,
   activo: true,
   agotado: false,
+  destacado: false,
   orden: 10,
   definicion: {
     ocasion: "Merienda",
@@ -87,6 +88,12 @@ const packAdmin = (): PackAdmin => ({
 });
 
 describe("centimosAEuros", () => {
+  it("destacado va y vuelve entre el pack y el borrador", () => {
+    const p = { ...packAdmin(), destacado: true };
+    expect(borradorDesdePack(p).destacado).toBe(true);
+    expect(aEntrada(borradorDesdePack(p)).destacado).toBe(true);
+  });
+
   it("muestra con coma", () => {
     expect(centimosAEuros(3950)).toBe("39,50");
   });

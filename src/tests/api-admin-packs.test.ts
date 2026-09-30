@@ -39,7 +39,7 @@ const entrada = (o: Record<string, unknown> = {}) => ({
   priceCents: 2500,
   shortDescription: "Para merendar",
   imageUrl: null, imageAlt: null, imageWidth: null, imageHeight: null,
-  activo: true, agotado: false, orden: 10,
+  activo: true, agotado: false, destacado: false, orden: 10,
   definicion: {
     ocasion: "Merienda",
     personas: { min: 2, max: 4, texto: "2 a 4 personas" },
@@ -118,6 +118,24 @@ describe("/api/admin/packs", () => {
     const m = await preparar([...CARTA, PACK_FILA, prod({ slug: "pack-merienda" }), prod({ slug: "pack-merienda-2" })]);
     const r = await m.POST({ request: req("POST", entrada()), url: new URL("https://x.test/api/admin/packs"), locals: { usuario: admin } } as never);
     expect((await r.json()).slug).toBe("pack-merienda-3");
+  });
+
+  it("POST: un nombre que da un slug reservado lleva sufijo", async () => {
+    for (const [nombre, esperado] of [["Packs", "packs-2"], ["Dulce", "dulce-2"], ["Salado", "salado-2"], ["Top ventas", "top-ventas-2"]]) {
+      vi.resetModules();
+      const m = await preparar();
+      const r = await m.POST({ request: req("POST", entrada({ name: nombre })), url: new URL("https://x.test/api/admin/packs"), locals: { usuario: admin } } as never);
+      expect((await r.json()).slug).toBe(esperado);
+    }
+  });
+
+  it("GET devuelve destacado y POST lo guarda", async () => {
+    const m = await preparar([...CARTA, { ...PACK_FILA, destacado: true }]);
+    const g = await m.GET({ request: req("GET"), url: new URL("https://x.test/api/admin/packs"), locals: { usuario: admin } } as never);
+    expect((await g.json()).packs[0].destacado).toBe(true);
+    await m.POST({ request: req("POST", entrada({ destacado: true })), url: new URL("https://x.test/api/admin/packs"), locals: { usuario: admin } } as never);
+    const { crearPack } = await import("~/lib/db/packs");
+    expect(vi.mocked(crearPack).mock.calls[0][0].destacado).toBe(true);
   });
 
   it("POST inválido: 400 con errores y sin guardar", async () => {

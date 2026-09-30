@@ -133,6 +133,7 @@ export type DatosPack = {
   imageHeight: number | null;
   activo: boolean;
   agotado: boolean;
+  destacado: boolean;
   orden: number;
   definicion: Omit<DefinicionPack, "slug">;
 };
@@ -205,6 +206,7 @@ const VALORES = (d: DatosPack) => [
   d.activo,
   d.agotado,
   d.orden,
+  d.destacado,
 ];
 
 /** Crea el pack (fila de productos + definición + piezas). Devuelve el slug. */
@@ -217,11 +219,11 @@ export async function crearPack(
     const { rows } = await cliente.query<{ id: string }>(
       `insert into productos
          (name, price_cents, short_description, image_url, image_alt,
-          image_width, image_height, activo, agotado, orden,
+          image_width, image_height, activo, agotado, orden, destacado,
           slug, category, seccion, consultar, unit, cuerpo, allergens,
-          destacado, temporada, especialidad)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-               $11,'packs','packs',false,null,'','{}',false,false,null)
+          temporada, especialidad)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+               $12,'packs','packs',false,null,'','{}',false,null)
        returning id`,
       [...VALORES(datos), datos.slug],
     );
@@ -248,11 +250,10 @@ export async function actualizarPack(
       `update productos set
          name = $1, price_cents = $2, short_description = $3, image_url = $4,
          image_alt = $5, image_width = $6, image_height = $7, activo = $8,
-         agotado = $9, orden = $10, updated_at = now(),
+         agotado = $9, orden = $10, destacado = $11, updated_at = now(),
          category = 'packs', seccion = 'packs', consultar = false, unit = null,
-         cuerpo = '', allergens = '{}', destacado = false, temporada = false,
-         especialidad = null
-       where slug = $11 and category = 'packs'
+         cuerpo = '', allergens = '{}'
+       where slug = $12 and category = 'packs'
        returning id`,
       [...VALORES(datos), slug],
     );

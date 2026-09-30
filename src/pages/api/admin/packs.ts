@@ -81,6 +81,7 @@ export const GET: APIRoute = async ({ locals }) => {
         imageHeight: p.imageHeight,
         activo: p.activo,
         agotado: p.agotado,
+        destacado: p.destacado,
         orden: p.orden,
         definicion,
         sueltoCents: suelto,
@@ -116,10 +117,13 @@ async function validar(
   return { datos: parsed.data, avisos };
 }
 
+/** Rutas estáticas bajo /catalogo/ que taparían la ficha de un pack con ese slug. */
+const RESERVADOS = new Set(["packs", "dulce", "salado", "top-ventas"]);
+
 /** `-2`, `-3`… hasta uno libre entre TODOS los productos, no solo los packs. */
 function slugLibre(nombre: string, ocupados: Set<string>): string {
   const base = slugify(nombre);
-  if (!ocupados.has(base)) return base;
+  if (!ocupados.has(base) && !RESERVADOS.has(base)) return base;
   for (let n = 2; ; n++) {
     const candidato = `${base}-${n}`;
     if (!ocupados.has(candidato)) return candidato;

@@ -358,19 +358,26 @@ ayudantes puros que salgan (con pruebas). Toma como modelo de estilo y de flujo
 
 ### Tarea 9: A producción
 
-Orden, para que no haya ventana rota (el código nuevo lee las tablas nuevas; el viejo no las usa):
+Orden y comprobaciones (el código nuevo lee las tablas nuevas; el viejo no las usa):
 
-- [ ] **Antes de nada:** guardar el HTML de `/catalogo/packs` y de las 7 fichas de producción
-  (`curl -sL`), para comparar después.
-- [ ] Migración 013 en producción con el OK de Oscar:
-  `node --env-file=<scratchpad>/prod.env scripts/migrar.mjs` (nunca `pnpm db:migrar`).
-- [ ] `volcar-packs.mjs` en seco contra producción, revisarlo, y `--aplicar --copia=…`. El código
-  desplegado todavía lee del código: no cambia nada visible.
-- [ ] Push a `main`, despliegue esperado **por SHA**.
-- [ ] Comparar el HTML nuevo con el guardado: nombres, precios, suelto, ahorro, €/persona y
-  opciones de cada desplegable, iguales (el orden de atributos o clases puede cambiar; se comparan
-  los textos).
-- [ ] Probar el panel en producción con Oscar: abrir `/admin/packs`, editar algo reversible
-  (el orden de un pack) y deshacerlo.
-- [ ] Marcha atrás: si hay que volver al código anterior, las tablas nuevas se quedan (el código
-  viejo las ignora).
+1. [ ] Comprobaciones de solo lectura en producción:
+   `select slug, category, activo, agotado, destacado, temporada, especialidad from productos where category='packs'`
+   → exactamente los 7 slugs de `scripts/packs-iniciales.json`; `select to_regclass('pack_piezas')` → null;
+   guardar el HTML (`curl -sL`) de `/catalogo/packs` y de las 7 fichas.
+2. [ ] Migración 013 con el OK de Oscar: `node --env-file=<scratchpad>/prod.env scripts/migrar.mjs`
+   (nunca `pnpm db:migrar`). El código desplegado ignora las tablas nuevas. OBLIGATORIO antes del
+   despliegue: con el código nuevo y sin la tabla, TODOS los checkouts dan 500.
+3. [ ] `volcar-packs.mjs` en seco (7 «se inserta», sin problemas), luego
+   `--aplicar --copia=<fichero nuevo>` → «Relectura OK». Desde aquí hasta el despliegue,
+   congelación: nadie crea ni cambia de categoría un pack en Productos.
+4. [ ] Push a `main` y despliegue esperado por SHA.
+5. [ ] Verificar: diff del texto visible de las 8 páginas contra el paso 1, y verlas en un
+   navegador. Checkout sin crear pedido: `POST /api/checkout` con un carrito de pack válido y una
+   fecha PASADA → «La fecha elegida no está disponible» (prueba que se valoró el pack). Un 500 o
+   «no está disponible ahora mismo» = parar.
+6. [ ] Panel con Oscar: `/admin/packs`, cambiar el orden de un pack y deshacerlo.
+7. [ ] Marcha atrás: rollback instantáneo de Vercel; nunca borrar las tablas. Las ediciones de
+   composición hechas en el panel no se ven mientras esté el código viejo.
+
+Si se despliega sin el volcado: los packs desaparecen (404 cacheable) y el checkout los rechaza;
+se arregla corriendo el paso 3 con `VERCEL_BYPASS_TOKEN` y `PUBLIC_SITE_URL` en el prod.env.
