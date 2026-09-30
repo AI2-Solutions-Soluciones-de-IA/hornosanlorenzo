@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import CompraRapida from "~/components/CompraRapida.astro";
+import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 import { formatDate } from "~/lib/format";
 import { site } from "~/data/site";
 import { obtenerNoticia } from "~/lib/db/noticias";
@@ -105,6 +106,10 @@ const jsonLd = {
         <p class="font-[family-name:var(--font-display)] text-2xl mt-1">
           <a href={`/catalogo/${comprable.slug}`} class="hover:text-[color:var(--color-accent-dark)]">{comprable.name}</a>
         </p>
+        {/* Un pack se pide eligiendo en su ficha: aquí no hay compra rápida. */}
+        {seCompraDesdeLaFicha(comprable) ? (
+          <a href={`/catalogo/${comprable.slug}`} class="btn btn-secundario mt-4">Ver el pack</a>
+        ) : (
         <CompraRapida
           slug={comprable.slug}
           name={comprable.name}
@@ -114,6 +119,7 @@ const jsonLd = {
           unit={comprable.unit ?? undefined}
           variants={comprable.variantes}
         />
+        )}
       </aside>
     )}
   </article>

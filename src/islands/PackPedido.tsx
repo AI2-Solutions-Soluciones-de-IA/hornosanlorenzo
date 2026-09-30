@@ -118,11 +118,10 @@ export default function PackPedido({
   }, [vista]);
 
   async function elegirFoto(fichero: File | undefined) {
+    // Cancelar el selector de ficheros dispara `change` sin fichero: no es
+    // «quitar la foto», así que la que ya estaba subida se queda.
+    if (!fichero) return;
     const mio = ++turno.current;
-    if (!fichero) {
-      setFoto({ estado: "vacia" });
-      return;
-    }
     if (!TIPOS_FOTO.includes(fichero.type)) {
       setFoto({
         estado: "error",

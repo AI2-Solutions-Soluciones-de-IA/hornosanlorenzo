@@ -164,6 +164,7 @@ describeSiHayBD("repositorio de noticias", () => {
       expect(n.producto).toEqual({
         slug: roscon.slug,
         name: "Roscón de Reyes (noticias.test)",
+        category: "tartas",
         priceCents: 2400,
         consultar: false,
         activo: true,

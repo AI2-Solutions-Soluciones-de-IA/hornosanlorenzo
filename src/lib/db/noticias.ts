@@ -22,6 +22,8 @@ export { NoticiaError };
 export type ProductoEnNoticia = {
   slug: string;
   name: string;
+  /** Un pack no se añade desde la noticia: hay que elegir en su ficha. */
+  category: string;
   priceCents: number | null;
   consultar: boolean;
   activo: boolean;
@@ -78,7 +80,7 @@ const CAMPOS = `
   tags, publicada,
   producto_id  as "productoId",
   (select json_build_object(
-            'slug', p.slug, 'name', p.name,
+            'slug', p.slug, 'name', p.name, 'category', p.category,
             'priceCents', p.price_cents, 'consultar', p.consultar,
             'activo', p.activo, 'agotado', p.agotado, 'unit', p.unit,
             'variantes', coalesce(

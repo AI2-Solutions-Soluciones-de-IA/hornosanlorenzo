@@ -14,16 +14,17 @@ const PIEZAS: PiezaPedido[] = [
 ];
 
 describe("detallePack", () => {
-  it("cada pieza en su orden: la fija tal cual y la elegida con su título", () => {
+  it("cada pieza en su orden: la fija tal cual y la elegida con la etiqueta del hueco", () => {
     expect(detallePack(PIEZAS, { quiche1: "quiche-carbonara", quiche2: "quiche-lorraine" })).toEqual([
-      "1 quiche: Quiche carbonara",
+      "Primera quiche: Quiche carbonara",
       "24 bollos preñaos asturianos",
-      "1 quiche: Quiche lorraine",
+      "Segunda quiche: Quiche lorraine",
     ]);
   });
 
-  it("la misma opción en dos huecos da dos líneas iguales (el carrito no puede usarlas de clave)", () => {
-    const detalle = detallePack(PIEZAS, { quiche1: "quiche-carbonara", quiche2: "quiche-carbonara" })!;
+  it("dos huecos con la misma etiqueta y la misma opción dan dos líneas iguales (el carrito no puede usarlas de clave)", () => {
+    const iguales: PiezaPedido[] = PIEZAS.map((p) => (p.tipo === "eleccion" ? { ...p, etiqueta: "Sabor de la quiche" } : p));
+    const detalle = detallePack(iguales, { quiche1: "quiche-carbonara", quiche2: "quiche-carbonara" })!;
     expect(detalle[0]).toBe(detalle[2]);
   });
 

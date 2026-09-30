@@ -11,6 +11,7 @@ import ProductCard from "~/components/ProductCard.astro";
 import ProductoSaboresCard from "~/components/ProductoSaboresCard.astro";
 import { grupoOfCategory, type CategoryId } from "~/data/categories";
 import { packPorSlug } from "~/data/packs";
+import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 import type { Producto } from "~/lib/db/productos";
 import type { ElementoCatalogo } from "~/lib/sabores";
 
@@ -31,7 +32,7 @@ function imagenDe(p: Producto) {
 const primero = elemento.tipo === "producto" ? elemento.producto : elemento.sabores[0];
 // Un pack no lleva compra rápida (hay que elegir): tarjeta propia. Uno sin
 // definición no se puede vender y su ficha da 404, así que no se pinta.
-const esPack = primero.category === "packs";
+const esPack = seCompraDesdeLaFicha(primero);
 const defPack = esPack ? packPorSlug(primero.slug) : undefined;
 const search =
   elemento.tipo === "producto"

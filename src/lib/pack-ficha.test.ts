@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { packPorSlug, type ProductoPieza } from "~/data/packs";
-import { fichaPack } from "~/lib/pack-ficha";
+import { fichaPack, seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 
 const p = (
   slug: string,
@@ -96,5 +96,13 @@ describe("fichaPack", () => {
     expect(fichaPack(cumple, { ...PACK, consultar: true }, CARTA).agotado).toBe(true);
     const sinPrecio = fichaPack(cumple, { ...PACK, priceCents: null }, CARTA);
     expect(sinPrecio).toMatchObject({ agotado: true, ahorro: null, porPersonaCents: null });
+  });
+});
+
+describe("seCompraDesdeLaFicha", () => {
+  it("solo los packs: sin elegir sabores ni foto, la compra rápida acabaría rechazada", () => {
+    expect(seCompraDesdeLaFicha({ category: "packs" })).toBe(true);
+    expect(seCompraDesdeLaFicha({ category: "tartas" })).toBe(false);
+    expect(seCompraDesdeLaFicha({ category: "salado" })).toBe(false);
   });
 });

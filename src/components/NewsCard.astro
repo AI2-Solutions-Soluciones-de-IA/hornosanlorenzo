@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import CompraRapida from "~/components/CompraRapida.astro";
+import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 import { formatDate } from "~/lib/format";
 import type { ProductoEnNoticia } from "~/lib/db/noticias";
 
@@ -58,6 +59,9 @@ const comprable = producto && producto.activo ? producto : null;
         <p class="numeracion">
           <a href={`/catalogo/${comprable.slug}`} class="hover:text-[color:var(--color-accent-dark)]">{comprable.name}</a>
         </p>
+        {seCompraDesdeLaFicha(comprable) ? (
+          <a href={`/catalogo/${comprable.slug}`} class="btn btn-secundario mt-3">Ver el pack</a>
+        ) : (
         <CompraRapida
           slug={comprable.slug}
           name={comprable.name}
@@ -67,6 +71,7 @@ const comprable = producto && producto.activo ? producto : null;
           unit={comprable.unit ?? undefined}
           variants={comprable.variantes}
         />
+        )}
       </div>
     )}
   </div>

@@ -32,6 +32,14 @@ export type FichaPack = {
   agotado: boolean;
 };
 
+/**
+ * ¿Se pide solo desde su ficha? Un pack no admite compra rápida (tarjeta del
+ * catálogo, noticia de Este mes): sin elegir sabores ni subir la foto, el
+ * checkout lo rechaza. Donde iría el botón de añadir va «Ver el pack».
+ */
+export const seCompraDesdeLaFicha = (producto: { category: string }): boolean =>
+  producto.category === "packs";
+
 type PackEnCarta = {
   priceCents: number | null;
   consultar: boolean;

@@ -24,8 +24,10 @@ export type PiezaPedido =
 
 /**
  * El desglose de la línea del carrito: cada pieza en orden, la fija tal cual
- * y la elegida como «<título del hueco>: <nombre elegido>». null si falta
- * alguna elección o no corresponde a una opción del hueco.
+ * y la elegida como «<etiqueta del hueco>: <nombre elegido>» («Sabor de la
+ * empanada: Empanada de carne»; el título entero, con sus raciones, se hacía
+ * largo en el carrito). null si falta alguna elección o no corresponde a una
+ * opción del hueco.
  */
 export function detallePack(
   piezas: readonly PiezaPedido[],
@@ -39,7 +41,7 @@ export function detallePack(
     }
     const opcion = p.opciones.find((o) => o.slug === elegidos[p.id]);
     if (!opcion) return null;
-    res.push(`${p.titulo}: ${opcion.name}`);
+    res.push(`${p.etiqueta}: ${opcion.name}`);
   }
   return res;
 }
