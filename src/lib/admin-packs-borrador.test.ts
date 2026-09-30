@@ -6,7 +6,7 @@ import {
   centimosAEuros,
   comprobarBorrador,
   dondeDePieza,
-  eurosACentimos,
+  hayErroresDePiezas,
   huecoVacio,
   mover,
   nuevoIdHueco,
@@ -86,14 +86,7 @@ const packAdmin = (): PackAdmin => ({
   ahorroPct: 10,
 });
 
-describe("euros ↔ céntimos", () => {
-  it("acepta coma o punto y redondea", () => {
-    expect(eurosACentimos("19,99")).toBe(1999);
-    expect(eurosACentimos("19.99")).toBe(1999);
-    expect(eurosACentimos(" 40 ")).toBe(4000);
-    expect(eurosACentimos("")).toBeNull();
-    expect(eurosACentimos("abc")).toBeNull();
-  });
+describe("centimosAEuros", () => {
   it("muestra con coma", () => {
     expect(centimosAEuros(3950)).toBe("39,50");
   });
@@ -295,5 +288,47 @@ describe("comprobarBorrador", () => {
     expect(comprobarBorrador(b, carta).errores.map((e) => e.donde)).toContain(
       "personas",
     );
+  });
+  it("un precio que no se entiende lo dice, en vez de «mayor que 0»", () => {
+    for (const precioEuros of ["doce", "12,50,3"]) {
+      const { errores } = comprobarBorrador({ ...borradorDesdePack(packAdmin()), precioEuros }, carta);
+      expect(problemasDe(errores, ["precio"]).map((e) => e.mensaje)).toEqual([
+        "No es un precio válido: escribe por ejemplo 39,50",
+      ]);
+    }
+  });
+  it("sin precio pide escribirlo", () => {
+    const { errores } = comprobarBorrador({ ...borradorDesdePack(packAdmin()), precioEuros: " " }, carta);
+    expect(problemasDe(errores, ["precio"]).map((e) => e.mensaje)).toEqual(["Escribe el precio del pack."]);
+  });
+  it("personas con decimales: «Escribe un número entero»", () => {
+    const { errores } = comprobarBorrador({ ...borradorDesdePack(packAdmin()), personasMin: "4.5" }, carta);
+    expect(problemasDe(errores, ["personas"]).map((e) => e.mensaje)).toEqual([
+      "Escribe un número entero de personas.",
+    ]);
+  });
+  it("sin máximo de personas lo pide, sin hablar de mínimo mayor que máximo", () => {
+    const { errores } = comprobarBorrador({ ...borradorDesdePack(packAdmin()), personasMax: "" }, carta);
+    expect(problemasDe(errores, ["personas"]).map((e) => e.mensaje)).toEqual([
+      "Escribe el mínimo y el máximo de personas.",
+    ]);
+  });
+});
+
+describe("hayErroresDePiezas (los que pueden venir de una carta vieja)", () => {
+  it("sí con un error de pieza o de hueco", () => {
+    expect(hayErroresDePiezas([{ donde: "pieza 2", mensaje: "x" }])).toBe(true);
+    expect(hayErroresDePiezas([{ donde: "hueco «Sabor»", mensaje: "x" }])).toBe(true);
+    expect(hayErroresDePiezas([{ donde: "hueco 3", mensaje: "x" }])).toBe(true);
+  });
+  it("no con errores de campos del pack", () => {
+    expect(hayErroresDePiezas([{ donde: "nombre", mensaje: "x" }, { donde: "precio", mensaje: "y" }])).toBe(false);
+    expect(hayErroresDePiezas([])).toBe(false);
+  });
+  it("una pieza que la carta nueva ya tiene deja de fallar", () => {
+    const b = borradorDesdePack(packAdmin());
+    const vieja = carta.filter((p) => p.slug !== "bollos");
+    expect(hayErroresDePiezas(comprobarBorrador(b, vieja).errores)).toBe(true);
+    expect(comprobarBorrador(b, carta).errores).toEqual([]);
   });
 });

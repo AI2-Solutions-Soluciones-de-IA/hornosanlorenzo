@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { categories, categoryIds, type CategoryId } from "~/data/categories";
 import { secciones, type SeccionId } from "~/data/secciones";
 import { formatPriceCents } from "~/lib/format";
+import { eurosACentimos } from "~/lib/euros";
+import { AVISO_DESACTIVAR } from "~/lib/panel-textos";
 
 /**
  * Misma forma que `Producto`/`Variante` de `~/lib/db/productos`, redefinida
@@ -103,25 +105,7 @@ const badge: React.CSSProperties = {
 
 const MENSAJE_GENERICO = "Algo ha fallado. Inténtalo de nuevo.";
 
-const AVISO_DESACTIVAR =
-  "Desaparece del catálogo y no se puede comprar. La ficha se conserva y se puede volver a activar.";
-
-/**
- * Único sitio de la isla donde se convierte euros → céntimos, y con
- * `Math.round`: `19.99 * 100` en coma flotante da `1998.9999999999998`, y
- * sin redondear se guardaría un precio con un céntimo de menos. Todo lo
- * demás de la isla trabaja con el texto que escribe quien rellena el
- * formulario; esta es la única conversión.
- */
-function eurosACentimos(texto: string): number | null {
-  const limpio = texto.trim().replace(",", ".");
-  if (limpio === "") return null;
-  const valor = Number(limpio);
-  if (Number.isNaN(valor)) return null;
-  return Math.round(valor * 100);
-}
-
-/** La misma conversión, al revés, para precargar el formulario en euros. */
+/** La conversión de `~/lib/euros`, al revés, para precargar el formulario. */
 function centimosAEuros(cents: number | null): string {
   return cents === null ? "" : (cents / 100).toFixed(2);
 }

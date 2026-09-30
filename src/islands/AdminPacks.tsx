@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type {
   PackAdmin,
   Problema,
+  ProductoCarta,
   RespuestaGetPacks,
   RespuestaGuardarPack,
 } from "~/lib/admin-packs-api";
@@ -54,6 +55,33 @@ export default function AdminPacks() {
 
   useEffect(() => {
     void cargar();
+  }, []);
+
+  /**
+   * Solo la carta, en silencio: la lista de packs y el borrador abierto no se
+   * tocan. Para que un producto activado o creado en otra pestaña no bloquee
+   * un guardado válido.
+   */
+  async function recargarCarta(): Promise<readonly ProductoCarta[] | null> {
+    try {
+      const res = await fetch("/api/admin/packs");
+      const cuerpo = await res.json().catch(() => null);
+      if (!res.ok || !Array.isArray(cuerpo?.carta)) return null;
+      const carta = cuerpo.carta as ProductoCarta[];
+      setDatos((d) => (d ? { ...d, carta } : d));
+      return carta;
+    } catch {
+      return null;
+    }
+  }
+
+  // Al volver a la pestaña (p. ej. tras cambiar algo en Productos), carta al día.
+  useEffect(() => {
+    const alVolver = () => {
+      if (document.visibilityState === "visible") void recargarCarta();
+    };
+    document.addEventListener("visibilitychange", alVolver);
+    return () => document.removeEventListener("visibilitychange", alVolver);
   }, []);
 
   async function onGuardado(r: RespuestaGuardarPack, creado: boolean) {
@@ -128,6 +156,7 @@ export default function AdminPacks() {
           setAviso(null);
           setVista({ tipo: "lista" });
         }}
+        onRecargarCarta={recargarCarta}
       />
     );
   }

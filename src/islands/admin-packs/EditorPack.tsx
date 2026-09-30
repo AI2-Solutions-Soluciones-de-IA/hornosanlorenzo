@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   PackAdmin,
   Problema,
@@ -10,6 +10,8 @@ import {
   borradorDesdePack,
   borradorVacio,
   comprobarBorrador,
+  dondeDePieza,
+  hayErroresDePiezas,
   mover,
   problemasDe,
   textoPersonas,
@@ -22,6 +24,7 @@ import {
   type DefinicionPack,
 } from "~/data/packs";
 import { formatPriceCents } from "~/lib/format";
+import { AVISO_DESACTIVAR } from "~/lib/panel-textos";
 import EditorPiezas from "./EditorPiezas";
 import {
   ayuda,
@@ -43,9 +46,25 @@ type Props = {
   aviso: { mensaje: string; avisos: Problema[] } | null;
   onGuardado: (r: RespuestaGuardarPack, creado: boolean) => void;
   onVolver: () => void;
+  /** Vuelve a leer la carta (sin tocar el borrador); null si no se pudo. */
+  onRecargarCarta: () => Promise<readonly ProductoCarta[] | null>;
 };
 
 const MAX_FRASES = 10;
+
+/** Cada campo del bloque 1 y 2 → su `donde` en `Problema`. */
+const DONDE_POR_ID: Record<string, string> = {
+  "pk-nombre": "nombre",
+  "pk-precio": "precio",
+  "pk-orden": "orden",
+  "pk-descriptor": "descriptor",
+  "pk-alt": "foto",
+  "pk-ocasion": "ocasión",
+  "pk-min": "personas",
+  "pk-max": "personas",
+  "pk-personas": "personas",
+  "pk-consejo": "consejo",
+};
 
 async function guardar(
   slug: string | null,
@@ -82,6 +101,7 @@ export default function EditorPack({
   aviso,
   onGuardado,
   onVolver,
+  onRecargarCarta,
 }: Props) {
   const [borrador, setBorrador] = useState<Borrador>(() =>
     pack ? borradorDesdePack(pack) : borradorVacio(),
@@ -97,6 +117,10 @@ export default function EditorPack({
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [erroresServidor, setErroresServidor] = useState<Problema[]>([]);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  // Un pack nuevo no enseña errores junto a los campos hasta que se toca el
+  // campo (al salir de él) o se intenta guardar; uno existente, desde el principio.
+  const [intentado, setIntentado] = useState(pack !== null);
+  const [tocados, setTocados] = useState<ReadonlySet<string>>(new Set());
 
   const entrada = useMemo(() => aEntrada(borrador), [borrador]);
   const { errores: erroresCliente, avisos } = useMemo(
@@ -105,6 +129,37 @@ export default function EditorPack({
   );
   const errores = [...erroresCliente, ...erroresServidor];
   const sinCambios = JSON.stringify(entrada) === original;
+
+  // Cerrar la pestaña, recargar o irse a otra sección del panel con cambios
+  // sin guardar: el navegador pregunta antes.
+  useEffect(() => {
+    if (sinCambios) return;
+    const alSalir = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", alSalir);
+    return () => window.removeEventListener("beforeunload", alSalir);
+  }, [sinCambios]);
+
+  /** `donde` de cada pieza → la clave con la que se marca como tocada. */
+  const clavePorDonde = new Map<string, string>();
+  borrador.piezas.forEach((p, i) => {
+    for (const d of dondeDePieza(p, i)) clavePorDonde.set(d, `clave:${p.clave}`);
+  });
+  const visibles = intentado
+    ? errores
+    : errores.filter(
+        (e) => tocados.has(e.donde) || tocados.has(clavePorDonde.get(e.donde) ?? ""),
+      );
+
+  /** Al salir de un campo, se marca como tocado (por su id o por el `data-donde` que lo envuelve). */
+  function alSalirDeCampo(e: React.FocusEvent) {
+    const el = e.target as HTMLElement;
+    const donde =
+      DONDE_POR_ID[el.id] ?? el.closest("[data-donde]")?.getAttribute("data-donde");
+    if (donde && !tocados.has(donde)) setTocados(new Set([...tocados, donde]));
+  }
 
   const resumen = useMemo(() => {
     const def = { slug: "", ...entrada.definicion } as DefinicionPack;
@@ -179,14 +234,32 @@ export default function EditorPack({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (guardando || subiendoFoto) return;
-    if (erroresCliente.length > 0) {
+    setIntentado(true);
+    setGuardando(true);
+    setErrorGeneral(null);
+    let pendientes = erroresCliente;
+    // Un error de pieza puede venir de una carta vieja (un producto que se
+    // activó o se creó después de abrir el panel): se vuelve a leer antes de
+    // bloquear. El borrador no se toca.
+    if (hayErroresDePiezas(pendientes)) {
+      const nueva = await onRecargarCarta();
+      if (nueva) pendientes = comprobarBorrador(borrador, nueva).errores;
+    }
+    if (pendientes.length > 0) {
+      setGuardando(false);
       setErrorGeneral(
-        `No se ha guardado: hay ${erroresCliente.length === 1 ? "una cosa" : `${erroresCliente.length} cosas`} que corregir. Están marcadas junto a cada campo y en el resumen.`,
+        `No se ha guardado: hay ${pendientes.length === 1 ? "una cosa" : `${pendientes.length} cosas`} que corregir. Están marcadas junto a cada campo y en el resumen.`,
       );
       return;
     }
-    setGuardando(true);
-    setErrorGeneral(null);
+    if (
+      pack?.activo &&
+      !borrador.activo &&
+      !window.confirm(`¿Desactivar «${entrada.name}»?\n\n${AVISO_DESACTIVAR}`)
+    ) {
+      setGuardando(false);
+      return;
+    }
     const r = await guardar(pack?.slug ?? null, entrada);
     setGuardando(false);
     if (r.ok) {
@@ -210,10 +283,8 @@ export default function EditorPack({
     onVolver();
   }
 
-  const de = (donde: string) => ({
-    errores: problemasDe(errores, [donde]),
-    avisos: problemasDe(avisos, [donde]),
-  });
+  // Los avisos (p. ej. «no ahorra nada») solo salen en el resumen: una vez.
+  const de = (donde: string) => ({ errores: problemasDe(visibles, [donde]) });
 
   return (
     <div>
@@ -262,19 +333,16 @@ export default function EditorPack({
             fontSize: 13,
           }}
         >
-          <p>{aviso.mensaje}</p>
-          {aviso.avisos.length > 0 && (
-            <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
-              {aviso.avisos.map((a, i) => (
-                <li key={i}>{a.mensaje}</li>
-              ))}
-            </ul>
-          )}
+          <p>
+            {aviso.mensaje}
+            {aviso.avisos.length > 0 && " Tiene avisos: los verás en el resumen."}
+          </p>
         </div>
       )}
 
       <form
         onSubmit={onSubmit}
+        onBlur={alSalirDeCampo}
         noValidate
         className="lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-10"
       >
@@ -554,7 +622,7 @@ export default function EditorPack({
             <p style={ayuda}>El precio por persona se calcula con el máximo.</p>
             <Problemas {...de("personas")} />
 
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 20 }} data-donde="para quién">
               <p style={etiqueta}>Para quién es</p>
               <p style={ayuda}>Una frase por línea; se leen en este orden.</p>
               {borrador.paraQuien.map((f, i) => (
@@ -631,8 +699,7 @@ export default function EditorPack({
             <EditorPiezas
               piezas={borrador.piezas}
               carta={carta}
-              errores={errores}
-              avisos={avisos}
+              errores={visibles}
               onChange={(piezas) => cambiar({ piezas })}
             />
           </Bloque>
@@ -671,14 +738,19 @@ export default function EditorPack({
 
             {errores.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <p style={etiqueta}>Antes de guardar, corrige</p>
+                <p style={etiqueta}>
+                  {intentado ? "Antes de guardar, corrige" : "Falta por completar"}
+                </p>
                 <ul
                   style={{ margin: "6px 0 0", paddingLeft: 18, fontSize: 13 }}
                 >
                   {errores.map((e, i) => (
                     <li
                       key={i}
-                      style={{ color: "var(--color-caramelo)", marginTop: 4 }}
+                      style={{
+                        color: intentado ? "var(--color-caramelo)" : "var(--color-ink-muted)",
+                        marginTop: 4,
+                      }}
                     >
                       <strong>{e.donde.charAt(0).toUpperCase() + e.donde.slice(1)}:</strong> {e.mensaje}
                     </li>

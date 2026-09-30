@@ -17,6 +17,9 @@ import {
   type Problema,
 } from "~/lib/pack-validacion";
 import type { Pieza } from "~/data/packs";
+import { eurosACentimos } from "~/lib/euros";
+
+export { eurosACentimos };
 
 export type PiezaFijaBorrador = {
   clave: string;
@@ -66,15 +69,6 @@ export type Borrador = {
   consejo: string;
   piezas: PiezaBorrador[];
 };
-
-/** Euros escritos a mano → céntimos enteros; null si no es un número. */
-export function eurosACentimos(texto: string): number | null {
-  const limpio = texto.trim().replace(",", ".");
-  if (limpio === "") return null;
-  const valor = Number(limpio);
-  if (Number.isNaN(valor)) return null;
-  return Math.round(valor * 100);
-}
 
 /** Céntimos → euros con coma, para precargar el formulario: «39,50». */
 export function centimosAEuros(cents: number): string {
@@ -323,10 +317,28 @@ export function comprobarBorrador(
     }
   });
   const res: Problema[] = [];
+
+  // Precio y personas: si lo escrito no se entiende, decirlo, en vez de
+  // «tiene que ser mayor que 0» o «el mínimo no puede ser mayor que el máximo».
+  let precioPropio: string | null = null;
+  if (b.precioEuros.trim() === "") precioPropio = "Escribe el precio del pack.";
+  else if (eurosACentimos(b.precioEuros) === null) {
+    precioPropio = "No es un precio válido: escribe por ejemplo 39,50";
+  }
+  if (precioPropio) res.push({ donde: "precio", mensaje: precioPropio });
+  const min = b.personasMin.trim();
+  const max = b.personasMax.trim();
+  let personasPropio: string | null = null;
+  if (min === "" || max === "") personasPropio = "Escribe el mínimo y el máximo de personas.";
+  else if (!/^\d+$/.test(min) || !/^\d+$/.test(max)) personasPropio = "Escribe un número entero de personas.";
+  if (personasPropio) res.push({ donde: "personas", mensaje: personasPropio });
+  const propios = new Set([...(precioPropio ? ["precio"] : []), ...(personasPropio ? ["personas"] : [])]);
+
   for (const donde of sinProducto) {
     res.push({ donde, mensaje: `Elige el producto de la ${donde}.` });
   }
   for (const e of errores) {
+    if (propios.has(e.donde)) continue;
     if (sinProducto.has(e.donde) && e.mensaje.includes("«»")) continue;
     if (sinSeccion.has(e.donde) && e.mensaje.includes("La sección «»")) {
       res.push({ donde: e.donde, mensaje: sinSeccion.get(e.donde)! });
@@ -344,3 +356,12 @@ export function comprobarBorrador(
   }
   return { errores: res, avisos };
 }
+
+/**
+ * ¿Hay errores de piezas o huecos? Son los únicos que dependen de la carta
+ * (producto que no existe, tamaño que no tiene, hueco sin opciones, pieza sin
+ * precio): con uno de estos, antes de bloquear el guardado, el panel vuelve
+ * a leer la carta por si la que tiene es vieja.
+ */
+export const hayErroresDePiezas = (errores: readonly Problema[]): boolean =>
+  errores.some((e) => /^(pieza|hueco) /.test(e.donde));

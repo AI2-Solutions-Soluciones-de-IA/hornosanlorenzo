@@ -27,8 +27,8 @@ import {
 type Props = {
   piezas: PiezaBorrador[];
   carta: readonly ProductoCarta[];
+  /** Solo los que ya toca enseñar (ver `EditorPack`); los avisos van en el resumen. */
   errores: readonly Problema[];
-  avisos: readonly Problema[];
   onChange: (piezas: PiezaBorrador[]) => void;
 };
 
@@ -71,7 +71,6 @@ export default function EditorPiezas({
   piezas,
   carta,
   errores,
-  avisos,
   onChange,
 }: Props) {
   const grupos = useMemo(() => agrupar(carta), [carta]);
@@ -91,16 +90,13 @@ export default function EditorPiezas({
     );
 
   return (
-    <div>
+    <div data-donde="piezas">
       <p style={ayuda}>
         En el orden en que se leen en la ficha. Una pieza <strong>fija</strong>{" "}
         va siempre igual; en un <strong>hueco a elegir</strong> el cliente
         escoge en un desplegable.
       </p>
-      <Problemas
-        errores={problemasDe(errores, ["piezas"])}
-        avisos={problemasDe(avisos, ["piezas"])}
-      />
+      <Problemas errores={problemasDe(errores, ["piezas"])} />
 
       <ol style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {piezas.map((p, i) => {
@@ -109,6 +105,7 @@ export default function EditorPiezas({
           return (
             <li
               key={p.clave}
+              data-donde={`clave:${p.clave}`}
               style={{
                 marginTop: 16,
                 border: `1px solid ${errs.length ? "var(--color-caramelo)" : "var(--color-avellana)"}`,
@@ -155,7 +152,7 @@ export default function EditorPiezas({
                 />
               )}
 
-              <Problemas errores={errs} avisos={problemasDe(avisos, donde)} />
+              <Problemas errores={errs} />
             </li>
           );
         })}
