@@ -1,0 +1,311 @@
+[
+  {
+    "slug": "pack-cumpleanos",
+    "ocasion": "Cumpleaños en casa",
+    "personas": {
+      "min": 18,
+      "max": 20,
+      "texto": "18–20 personas"
+    },
+    "paraQuien": [
+      "El cumpleaños familiar en casa: el pedido más repetido del obrador convertido en un clic.",
+      "Quien organiza no quiere calcular cantidades: aquí van resueltas."
+    ],
+    "piezas": [
+      {
+        "tipo": "eleccion",
+        "id": "empanada",
+        "titulo": "1 empanada entera, sabor a elegir (16–20 rac.)",
+        "descripcion": "Hojaldre dorado y crujiente, de relleno generoso",
+        "etiqueta": "Sabor de la empanada",
+        "seccion": "empanadas",
+        "variantId": "entera"
+      },
+      {
+        "tipo": "fija",
+        "slug": "los-prenaos-de-la-casa",
+        "variantId": "u24",
+        "titulo": "24 bollos preñaos asturianos",
+        "descripcion": "Bollitos tiernos con su chorizo dentro, para comer de un bocado"
+      },
+      {
+        "tipo": "eleccion",
+        "id": "plancha",
+        "titulo": "1 plancha grande a elegir (24–30 rac.)",
+        "descripcion": "Bizcocho esponjoso del obrador con la cobertura que elijas",
+        "etiqueta": "Sabor de la plancha",
+        "seccion": "planchas",
+        "variantId": "grande"
+      },
+      {
+        "tipo": "fija",
+        "slug": "tarta-retrato",
+        "variantId": "pequena",
+        "titulo": "Foto grande comestible personalizada",
+        "descripcion": "Impresa en oblea sobre la plancha, con bordeado decorado",
+        "requiereFoto": true,
+        "rotulo": "Foto comestible grande, sobre la plancha"
+      }
+    ]
+  },
+  {
+    "slug": "pack-merienda-infantil",
+    "ocasion": "Merienda infantil",
+    "personas": {
+      "min": 10,
+      "max": 12,
+      "texto": "10–12 niños"
+    },
+    "paraQuien": [
+      "Cumpleañeros de 4 a 12 años, meriendas de cole y tardes de parque: cantidad justa y cero cocina.",
+      "La madre o padre que organiza entre semana y lo resuelve en dos minutos (si el cumpleaños es grande, pueden añadir producto suelto o pedir dos packs)."
+    ],
+    "piezas": [
+      {
+        "tipo": "fija",
+        "slug": "quiche-salchicha-y-queso",
+        "titulo": "1 quiche de salchicha y queso (8–10 rac.)",
+        "descripcion": "Cremosa y suave, la receta pensada para los pequeños"
+      },
+      {
+        "tipo": "fija",
+        "slug": "mini-croissants-york-y-queso",
+        "variantId": "u12",
+        "titulo": "12 mini croissants de york y queso",
+        "descripcion": "De mantequilla, con el queso fundente en su punto"
+      },
+      {
+        "tipo": "fija",
+        "slug": "plancha-oreo",
+        "variantId": "pequena",
+        "titulo": "½ plancha de Oreo (12–15 rac.)",
+        "descripcion": "La favorita infantil: crema de Oreo sobre bizcocho tierno"
+      }
+    ]
+  },
+  {
+    "slug": "pack-futbolero",
+    "ocasion": "Partido en casa",
+    "personas": {
+      "min": 10,
+      "max": 12,
+      "texto": "10–12 personas"
+    },
+    "paraQuien": [
+      "Quedadas para el fútbol, tardes de amigos y planes improvisados de fin de semana en casa.",
+      "El anfitrión que quiere quedar bien sin cocinar ni perderse el partido."
+    ],
+    "piezas": [
+      {
+        "tipo": "eleccion",
+        "id": "empanada",
+        "titulo": "½ empanada, sabor a elegir (8–10 rac.)",
+        "descripcion": "Nuestro hojaldre de siempre, en formato para el sofá",
+        "etiqueta": "Sabor de la empanada",
+        "seccion": "empanadas",
+        "variantId": "media"
+      },
+      {
+        "tipo": "fija",
+        "slug": "mini-croissants-surtido-salado",
+        "variantId": "u24",
+        "titulo": "24 mini croissants salados variados (4×6 sabores)",
+        "descripcion": "Rellenos surtidos para que nadie discuta más que del árbitro"
+      },
+      {
+        "tipo": "fija",
+        "slug": "surtido-de-pastelitos",
+        "variantId": "medio-kg",
+        "titulo": "½ kg de pasteles variados (≈ 20 ud)",
+        "descripcion": "Petisús, bocaditos y clásicos de vitrina para el descanso"
+      }
+    ]
+  },
+  {
+    "slug": "pack-brunch-en-casa",
+    "ocasion": "Mañana de fiesta",
+    "personas": {
+      "min": 10,
+      "max": 12,
+      "texto": "10–12 personas"
+    },
+    "paraQuien": [
+      "Brunch de fin de semana, visitas de media mañana y celebraciones tranquilas en casa.",
+      "Quien busca un plan con nivel — la suprema — sin encargarlo pieza a pieza."
+    ],
+    "piezas": [
+      {
+        "tipo": "fija",
+        "slug": "suprema-salmon-cebolla-caramelizada-y-queso-crema",
+        "titulo": "1 suprema de salmón · especialidad (8–10 rac.)",
+        "descripcion": "Hojaldre con salmón, cebolla caramelizada y queso crema"
+      },
+      {
+        "tipo": "fija",
+        "slug": "los-prenaos-de-la-casa",
+        "variantId": "u24",
+        "titulo": "24 bollos preñaos asturianos",
+        "descripcion": "El bocado salado que nunca sobra en una mesa de brunch"
+      },
+      {
+        "tipo": "fija",
+        "slug": "mini-croissants-surtido-dulce",
+        "titulo": "24 mini croissants dulces variados (4×6 sabores)",
+        "descripcion": "Caladas, glaseadas, cebra y pico de chocolate"
+      }
+    ]
+  },
+  {
+    "slug": "pack-gran-celebracion",
+    "ocasion": "Celebración grande",
+    "personas": {
+      "min": 20,
+      "max": 24,
+      "texto": "20–24 personas"
+    },
+    "paraQuien": [
+      "Comuniones en casa, aniversarios, comidas familiares grandes y celebraciones de empresa.",
+      "El pedido que antes exigía una llamada larga: aquí va cerrado y completo."
+    ],
+    "consejo": "Quiches: un golpe de horno de 3–5 minutos antes de servir. Mini canapés: en frío hasta 15–20 minutos antes de servir.",
+    "piezas": [
+      {
+        "tipo": "eleccion",
+        "id": "empanada",
+        "titulo": "1 empanada, sabor a elegir (16–20 rac.)",
+        "descripcion": "El hojaldre insignia de la casa, entero y a tu gusto",
+        "etiqueta": "Sabor de la empanada",
+        "seccion": "empanadas",
+        "variantId": "entera"
+      },
+      {
+        "tipo": "eleccion",
+        "id": "quiche1",
+        "titulo": "1 quiche, sabor a elegir (8–10 rac.)",
+        "descripcion": "Recién horneadas; un golpe de horno de 3–5 min y a la mesa",
+        "etiqueta": "Primera quiche",
+        "seccion": "quiches"
+      },
+      {
+        "tipo": "eleccion",
+        "id": "quiche2",
+        "titulo": "1 quiche, sabor a elegir (8–10 rac.)",
+        "descripcion": "Recién horneadas; un golpe de horno de 3–5 min y a la mesa",
+        "etiqueta": "Segunda quiche",
+        "seccion": "quiches"
+      },
+      {
+        "tipo": "fija",
+        "slug": "hojaldritos-de-coctel",
+        "variantId": "kg",
+        "titulo": "1 kg de hojaldritos variados (≈ 60 ud · 5 sabores)",
+        "descripcion": "Bocados salados crujientes para el picoteo largo"
+      },
+      {
+        "tipo": "fija",
+        "slug": "los-prenaos-de-la-casa",
+        "variantId": "u24",
+        "titulo": "24 bollos preñaos asturianos",
+        "descripcion": "Tiernos, con su chorizo dentro: vuelan siempre"
+      },
+      {
+        "tipo": "fija",
+        "slug": "bocados-de-coctel",
+        "titulo": "Bandeja de mini canapés (34 ud · ≈ 11 sabores)",
+        "descripcion": "Canapé fino y variado, listo para servir en frío"
+      },
+      {
+        "tipo": "fija",
+        "slug": "surtido-de-pastelitos",
+        "variantId": "kg",
+        "titulo": "1 kg de pasteles variados",
+        "descripcion": "La vitrina dulce del obrador servida en bandeja"
+      },
+      {
+        "tipo": "fija",
+        "slug": "mini-croissants-surtido-dulce",
+        "titulo": "24 mini croissants dulces variados",
+        "descripcion": "El cierre dulce para acompañar el café"
+      }
+    ]
+  },
+  {
+    "slug": "pack-evento-especial",
+    "ocasion": "Ocasión señalada",
+    "personas": {
+      "min": 8,
+      "max": 10,
+      "texto": "8–10 personas"
+    },
+    "paraQuien": [
+      "Aperitivos señalados, visitas que importan y celebraciones íntimas con detalle.",
+      "Grupos pequeños que quieren nivel de evento sin el tamaño de uno: Navidad, una merienda con amigos o tu cumpleaños en la oficina con unos pocos."
+    ],
+    "consejo": "Tarta y mini canapés: en frío hasta 15–20 minutos antes de servir.",
+    "piezas": [
+      {
+        "tipo": "fija",
+        "slug": "tarta-salada-salmon-y-gambas",
+        "titulo": "1 tarta de salmón y gambas (8–10 rac.)",
+        "descripcion": "La tarta salada premium: fría, fina y elegante"
+      },
+      {
+        "tipo": "fija",
+        "slug": "bocados-de-coctel",
+        "titulo": "Bandeja de mini canapés (34 ud · ≈ 11 sabores)",
+        "descripcion": "Once sabores en bocado pequeño, lista para servir"
+      },
+      {
+        "tipo": "fija",
+        "slug": "coleccion-de-petisus",
+        "variantId": "medio-kg",
+        "titulo": "½ kg de petisús variados (≈ 20 ud)",
+        "descripcion": "Rellenos de crema y nata: el clásico que vuela"
+      }
+    ]
+  },
+  {
+    "slug": "pack-reunion-oficina",
+    "ocasion": "Trabajo",
+    "personas": {
+      "min": 10,
+      "max": 12,
+      "texto": "10–12 personas"
+    },
+    "paraQuien": [
+      "Desayunos de trabajo, comités y formaciones: el clásico de oficina sin gestor de compras.",
+      "Empresas de Alcobendas, Sanse y Tres Cantos."
+    ],
+    "piezas": [
+      {
+        "tipo": "eleccion",
+        "id": "empanada",
+        "titulo": "½ empanada, sabor a elegir (8–10 rac.)",
+        "descripcion": "Hojaldre del obrador que aguanta la mañana entera",
+        "etiqueta": "Sabor de la empanada",
+        "seccion": "empanadas",
+        "variantId": "media"
+      },
+      {
+        "tipo": "fija",
+        "slug": "mini-croissants-surtido-salado",
+        "variantId": "u12",
+        "titulo": "12 mini croissants salados rellenos (2×6 sabores)",
+        "descripcion": "De mantequilla, rellenos variados para acompañar el café"
+      },
+      {
+        "tipo": "eleccion",
+        "id": "dulce",
+        "titulo": "Bayonesa o bizcocho a elegir (10–12 rac.)",
+        "descripcion": "Hojaldre con cabello de ángel, o bizcocho casero",
+        "etiqueta": "Bayonesa o bizcocho",
+        "slugs": [
+          "la-bayonesa",
+          "bizcocho-casero-de-chocolate",
+          "bizcocho-casero-de-limon",
+          "bizcocho-casero-de-zanahoria"
+        ]
+      }
+    ]
+  }
+]

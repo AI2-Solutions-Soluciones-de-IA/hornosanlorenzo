@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   packs,
@@ -233,5 +234,16 @@ describe("requiereFoto", () => {
   it("solo el Pack Cumpleaños la lleva", () => {
     const con = packs.filter((d) => d.piezas.some((x) => x.tipo === "fija" && x.requiereFoto));
     expect(con.map((d) => d.slug)).toEqual(["pack-cumpleanos"]);
+  });
+});
+
+// Se borra con `packs` en la Tarea 4: mientras tanto garantiza que el volcado
+// que lee `scripts/volcar-packs.mjs` es fiel al código.
+describe("scripts/packs-iniciales.json", () => {
+  it("es idéntico al array `packs`", () => {
+    const json = JSON.parse(
+      readFileSync(new URL("../../scripts/packs-iniciales.json", import.meta.url), "utf8"),
+    );
+    expect(json).toEqual(packs);
   });
 });
