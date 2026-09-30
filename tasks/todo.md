@@ -126,6 +126,22 @@
       hoy marcadas `consultar: true`
 
 ## Coherencia y deuda
+- [ ] **Packs (en producción desde el 30-9-2026), pendientes del cliente o de Oscar:**
+      fotos de los 7 packs (el pptx no trae; se suben desde el panel a cada
+      ficha); listado de sabores de los variados en letra pequeña (pendiente de
+      Julio, diapositiva 10); confirmar con el obrador el rótulo «Foto comestible
+      grande, sobre la plancha» y que la foto cuesta lo del suplemento de tarta
+      pequeña (15 €); el aviso de «Las Tartas del Obrador» («tarta con foto no se
+      encarga por la web») convive ahora con un pack que sí lleva foto por la web
+- [ ] **Diapositiva 10 del pptx de packs, entera** (plan aparte): reparto de 9:00
+      a 14:30, antes de las 10:30 solo Alcobendas, Sanse, Tres Cantos y 28050,
+      mínimo de 35 € en fin de semana (hoy se aplica a viernes y sábado) y
+      destacar que la recogida no tiene mínimo
+- [ ] **Fotos de clientes (Pack Cumpleaños):** se quedan en el almacén
+      (`pedidos-fotos/`) para siempre, y las que se suben sin llegar a pedir,
+      también. Proponer borrarlas a los 30 días de la entrega y decirlo en la
+      política de privacidad. Ídem `limite_subidas` (hash de IP sin sal: es
+      seudonimizar, no anonimizar)
 - [ ] Descriptor de **Pack Reunión en Oficina**: la diapositiva dice «La reunión
       resuelta antes de las 10:30: salado serio, croissants rellenos y el dulce
       para el café». Se publicó sin «antes de las 10:30» porque esa franja de
