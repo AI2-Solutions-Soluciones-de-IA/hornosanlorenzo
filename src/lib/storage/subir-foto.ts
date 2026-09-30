@@ -8,7 +8,8 @@ function nombre(fichero: File): string {
       : fichero.type === "image/webp"
         ? "webp"
         : "jpg";
-  return `pedidos-fotos/foto-cliente.${ext}`;
+  // El UUID hace única la ruta: el token se firma para esa ruta exacta.
+  return `pedidos-fotos/${crypto.randomUUID()}.${ext}`;
 }
 
 /**

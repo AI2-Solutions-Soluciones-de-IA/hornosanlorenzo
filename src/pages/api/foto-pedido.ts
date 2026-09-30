@@ -11,6 +11,8 @@ const json = (body: unknown, status = 200) =>
     headers: { "content-type": "application/json" },
   });
 
+const MENSAJE_FALLO = "No hemos podido preparar la subida de la foto.";
+
 /**
  * Clave del límite: hash de la IP, para no guardar IP en claro. Detrás del
  * proxy de Vercel `x-forwarded-for` trae varios saltos; la del cliente es la
@@ -35,23 +37,28 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     body = await request.json();
   } catch {
-    return json({ error: "No hemos podido preparar la subida de la foto." }, 400);
+    return json({ error: MENSAJE_FALLO }, 400);
   }
 
   // `handleUpload` recibe dos eventos: pedir token y aviso de subida
   // completada (este último lo manda Vercel, firmado, y no es del cliente).
   // Solo el primero gasta cupo.
   if (body?.type === "blob.generate-client-token") {
-    if (
-      !(await permitirSubida(claveDeLimite(request), {
+    let permitida: boolean;
+    try {
+      permitida = await permitirSubida(claveDeLimite(request), {
         max: 20,
         ventanaMs: 60 * 60 * 1000,
-      }))
-    ) {
+      });
+    } catch (error) {
+      // Fallo nuestro (base de datos), no de la petición: 500 con JSON.
+      console.error("foto-pedido: no se pudo comprobar el límite", error);
+      return json({ error: MENSAJE_FALLO }, 500);
+    }
+    if (!permitida) {
       return json(
         {
-          error:
-            "Has subido muchas fotos seguidas. Espera un rato o llámanos.",
+          error: "Has subido muchas fotos seguidas. Espera un rato o llámanos.",
         },
         429,
       );
@@ -63,6 +70,6 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     // El detalle va al log, no al navegador.
     console.error("foto-pedido: no se pudo atender la subida", error);
-    return json({ error: "No hemos podido preparar la subida de la foto." }, 400);
+    return json({ error: MENSAJE_FALLO }, 400);
   }
 };

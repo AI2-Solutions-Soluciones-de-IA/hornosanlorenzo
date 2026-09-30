@@ -52,6 +52,17 @@ describe("POST /api/foto-pedido", () => {
     expect(texto).not.toContain("secreto");
   });
 
+  it("si falla la base de datos del límite, 500 con JSON y sin detalles", async () => {
+    permitirSubida.mockRejectedValue(new Error("connection refused 10.0.0.5"));
+    const { POST } = await import("~/pages/api/foto-pedido");
+    const res = await POST({ request: peticion(TOKEN) } as never);
+    expect(res.status).toBe(500);
+    const texto = JSON.stringify(await res.json());
+    expect(texto).toContain("No hemos podido preparar la subida");
+    expect(texto).not.toContain("10.0.0.5");
+    expect(atenderSubida).not.toHaveBeenCalled();
+  });
+
   it("un cuerpo que no es JSON da 400", async () => {
     const { POST } = await import("~/pages/api/foto-pedido");
     const res = await POST({

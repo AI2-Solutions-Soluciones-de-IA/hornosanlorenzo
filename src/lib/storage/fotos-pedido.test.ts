@@ -77,7 +77,7 @@ describe("atenderSubida", () => {
   it("solo da token para fotos de la carpeta, con tipos y tamaño acotados", async () => {
     const { onBeforeGenerateToken } = await opciones();
     const conf = await onBeforeGenerateToken(
-      "pedidos-fotos/foto-cliente.png",
+      "pedidos-fotos/3f2b8c1e-9a4d-4e7b-8c2a-1d5f6a7b8c9d.png",
       null,
       false,
     );
@@ -87,7 +87,7 @@ describe("atenderSubida", () => {
       "image/webp",
     ]);
     expect(conf.maximumSizeInBytes).toBe(20 * 1024 * 1024);
-    expect(conf.addRandomSuffix).toBe(true);
+    expect(conf.addRandomSuffix).toBe(false);
     expect(conf.allowOverwrite).toBe(false);
     expect(conf.validUntil).toBeGreaterThan(Date.now());
     expect(conf.validUntil).toBeLessThanOrEqual(Date.now() + 10 * 60 * 1000);
@@ -99,6 +99,11 @@ describe("atenderSubida", () => {
     "pedidos-fotos/sub/a.jpg",
     "pedidos-fotos/a.html",
     "pedidos-fotos/A.JPG",
+    "pedidos-fotos/foto-cliente.jpg",
+    "pedidos-fotos/3f2b8c1e-9a4d-4e7b-8c2a-1d5f6a7b8c9d.jpeg",
+    "pedidos-fotos/3f2b8c1e-9a4d-1e7b-8c2a-1d5f6a7b8c9d.jpg",
+    "pedidos-fotos/3F2B8C1E-9A4D-4E7B-8C2A-1D5F6A7B8C9D.jpg",
+    "pedidos-fotos/x/3f2b8c1e-9a4d-4e7b-8c2a-1d5f6a7b8c9d.jpg",
     "pedidos-fotos/.jpg",
     "/pedidos-fotos/a.jpg",
   ])("rechaza la ruta %s", async (ruta) => {

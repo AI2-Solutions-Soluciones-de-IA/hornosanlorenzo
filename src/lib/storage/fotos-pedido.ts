@@ -15,12 +15,19 @@ export const CARPETA_FOTOS = "pedidos-fotos/";
 export const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
 export const MAX_BYTES_FOTO = 20 * 1024 * 1024;
 
-const NOMBRE = /^pedidos-fotos\/[a-z0-9-]{1,60}\.(jpe?g|png|webp)$/;
+// La ruta exacta que genera `subirFotoPedido`: un UUID v4 en minúsculas.
+const NOMBRE =
+  /^pedidos-fotos\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(jpg|png|webp)$/;
 
 /**
- * Atiende la petición del navegador a `/api/foto-pedido`: le da un token de
- * un solo uso para subir UNA foto, o (si es el aviso de subida completada)
- * lo verifica.
+ * Atiende la petición del navegador a `/api/foto-pedido`: le da un token para
+ * subir UNA foto, o (si es el aviso de subida completada) lo verifica.
+ *
+ * Un token de Vercel Blob no caduca al usarse: vale hasta `validUntil`, y con
+ * `addRandomSuffix` cada subida con él crearía un fichero nuevo, de modo que
+ * el límite por IP contaría tokens y no fotos. Por eso el token se firma para
+ * una ruta exacta (con UUID, elegido por el navegador) y sin sufijo aleatorio
+ * ni sobrescritura: una segunda subida con el mismo token falla.
  */
 export async function atenderSubida(request: Request, body: unknown) {
   return handleUpload({
@@ -33,7 +40,7 @@ export async function atenderSubida(request: Request, body: unknown) {
       return {
         allowedContentTypes: TIPOS_FOTO,
         maximumSizeInBytes: MAX_BYTES_FOTO,
-        addRandomSuffix: true,
+        addRandomSuffix: false,
         allowOverwrite: false,
         validUntil: Date.now() + 10 * 60 * 1000,
       };
