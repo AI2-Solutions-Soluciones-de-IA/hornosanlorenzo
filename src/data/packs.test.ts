@@ -7,6 +7,9 @@ import {
   precioSueltoCents,
   ahorroPct,
   precioPorPersonaCents,
+  slugsFijos,
+  seccionesDeHuecos,
+  etiquetaPieza,
   PackError,
   type ProductoPieza,
   type HuecoEleccion,
@@ -192,5 +195,43 @@ describe("ahorroPct (foco de revisión 5)", () => {
 
   it("un ahorro que redondea a 0 % tampoco se enseña", () => {
     expect(ahorroPct(4990, 5000)).toBeNull();
+  });
+});
+
+describe("slugsFijos y seccionesDeHuecos", () => {
+  it("Reunión: la pieza fija más la lista cerrada del hueco", () => {
+    expect(slugsFijos(packPorSlug("pack-reunion-oficina")!).sort()).toEqual(
+      [
+        "mini-croissants-surtido-salado",
+        "la-bayonesa",
+        "bizcocho-casero-de-chocolate",
+        "bizcocho-casero-de-limon",
+        "bizcocho-casero-de-zanahoria",
+      ].sort(),
+    );
+  });
+
+  it("Cumpleaños: solo las fijas, sin empanada ni plancha (son de sección)", () => {
+    expect(slugsFijos(packPorSlug("pack-cumpleanos")!).sort()).toEqual(
+      ["los-prenaos-de-la-casa", "tarta-retrato"].sort(),
+    );
+  });
+
+  it("Gran Celebración: las secciones de sus huecos, sin repetir", () => {
+    expect(seccionesDeHuecos(packPorSlug("pack-gran-celebracion")!)).toEqual(["empanadas", "quiches"]);
+  });
+});
+
+describe("etiquetaPieza", () => {
+  it("con y sin variante", () => {
+    expect(etiquetaPieza({ slug: "a", nombre: "Empanada", varianteLabel: "Entera", qty: 1 })).toBe("Empanada · Entera");
+    expect(etiquetaPieza({ slug: "a", nombre: "Foto", varianteLabel: null, qty: 1 })).toBe("Foto");
+  });
+});
+
+describe("requiereFoto", () => {
+  it("solo el Pack Cumpleaños la lleva", () => {
+    const con = packs.filter((d) => d.piezas.some((x) => x.tipo === "fija" && x.requiereFoto));
+    expect(con.map((d) => d.slug)).toEqual(["pack-cumpleanos"]);
   });
 });

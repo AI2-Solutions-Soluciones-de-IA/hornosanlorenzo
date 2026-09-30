@@ -307,7 +307,8 @@ export const packs: readonly DefinicionPack[] = [
     personas: { min: 10, max: 12, texto: "10–12 personas" },
     paraQuien: [
       "Desayunos de trabajo, comités y formaciones: el clásico de oficina sin gestor de compras.",
-      "Empresas de Alcobendas, Sanse y Tres Cantos con entrega antes de las 10:30.",
+      // La promesa de entrega temprana (antes de las 10:30) vuelve cuando esa franja exista en la web.
+      "Empresas de Alcobendas, Sanse y Tres Cantos.",
     ],
     piezas: [
       {
