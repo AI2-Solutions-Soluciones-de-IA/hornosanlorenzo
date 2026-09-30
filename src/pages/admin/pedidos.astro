@@ -2,6 +2,8 @@
 // src/pages/admin/pedidos.astro
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import PedidoEstado from "~/islands/PedidoEstado.tsx";
+import Paginacion from "~/islands/Paginacion.tsx";
+import { paginar, resumenPagina } from "~/lib/paginacion";
 import { listarPedidos, contarPedidos, type PedidoConLineas } from "~/lib/db/pedidos";
 import { leerFiltrosPedidos, queryFiltros } from "~/lib/filtros-pedidos";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
@@ -26,14 +28,14 @@ const POR_PAGINA = 20;
 // en un 500. Se enseña el aviso y el resto del panel sigue navegable.
 let pedidos: PedidoConLineas[] = [];
 let total = 0;
-let pagina = 1;
+let pag = paginar(0, POR_PAGINA, 1);
 let fallo = false;
 try {
   // Primero la cuenta: una `?pagina=` más allá de la última se queda en la
   // última en vez de enseñar una página vacía.
   total = await contarPedidos(leidos.filtros);
-  pagina = Math.min(leidos.pagina, Math.max(1, Math.ceil(total / POR_PAGINA)));
-  pedidos = await listarPedidos(POR_PAGINA, leidos.filtros, (pagina - 1) * POR_PAGINA);
+  pag = paginar(total, POR_PAGINA, leidos.pagina);
+  pedidos = await listarPedidos(POR_PAGINA, leidos.filtros, (pag.pagina - 1) * POR_PAGINA);
 } catch (error) {
   fallo = true;
   console.error(
@@ -42,22 +44,12 @@ try {
   );
 }
 
-const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 const query = queryFiltros(leidos);
 const enlacePagina = (n: number) => {
   const q = new URLSearchParams(query);
   if (n > 1) q.set("pagina", String(n));
   return `/admin/pedidos?${q}`;
 };
-// Números a enseñar: la primera, la última y las vecinas de la actual; el
-// resto se resume en «…».
-const numeros: (number | "…")[] = [];
-for (let n = 1; n <= paginas; n++) {
-  if (n === 1 || n === paginas || Math.abs(n - pagina) <= 1) numeros.push(n);
-  else if (numeros.at(-1) !== "…") numeros.push("…");
-}
-const primero = total === 0 ? 0 : (pagina - 1) * POR_PAGINA + 1;
-const ultimo = Math.min(pagina * POR_PAGINA, total);
 
 const SLOT_LABEL = { morning: "mañana", afternoon: "tarde" } as const;
 
@@ -130,7 +122,7 @@ function franja(p: PedidoConLineas): string {
 
   {!fallo && total > 0 && (
     <p class="mb-3 text-sm text-[color:var(--color-ink-muted)]">
-      {total === 1 ? "1 pedido" : `${primero}–${ultimo} de ${total} pedidos`}
+      {resumenPagina(pag, total, "pedido", "pedidos")}
     </p>
   )}
 
@@ -220,34 +212,5 @@ function franja(p: PedidoConLineas): string {
     ))}
   </ul>
 
-  {paginas > 1 && (
-    <nav aria-label="Páginas de pedidos" class="mt-6 flex flex-wrap items-center justify-center gap-2 text-sm">
-      {pagina > 1 ? (
-        <a href={enlacePagina(pagina - 1)} class="px-3 py-2 border border-[color:var(--color-avellana)] hover:bg-[color:var(--color-latte)]" rel="prev">← Anterior</a>
-      ) : (
-        <span class="px-3 py-2 border border-[color:var(--color-line)] text-[color:var(--color-ink-muted)]">← Anterior</span>
-      )}
-      {numeros.map((n) =>
-        n === "…" ? (
-          <span class="px-2 text-[color:var(--color-ink-muted)]">…</span>
-        ) : (
-          <a
-            href={enlacePagina(n)}
-            class:list={[
-              "min-w-10 px-3 py-2 text-center border border-[color:var(--color-avellana)] tabular-nums hover:bg-[color:var(--color-latte)]",
-              n === pagina && "bg-[color:var(--color-moka)] text-[color:var(--color-leche)] hover:bg-[color:var(--color-moka)]",
-            ]}
-            aria-current={n === pagina ? "page" : undefined}
-          >
-            {n}
-          </a>
-        ),
-      )}
-      {pagina < paginas ? (
-        <a href={enlacePagina(pagina + 1)} class="px-3 py-2 border border-[color:var(--color-avellana)] hover:bg-[color:var(--color-latte)]" rel="next">Siguiente →</a>
-      ) : (
-        <span class="px-3 py-2 border border-[color:var(--color-line)] text-[color:var(--color-ink-muted)]">Siguiente →</span>
-      )}
-    </nav>
-  )}
+  <Paginacion pagina={pag.pagina} paginas={pag.paginas} etiqueta="Páginas de pedidos" href={enlacePagina} />
 </AdminLayout>

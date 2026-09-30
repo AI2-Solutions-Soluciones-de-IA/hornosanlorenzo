@@ -74,6 +74,14 @@ describeSiHayBD("repositorio de clientes", () => {
     it("sin texto devuelve el listado entero", async () => {
       expect(await idsQueCasan("  ")).toContain(ID);
     });
+
+    it("cuenta lo que casa con la búsqueda, y el desplazamiento salta filas", async () => {
+      // Solo con la búsqueda propia: otros ficheros crean usuarios a la vez.
+      expect(await repo.contarClientes("prueba zeta")).toBe(1);
+      expect(await repo.contarClientes("ornitorrinco-zeta")).toBe(0);
+      expect((await repo.listarClientes(1, "prueba zeta", 0)).map((c) => c.id)).toEqual([ID]);
+      expect(await repo.listarClientes(1, "prueba zeta", 1)).toEqual([]);
+    });
   });
 
   it("devuelve nombre, correo y teléfono, y nunca la contraseña", async () => {

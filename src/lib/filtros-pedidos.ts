@@ -1,4 +1,5 @@
 import type { FiltrosPedidos } from "~/lib/db/pedidos";
+import { leerPagina } from "~/lib/paginacion";
 
 /**
  * Los filtros de `/admin/pedidos` leídos de la URL:
@@ -54,8 +55,7 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
   // manipulada arrastre un patrón kilométrico hasta Postgres.
   const texto = (params.get("q") ?? "").slice(0, 80).trim();
 
-  const n = Number.parseInt(params.get("pagina") ?? "", 10);
-  const pagina = Number.isFinite(n) && n > 0 ? n : 1;
+  const pagina = leerPagina(params);
 
   const filtros: FiltrosPedidos = {
     ...(tipo === "entrega"

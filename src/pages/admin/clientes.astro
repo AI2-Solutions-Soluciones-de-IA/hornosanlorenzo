@@ -1,7 +1,9 @@
 ---
 // src/pages/admin/clientes.astro
 import AdminLayout from "~/layouts/AdminLayout.astro";
-import { listarClientes, type Cliente } from "~/lib/db/clientes";
+import Paginacion from "~/islands/Paginacion.tsx";
+import { listarClientes, contarClientes, type Cliente } from "~/lib/db/clientes";
+import { leerPagina, paginar, resumenPagina } from "~/lib/paginacion";
 import { formatDate } from "~/lib/format";
 import { ROL_ADMIN } from "~/lib/auth/guardia";
 
@@ -11,10 +13,18 @@ export const prerender = false;
 // va parametrizada en la consulta, el tope solo acota el patrón.
 const filtroTexto = (Astro.url.searchParams.get("q") ?? "").slice(0, 80).trim();
 
+// De 25 en 25: son filas de tabla, caben más que pedidos desplegados.
+const POR_PAGINA = 25;
+
 let clientes: Cliente[] = [];
+let total = 0;
+let pag = paginar(0, POR_PAGINA, 1);
 let fallo = false;
 try {
-  clientes = await listarClientes(500, filtroTexto || undefined);
+  // Primero la cuenta, para acotar una `?pagina=` que se pase de la última.
+  total = await contarClientes(filtroTexto || undefined);
+  pag = paginar(total, POR_PAGINA, leerPagina(Astro.url.searchParams));
+  clientes = await listarClientes(POR_PAGINA, filtroTexto || undefined, (pag.pagina - 1) * POR_PAGINA);
 } catch (error) {
   fallo = true;
   console.error(
@@ -22,6 +32,14 @@ try {
     error instanceof Error ? error.message : error,
   );
 }
+
+const enlacePagina = (n: number) => {
+  const q = new URLSearchParams();
+  if (filtroTexto) q.set("q", filtroTexto);
+  if (n > 1) q.set("pagina", String(n));
+  const s = q.toString();
+  return `/admin/clientes${s ? `?${s}` : ""}`;
+};
 ---
 <AdminLayout titulo="Clientes">
   {fallo && (
@@ -46,6 +64,12 @@ try {
       {filtroTexto
         ? "No hay clientes que casen con esa búsqueda."
         : "Todavía no se ha registrado nadie."}
+    </p>
+  )}
+
+  {!fallo && total > 0 && (
+    <p class="mb-3 text-sm text-[color:var(--color-ink-muted)]">
+      {resumenPagina(pag, total, "cliente", "clientes")}
     </p>
   )}
 
@@ -84,4 +108,6 @@ try {
       </table>
     </div>
   )}
+
+  <Paginacion pagina={pag.pagina} paginas={pag.paginas} etiqueta="Páginas de clientes" href={enlacePagina} />
 </AdminLayout>

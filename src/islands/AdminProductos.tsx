@@ -4,6 +4,11 @@ import { secciones, type SeccionId } from "~/data/secciones";
 import { formatPriceCents } from "~/lib/format";
 import { eurosACentimos } from "~/lib/euros";
 import { AVISO_DESACTIVAR } from "~/lib/panel-textos";
+import { paginar } from "~/lib/paginacion";
+import Paginacion from "~/islands/Paginacion";
+
+/** Fichas por página: con más, la lista ya obliga a un scroll muy largo. */
+const POR_PAGINA = 20;
 
 /**
  * Misma forma que `Producto`/`Variante` de `~/lib/db/productos`, redefinida
@@ -234,6 +239,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
   const [cargando, setCargando] = useState(false);
   const [query, setQuery] = useState("");
   const [seccionFiltro, setSeccionFiltro] = useState("");
+  const [pagina, setPagina] = useState(1);
   const [abierto, setAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [formulario, setFormulario] =
@@ -255,6 +261,16 @@ export default function AdminProductos({ productosIniciales }: Props) {
       return true;
     });
   }, [productos, query, seccionFiltro]);
+
+  // `paginar` acota: si al desactivar o filtrar se quedan menos páginas, se
+  // enseña la última que queda en vez de una vacía.
+  const pag = paginar(filtrados.length, POR_PAGINA, pagina);
+  const visibles = filtrados.slice((pag.pagina - 1) * POR_PAGINA, pag.pagina * POR_PAGINA);
+
+  function irAPagina(n: number) {
+    setPagina(n);
+    document.getElementById("ap-lista")?.scrollIntoView({ block: "start" });
+  }
 
   async function recargar() {
     setCargando(true);
@@ -581,7 +597,10 @@ export default function AdminProductos({ productosIniciales }: Props) {
                 <input
                   id="ap-buscar"
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setPagina(1);
+                  }}
                   placeholder="Nombre de la ficha"
                   style={{ ...field, width: "16rem" }}
                 />
@@ -593,7 +612,10 @@ export default function AdminProductos({ productosIniciales }: Props) {
                 <select
                   id="ap-seccion"
                   value={seccionFiltro}
-                  onChange={(e) => setSeccionFiltro(e.target.value)}
+                  onChange={(e) => {
+                    setSeccionFiltro(e.target.value);
+                    setPagina(1);
+                  }}
                   style={{ ...field, width: "14rem" }}
                 >
                   <option value="">Todas</option>
@@ -612,6 +634,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
             style={{ marginTop: 16, color: "var(--color-ink-muted)" }}
           >
             {filtrados.length} de {productos.length} fichas
+            {pag.paginas > 1 && ` · viendo ${pag.desde}–${pag.hasta}`}
           </p>
 
           {productos.length === 0 && (
@@ -638,8 +661,8 @@ export default function AdminProductos({ productosIniciales }: Props) {
           )}
 
           {filtrados.length > 0 && (
-            <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0" }}>
-              {filtrados.map((p) => (
+            <ul id="ap-lista" style={{ listStyle: "none", padding: 0, margin: "12px 0 0", scrollMarginTop: 16 }}>
+              {visibles.map((p) => (
                 <li
                   key={p.id}
                   style={{
@@ -718,6 +741,13 @@ export default function AdminProductos({ productosIniciales }: Props) {
               ))}
             </ul>
           )}
+
+          <Paginacion
+            pagina={pag.pagina}
+            paginas={pag.paginas}
+            etiqueta="Páginas de productos"
+            onCambiar={irAPagina}
+          />
 
           {productos.length > 0 && filtrados.length === 0 && (
             <p style={{ marginTop: 16, color: "var(--color-ink-muted)" }}>

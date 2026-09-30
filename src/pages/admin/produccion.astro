@@ -155,7 +155,9 @@ const celda = "py-2 text-right tabular-nums";
     <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
       <section>
         <h3 class="numeracion">Qué hornear</h3>
-        <div class="mt-3 overflow-x-auto">
+        {/* Paginada en el navegador y no en el servidor: en pantalla se ve de
+            25 en 25, pero al imprimir sale la hoja entera (ver `@media print`). */}
+        <div class="mt-3 overflow-x-auto" data-paginada data-por-pagina="25">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left numeracion">
@@ -172,7 +174,7 @@ const celda = "py-2 text-right tabular-nums";
           </thead>
           <tbody>
             {hoja.lineas.map((l) => (
-              <tr class="border-t border-[color:var(--color-line)]">
+              <tr class="border-t border-[color:var(--color-line)]" data-fila>
                 <td class="py-2 font-semibold">{l.nombre}</td>
                 <td class="py-2 text-[color:var(--color-ink-muted)]">{l.varianteLabel ?? "—"}</td>
                 <td class:list={[celda, "font-[family-name:var(--font-display)] text-lg"]}>{l.unidades}</td>
@@ -190,6 +192,8 @@ const celda = "py-2 text-right tabular-nums";
           </tbody>
         </table>
         </div>
+        <p class="no-imprimir mt-3 text-xs text-[color:var(--color-ink-muted)]" data-resumen hidden></p>
+        <div class="no-imprimir" data-paginacion></div>
       </section>
 
       <section>
@@ -216,6 +220,65 @@ const celda = "py-2 text-right tabular-nums";
   )}
 </AdminLayout>
 
+<script>
+  import { CLASES_PAGINACION as C, numerosPagina, paginar } from "~/lib/paginacion";
+
+  // La misma barra que `Paginacion.tsx`, pero sobre filas que ya están en la
+  // página: así la impresión, que las enseña todas, no depende de la página
+  // en la que se esté. Va con `astro:page-load` porque el sitio navega con
+  // ClientRouter y un script de módulo solo corre la primera vez.
+  function paginarTabla() {
+    const caja = document.querySelector<HTMLElement>("[data-paginada]");
+    const barra = document.querySelector<HTMLElement>("[data-paginacion]");
+    const resumen = document.querySelector<HTMLElement>("[data-resumen]");
+    if (!caja || !barra || !resumen) return;
+    const filas = [...caja.querySelectorAll<HTMLElement>("[data-fila]")];
+    const porPagina = Number(caja.dataset.porPagina) || 25;
+
+    const pintar = (pedida: number) => {
+      const p = paginar(filas.length, porPagina, pedida);
+      filas.forEach((f, i) => {
+        f.hidden = i < p.desde - 1 || i >= p.hasta;
+      });
+      barra.replaceChildren();
+      resumen.hidden = p.paginas <= 1;
+      if (p.paginas <= 1) return;
+      resumen.textContent = `Productos ${p.desde}–${p.hasta} de ${filas.length}`;
+
+      const nav = document.createElement("nav");
+      nav.setAttribute("aria-label", "Páginas de la hoja");
+      nav.className = C.nav;
+      const boton = (texto: string, n: number | null, clase: string, actual = false) => {
+        const el = document.createElement(n === null || actual ? "span" : "button");
+        el.textContent = texto;
+        el.className = clase;
+        if (actual) el.setAttribute("aria-current", "page");
+        if (el instanceof HTMLButtonElement && n !== null) {
+          el.type = "button";
+          el.addEventListener("click", () => {
+            pintar(n);
+            caja.scrollIntoView({ block: "start" });
+          });
+        }
+        nav.append(el);
+      };
+      boton("← Anterior", p.pagina > 1 ? p.pagina - 1 : null, p.pagina > 1 ? C.boton : C.apagado);
+      for (const n of numerosPagina(p.pagina, p.paginas)) {
+        if (n === "…") boton("…", null, C.puntos);
+        else boton(String(n), n, n === p.pagina ? C.actual : C.boton, n === p.pagina);
+      }
+      boton(
+        "Siguiente →",
+        p.pagina < p.paginas ? p.pagina + 1 : null,
+        p.pagina < p.paginas ? C.boton : C.apagado,
+      );
+      barra.append(nav);
+    };
+    pintar(1);
+  }
+  document.addEventListener("astro:page-load", paginarTabla);
+</script>
+
 <style is:global>
   /* La hoja se imprime y se cuelga en el obrador: fuera la navegación, el
      formulario y los botones; queda el título, la fecha y las tablas. */
@@ -227,6 +290,10 @@ const celda = "py-2 text-right tabular-nums";
     }
     body {
       background: #fff;
+    }
+    /* En papel va la hoja entera, no la página que se estuviera viendo. */
+    [data-fila][hidden] {
+      display: table-row !important;
     }
   }
 </style>
