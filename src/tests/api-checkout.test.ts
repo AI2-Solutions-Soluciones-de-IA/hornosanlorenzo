@@ -77,6 +77,31 @@ beforeEach(() => {
 });
 
 describe("POST /api/checkout", () => {
+  it("las elecciones y la foto de un pack llegan tal cual a priceOrder", async () => {
+    const items = [
+      {
+        slug: "pack-cumpleanos",
+        qty: 1,
+        opciones: { empanada: "empanada-de-carne", plancha: "plancha-oreo" },
+        fotoUrl:
+          "https://abc.public.blob.vercel-storage.com/pedidos-fotos/foto-x.jpg",
+      },
+    ];
+    const { POST } = await import("~/pages/api/checkout");
+    const respuesta = await POST({
+      ...contexto(),
+      request: new Request("https://ejemplo.test/api/checkout", {
+        method: "POST",
+        body: JSON.stringify({ ...PEDIDO_VALORADO.payload, items }),
+      }),
+    } as never);
+
+    expect(respuesta.status).toBe(200);
+    // Si el esquema no las conociera, Zod las descartaría en silencio y el
+    // pack se valoraría sin elecciones.
+    expect(priceOrder.mock.calls[0][0].items).toEqual(items);
+  });
+
   it("anota el pedido y manda su id en los metadatos de Stripe", async () => {
     const { POST } = await import("~/pages/api/checkout");
     const respuesta = await POST(contexto() as never);

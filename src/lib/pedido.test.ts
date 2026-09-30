@@ -13,7 +13,15 @@ import type { ProductoVendible } from "~/lib/db/productos";
  * día, y siguen siendo tan rápidas como cuando leían Markdown.
  */
 const productosParaPedido = vi.fn();
-vi.mock("~/lib/db/productos", () => ({ productosParaPedido }));
+const productosDeSecciones = vi.fn();
+vi.mock("~/lib/db/productos", () => ({
+  productosParaPedido,
+  productosDeSecciones,
+}));
+// La foto se comprueba contra Vercel Blob: aquí se dobla, y su lógica real
+// se prueba en su propio fichero.
+const esFotoDePedido = vi.fn();
+vi.mock("~/lib/storage/fotos-pedido", () => ({ esFotoDePedido }));
 
 const { priceOrder } = await import("~/lib/pedido");
 type OrderPayload = import("~/lib/pedido").OrderPayload;
@@ -353,5 +361,220 @@ describe("priceOrder — estados de venta", () => {
   it("solo pide a la base de datos los productos del carrito", async () => {
     await priceOrder(pedidoBase(), { now: AHORA });
     expect(productosParaPedido).toHaveBeenCalledWith([SENCILLO.slug]);
+  });
+});
+
+/**
+ * Packs: el precio sale de la ficha del propio pack, y las piezas (fijas y
+ * elegidas) se validan contra el catálogo. Los slugs y variantes son los reales
+ * de la carta; los nombres, los de la ficha.
+ */
+describe("priceOrder con packs", () => {
+  const prod = (
+    slug: string,
+    name: string,
+    category: string,
+    seccion: string | null,
+    priceCents: number,
+    variantes: [string, string, number][] = [],
+    extra: Partial<ProductoVendible> = {},
+  ): ProductoVendible => ({
+    slug,
+    name,
+    category,
+    seccion,
+    priceCents,
+    consultar: false,
+    activo: true,
+    agotado: false,
+    variantes: variantes.map(([variantId, label, priceCents]) => ({
+      variantId,
+      label,
+      priceCents,
+    })),
+    ...extra,
+  });
+
+  const CATALOGO_PACKS: ProductoVendible[] = [
+    prod("pack-cumpleanos", "Pack Cumpleaños", "packs", null, 7100),
+    prod("pack-futbolero", "Pack Futbolero", "packs", null, 4900),
+    prod("empanada-de-carne", "Empanada de carne", "empanadas", "empanadas", 1380, [
+      ["media", "Media", 1380],
+      ["entera", "Entera", 2280],
+    ]),
+    prod("empanada-de-bonito", "Empanada de bonito", "empanadas", "empanadas", 1380, [
+      ["media", "Media", 1380],
+      ["entera", "Entera", 2280],
+    ]),
+    prod("los-prenaos-de-la-casa", "Los preñaos de la casa", "para-compartir", "para-compartir", 1050, [
+      ["u12", "12 unidades", 1050],
+      ["u24", "24 unidades", 1850],
+    ]),
+    prod("plancha-oreo", "Plancha Oreo", "planchas", "planchas", 1360, [
+      ["pequena", "L", 1360],
+      ["grande", "XL", 2080],
+    ]),
+    prod("plancha-fresa-y-nata", "Plancha de fresa y nata", "planchas", "planchas", 1360, [
+      ["pequena", "L", 1360],
+      ["grande", "XL", 2080],
+    ]),
+    prod("tarta-retrato", "Tarta retrato", "tartas", "detalles-celebracion", 600, [
+      ["pequena", "Pequeña", 1500],
+      ["mediana", "Mediana", 1000],
+      ["grande", "Grande", 600],
+    ]),
+    prod("mini-croissants-surtido-salado", "Mini croissants surtido salado", "las-lorenzas", "las-lorenzas-salado", 1850, [
+      ["u12", "12", 1850],
+      ["u24", "24", 3400],
+    ]),
+    prod("surtido-de-pastelitos", "Surtido de pastelitos", "bocados", "bocados", 1550, [
+      ["medio-kg", "½ kg", 1550],
+      ["kg", "1 kg", 2600],
+    ]),
+  ];
+
+  const FOTO = "https://abc.public.blob.vercel-storage.com/pedidos-fotos/foto-x.jpg";
+  const OPCIONES = { empanada: "empanada-de-carne", plancha: "plancha-oreo" };
+
+  const conCatalogo = (cambios: Record<string, Partial<ProductoVendible>> = {}) => {
+    const todo = CATALOGO_PACKS.map((p) => ({ ...p, ...cambios[p.slug] }));
+    // Como la BD real: devuelve solo los slugs que se le piden.
+    productosParaPedido.mockImplementation(async (slugs: string[]) =>
+      catalogo(...todo.filter((p) => slugs.includes(p.slug))),
+    );
+  };
+
+  const pedidoPack = (item: OrderPayload["items"][number]): OrderPayload => ({
+    ...pedidoBase(),
+    items: [item],
+  });
+
+  const cumple = (extra: Partial<OrderPayload["items"][number]> = {}) =>
+    pedidoPack({
+      slug: "pack-cumpleanos",
+      qty: 1,
+      opciones: OPCIONES,
+      fotoUrl: FOTO,
+      ...extra,
+    });
+
+  beforeEach(() => {
+    conCatalogo();
+    productosDeSecciones.mockReset();
+    esFotoDePedido.mockReset().mockResolvedValue(true);
+  });
+
+  it("valora el Pack Cumpleaños al precio del pack, con su desglose y la foto", async () => {
+    const pedido = await priceOrder(cumple(), { now: AHORA });
+    expect(pedido.lines).toHaveLength(1);
+    const [l] = pedido.lines;
+    expect(l.unitPriceCents).toBe(7100);
+    expect(l.totalCents).toBe(7100);
+    expect(l.variantLabel).toBeUndefined();
+    expect(l.fotoUrl).toBe(FOTO);
+    expect(l.detalle).toHaveLength(4);
+    expect(l.detalle!.map((d) => d.slug)).toEqual([
+      "empanada-de-carne",
+      "los-prenaos-de-la-casa",
+      "plancha-oreo",
+      "tarta-retrato",
+    ]);
+    expect(pedido.subtotalCents).toBe(7100);
+  });
+
+  it("con cantidad 2 cobra dos packs y el desglose sigue siendo por unidad", async () => {
+    const pedido = await priceOrder(cumple({ qty: 2 }), { now: AHORA });
+    expect(pedido.lines[0].totalCents).toBe(14200);
+    expect(pedido.lines[0].detalle).toHaveLength(4);
+  });
+
+  it("sin opciones rechaza el pack y nombra «Pack Cumpleaños»", async () => {
+    await expect(
+      priceOrder(cumple({ opciones: undefined }), { now: AHORA }),
+    ).rejects.toMatchObject({
+      name: "OrderError",
+      message: expect.stringContaining("Pack Cumpleaños"),
+    });
+  });
+
+  it("rechaza una empanada agotada y la nombra", async () => {
+    conCatalogo({ "empanada-de-carne": { agotado: true } });
+    await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
+      name: "OrderError",
+      message: expect.stringContaining("Empanada de carne"),
+    });
+  });
+
+  it("rechaza una plancha puesta en el hueco de la empanada", async () => {
+    await expect(
+      priceOrder(
+        cumple({ opciones: { empanada: "plancha-oreo", plancha: "plancha-oreo" } }),
+        { now: AHORA },
+      ),
+    ).rejects.toMatchObject({ name: "OrderError" });
+  });
+
+  it("un pack con foto sin fotoUrl pide subirla", async () => {
+    await expect(
+      priceOrder(cumple({ fotoUrl: undefined }), { now: AHORA }),
+    ).rejects.toMatchObject({
+      name: "OrderError",
+      message: expect.stringContaining("sube la foto"),
+    });
+  });
+
+  it("rechaza una foto que no es de nuestro almacén", async () => {
+    esFotoDePedido.mockResolvedValue(false);
+    await expect(priceOrder(cumple(), { now: AHORA })).rejects.toMatchObject({
+      name: "OrderError",
+    });
+    expect(esFotoDePedido).toHaveBeenCalledWith(FOTO);
+  });
+
+  it("un producto que no es pack no admite opciones ni foto", async () => {
+    productosParaPedido.mockResolvedValue(catalogo(SENCILLO));
+    for (const extra of [{ opciones: { x: "y" } }, { fotoUrl: FOTO }]) {
+      await expect(
+        priceOrder(pedidoPack({ slug: SENCILLO.slug, qty: 1, ...extra }), {
+          now: AHORA,
+        }),
+      ).rejects.toMatchObject({
+        name: "OrderError",
+        message: "Elección no válida.",
+      });
+    }
+  });
+
+  it("una foto en un pack sin pieza con foto (Futbolero) se rechaza", async () => {
+    await expect(
+      priceOrder(
+        pedidoPack({
+          slug: "pack-futbolero",
+          qty: 1,
+          opciones: { empanada: "empanada-de-bonito" },
+          fotoUrl: FOTO,
+        }),
+        { now: AHORA },
+      ),
+    ).rejects.toMatchObject({ name: "OrderError" });
+  });
+
+  it("el Pack Futbolero sin foto se valora bien", async () => {
+    const pedido = await priceOrder(
+      pedidoPack({
+        slug: "pack-futbolero",
+        qty: 1,
+        opciones: { empanada: "empanada-de-bonito" },
+      }),
+      { now: AHORA },
+    );
+    expect(pedido.lines[0].totalCents).toBe(4900);
+    expect(pedido.lines[0].detalle).toHaveLength(3);
+    expect(esFotoDePedido).not.toHaveBeenCalled();
+  });
+
+  it("no lee secciones: la elección se valida con la sección del producto elegido", async () => {
+    await priceOrder(cumple(), { now: AHORA });
+    expect(productosDeSecciones).not.toHaveBeenCalled();
   });
 });

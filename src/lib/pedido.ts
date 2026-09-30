@@ -13,6 +13,14 @@ import {
 } from "~/lib/entrega";
 import { stores, type StoreId } from "~/data/stores";
 import { productosParaPedido } from "~/lib/db/productos";
+import {
+  packPorSlug,
+  resolverPack,
+  slugsFijos,
+  PackError,
+  type PiezaResuelta,
+} from "~/data/packs";
+import { esFotoDePedido } from "~/lib/storage/fotos-pedido";
 
 /**
  * Modelo de pedido del lado del servidor.
@@ -29,6 +37,12 @@ export const orderPayloadSchema = z.object({
         slug: z.string().min(1).max(120),
         variantId: z.string().min(1).max(60).optional(),
         qty: z.number().int().min(1).max(99),
+        /** Solo en un pack: hueco → slug elegido (`{ empanada: "…" }`). */
+        opciones: z
+          .record(z.string().min(1).max(40), z.string().min(1).max(120))
+          .optional(),
+        /** Solo en un pack con foto: la URL que devolvió la subida. */
+        fotoUrl: z.string().url().max(500).optional(),
       }),
     )
     .min(1)
@@ -60,6 +74,9 @@ export type PricedLine = {
   qty: number;
   unitPriceCents: number;
   totalCents: number;
+  /** Solo en un pack: sus piezas por UNIDAD de pack, ya validadas. */
+  detalle?: PiezaResuelta[];
+  fotoUrl?: string;
 };
 
 export type PricedOrder = {
@@ -125,10 +142,20 @@ export async function priceOrder(
   // La fuente de verdad del precio es la tabla `productos`. Se piden solo los
   // slugs del carrito, no el catálogo entero: son 98 fichas y aquí hacen falta
   // dos o tres.
-  const bySlug = await productosParaPedido(payload.items.map((i) => i.slug));
+  // Un pack necesita leer sus piezas, no solo su ficha: las fijas y las
+  // elegidas van por slug. Las opciones de un hueco NO se piden por sección:
+  // `resolverPack` valida la elegida contra la sección de su propia ficha.
+  const defs = payload.items.map((i) => packPorSlug(i.slug));
+  const slugs = new Set(payload.items.map((i) => i.slug));
+  for (const [n, def] of defs.entries()) {
+    if (!def) continue;
+    for (const s of slugsFijos(def)) slugs.add(s);
+    for (const s of Object.values(payload.items[n].opciones ?? {})) slugs.add(s);
+  }
+  const bySlug = await productosParaPedido([...slugs]);
 
   const lines: PricedLine[] = [];
-  for (const item of payload.items) {
+  for (const [index, item] of payload.items.entries()) {
     const product = bySlug.get(item.slug);
     if (!product || !product.activo) {
       // Mismo mensaje para «no existe» y «desactivado»: para quien compra son
@@ -151,6 +178,35 @@ export async function priceOrder(
       throw new OrderError(
         `«${product.name}» se ha agotado. Quítalo del carrito y vuelve a intentarlo.`,
       );
+    }
+
+    // Un pack se cobra al precio de SU ficha (ya validada arriba); lo que se
+    // comprueba aquí es que las piezas que lo componen se puedan servir hoy y
+    // que las elecciones sean legales. Va antes de las variantes: un pack no
+    // tiene, y así un `variantId` colado no cambia el importe.
+    const def = defs[index];
+    let detalle: PiezaResuelta[] | undefined;
+    if (def) {
+      try {
+        detalle = resolverPack(def, bySlug, item.opciones ?? {});
+      } catch (err) {
+        if (err instanceof PackError)
+          throw new OrderError(`«${product.name}»: ${err.message}`);
+        throw err;
+      }
+      const conFoto = def.piezas.some((x) => x.tipo === "fija" && x.requiereFoto);
+      if (conFoto && !item.fotoUrl)
+        throw new OrderError(`«${product.name}»: sube la foto para la plancha.`);
+      if (!conFoto && item.fotoUrl) throw new OrderError("Elección no válida.");
+      // La URL la manda el navegador: solo vale una foto que esté de verdad
+      // en nuestro almacén.
+      if (item.fotoUrl && !(await esFotoDePedido(item.fotoUrl)))
+        throw new OrderError(
+          `«${product.name}»: no encontramos la foto. Vuelve a subirla.`,
+        );
+    } else if (item.opciones || item.fotoUrl) {
+      // Un producto normal no admite elecciones: es un cliente manipulado.
+      throw new OrderError("Elección no válida.");
     }
 
     let unitPriceCents = product.priceCents;
@@ -192,6 +248,8 @@ export async function priceOrder(
       qty: item.qty,
       unitPriceCents,
       totalCents: unitPriceCents * item.qty,
+      detalle,
+      fotoUrl: item.fotoUrl,
     });
   }
 
