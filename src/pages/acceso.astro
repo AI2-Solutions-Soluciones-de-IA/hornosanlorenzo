@@ -2,24 +2,27 @@
 export const prerender = false;
 
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
-import AccesoClientes from "~/islands/AccesoClientes.tsx";
+import AccesoForm from "~/islands/AccesoForm.tsx";
 
 if (Astro.locals.usuario) return Astro.redirect("/cuenta");
 ---
 <MarketingLayout
   title="Acceso clientes"
-  description="Date de alta como particular o como empresa y pide con tus condiciones."
+  description="Entra con tu cuenta o date de alta para pedir sin repetir tus datos cada vez."
 >
+  <!-- Solo el acceso de particulares (petición de Oscar, 30-9-2026): se
+       quitaron «¿Cómo nos compras?» y la elección Particulares / Empresas.
+       El alta de empresas sigue por el formulario de /contacto. -->
   <section class="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
-    <p class="numeracion">Acceso clientes</p>
-    <h1 class="text-4xl sm:text-5xl mt-2">¿Cómo nos compras?</h1>
+    <h1 class="text-4xl sm:text-5xl">Entra.</h1>
     <p class="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">
-      El alta no es la misma para una casa que para una cocina que pide cada
-      semana. Dinos cuál eres.
+      Déjanos tu contacto y te damos de alta. No hace falta cuenta para
+      comprar: en la tienda online puedes pagar directamente, sin
+      registrarte.
     </p>
 
     <div class="mt-8">
-      <AccesoClientes client:load />
+      <AccesoForm client:load />
     </div>
   </section>
 </MarketingLayout>
