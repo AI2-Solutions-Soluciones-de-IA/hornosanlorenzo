@@ -24,7 +24,7 @@ const [productsAll, defsPacks] = await Promise.all([
 // `listarProductos` ya devuelve en el orden de la carta.
 const featured = productsAll.filter((p) => p.destacado).slice(0, 6);
 
-const heroImage = (await import("../../public/images/productos/bolleria.jpeg")).default;
+const heroImage = (await import("../../public/images/productos/portada.jpg")).default;
 
 const localBizJsonLd = stores.map((s) => ({
   "@context": "https://schema.org",
@@ -53,7 +53,7 @@ const localBizJsonLd = stores.map((s) => ({
     italicTail="haciéndolo bien."
     body="Comida casera para hogares y empresas. Tartas y empanadas hechas cada mañana en obrador propio, con método tradicional e ingredientes de siempre."
     image={heroImage}
-    imageAlt="Bollería de obrador recién horneada"
+    imageAlt="Tarta de nata con frutas naturales variadas"
     primaryCta={{ href: "/catalogo", label: "Ver el catálogo" }}
     secondaryCta={{ href: "/a-quien-servimos", label: "A quién servimos" }}
   />
