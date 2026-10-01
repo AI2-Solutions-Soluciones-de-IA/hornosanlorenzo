@@ -67,8 +67,9 @@ const isActive = (href: string) => {
 
   <!-- Banda superior: La Firma · buscador y acceso -->
   <div class="mx-auto max-w-6xl px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-    <!-- Buscador: solo la lupa; al pulsarla se despliega el campo debajo,
-         flotando, para no mover el logo. Lo abre y cierra el script de abajo. -->
+    <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
+         derecha, flotando, para no mover el logo (en el móvil lo tapa
+         mientras se escribe). Lo abre y cierra el script de abajo. -->
     <div class="relative justify-self-start" data-buscador>
       <button
         type="button"
@@ -89,7 +90,7 @@ const isActive = (href: string) => {
         method="get"
         role="search"
         hidden
-        class="absolute left-0 top-full mt-2 z-50 w-72 max-w-[calc(100vw-2rem)] flex items-center border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] shadow-lg"
+        class="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 w-72 md:w-52 lg:w-72 max-w-[calc(100vw-5rem)] flex items-center border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] shadow-lg"
       >
         <label for="buscar" class="sr-only">Buscar en el catálogo</label>
         <input
