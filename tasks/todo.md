@@ -250,6 +250,80 @@
       rama de pruebas
 - [ ] Resumen y «Este mes» no están paginados: no se pidió; mirar si crecen
 
+## Seguridad: revisión del 1-10-2026 (nada aplicado, solo anotado)
+Sin agujeros graves explotables hoy. Por prioridad:
+- [ ] **Comprobar primero (negocio, no seguridad): cortes de entrega en UTC.**
+      `src/lib/entrega.ts:139-146,175` usan la hora local del proceso
+      (`getHours`, `toISO`), y Vercel corre en UTC: los cortes de 13:00,
+      17:00 y 18:00 se aplicarían hasta 2 h tarde (a las 14:30 de Madrid aún
+      deja recoger hoy). Sospecha sin verificar: probar con `TZ=UTC` y una
+      hora fija, y calcular en `Europe/Madrid`
+- [ ] **Media: pedidos «sin pago» forzables.** Producción no tiene
+      `STRIPE_*` (comprobado con `vercel env ls` y en la base: 1 pagado,
+      2 `sin_pago`), así que `POST /api/checkout` anota pedidos sin cobrar,
+      sin límite de intentos (`src/pages/api/checkout.ts:63-77`). Configurar
+      Stripe o, mientras, límite por IP en el checkout
+- [ ] **Media: dependencias.** `pnpm audit --prod`: 1 crítica, 23 altas,
+      17 moderadas. La crítica es Astro (RCE en optimización AVIF, arreglada
+      en `>=7.2.8`: salto a Astro 7, tarea aparte y con pruebas). Resto sobre
+      todo de astro, sharp (`>=0.35.4`), vite, js-yaml, devalue y exceljs
+      (brace-expansion). Riesgo real bajo: las imágenes las optimiza Vercel
+- [ ] **Media: cabeceras de seguridad.** Solo hay HSTS (lo pone Vercel). Falta
+      `vercel.json` con `X-Frame-Options`/`frame-ancestors`, CSP,
+      `X-Content-Type-Options: nosniff`, `Referrer-Policy`,
+      `Permissions-Policy`. Ojo: CSP sin romper Stripe, Google Maps ni el
+      JSON-LD inline
+- [ ] **Media: el alta revela si un correo existe** («Ya hay una cuenta con
+      este correo», `src/islands/AccesoForm.tsx:66-67`). Mensaje neutro o
+      verificación de correo
+- [ ] **Baja: cambiar la contraseña no cierra las sesiones abiertas.** Añadir
+      `revokeSessionsOnPasswordReset: true` en `emailAndPassword`
+      (`src/lib/auth/server.ts:23`)
+- [ ] **Baja: no se verifica el correo al darse de alta.** Se puede registrar
+      un correo ajeno y pedir la recuperación: llega un correo nuestro con el
+      nombre que puso el atacante (`server.ts:37`). Valorar
+      `requireEmailVerification`, y no poner el nombre en ese correo
+- [ ] **Baja: fotos de pedido anónimas.** `src/pages/api/foto-pedido.ts:35-66`:
+      20 subidas/h por IP de hasta 20 MB (`src/lib/storage/fotos-pedido.ts:16`),
+      sin borrar las que no acaban en pedido. Bajar el tamaño o el cupo y
+      limpiar las huérfanas
+- [ ] **Baja (solo si cae la cuenta admin): HTML sin limpiar.** El Markdown
+      del panel admite HTML crudo (`src/lib/markdown.ts:18-23` →
+      `set:html` en `noticias/[slug].astro:101` y `catalogo/[slug].astro:261`).
+      Y `src/components/SEO.astro:54`: un `</script>` en un nombre rompe el
+      JSON-LD; escapar con `.replace(/</g, "\\u003c")`
+- [ ] Defensa extra: comprobar `esAdmin` también en las páginas
+      `src/pages/admin/*.astro` (hoy solo el middleware). Probado en
+      producción con `/%61dmin`, `//admin`, `/admin%2F…` y mayúsculas: no
+      se salta
+- [ ] Declarar `security: { checkOrigin: true }` en `astro.config.mjs`
+      (hoy viene por defecto)
+- [ ] Con Stripe ya configurado:
+  - [ ] Procesar `checkout.session.async_payment_succeeded` (SEPA y otros
+        diferidos), hoy ignorado (`src/pages/api/webhook.ts:50-57`)
+  - [ ] Aviso duplicado si Stripe reintenta a la vez: leer y marcar
+        `notificado_en` de forma atómica (`webhook.ts:59-69`)
+  - [ ] Comparar `amount_total` y moneda con `total_cents` en `marcarPagado`
+        (`src/lib/db/pedidos.ts:175-188`)
+- [ ] `.gitignore` para los ficheros sueltos de la raíz (zip, pptx, docx,
+      png, `graphify-out/`, `.claude/`) y las copias `--copia=`
+
+## Fotos de la web (1-10-2026)
+- [ ] 44 fichas con foto prestada de otro producto, marcadas «Foto
+      provisional» en el panel (filtro en Productos, etiqueta en Packs).
+      Al llegar la foto buena: subirla desde el panel (la marca se quita sola)
+      o quitar la ficha de `PARECIDAS` en `scripts/fotos-finales-web.mjs`
+- [ ] Confirmar con el cliente dos asignaciones dudosas: «Tarta vegetal»
+      lleva salmón y gambas (¿La Vegetal o La de Salmón y Gambas?) y «Tarta
+      de chocolate y trufa» (¿la sin alérgenos o el Bombón Negro?)
+- [ ] La foto «Tarta de comunión personalizada» (libro) no se usa: no hay
+      producto de comunión
+- [ ] Mirar en producción, con cuenta de admin, la sección «Más fotos» y la
+      marca «Foto provisional»: solo se probó en la rama de pruebas
+- [ ] `src/lib/db/productos.test.ts:40,44,239` borra la tabla `productos`
+      entera: vacía la rama de pruebas y choca con `packs.test.ts` (falla a
+      ratos también en `main`). Que borre solo lo suyo
+
 ## Más adelante
 - [ ] **Llevar el cómputo a Cloud Run** cuando el proyecto esté asentado. Del
       análisis de costes del 9 de septiembre de 2026: Vercel Pro son ~20 €/mes
