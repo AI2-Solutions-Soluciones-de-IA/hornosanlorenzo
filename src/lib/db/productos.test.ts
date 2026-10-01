@@ -25,6 +25,7 @@ describeSiHayBD("repositorio de productos", () => {
     imageWidth: null,
     imageHeight: null,
     fotosExtra: [],
+    fotoProvisional: false,
     activo: true,
     agotado: false,
     especialidad: null,
@@ -137,6 +138,18 @@ describeSiHayBD("repositorio de productos", () => {
     });
     expect(cambiado?.fotosExtra).toEqual([foto(3)]);
     expect((await repo.obtenerProducto(producto.slug))?.fotosExtra).toEqual([foto(3)]);
+  });
+
+  it("guarda la marca de foto provisional y la quita al editar", async () => {
+    const producto = await repo.crearProducto(
+      datos({ name: "Tarta con foto prestada", fotoProvisional: true }),
+    );
+    expect(producto.fotoProvisional).toBe(true);
+    const cambiado = await repo.actualizarProducto(producto.id, {
+      ...datos({ name: "Tarta con foto prestada" }),
+      fotoProvisional: false,
+    });
+    expect(cambiado?.fotoProvisional).toBe(false);
   });
 
   it("una ficha sin fotos de carrusel devuelve una lista vacía, no null", async () => {

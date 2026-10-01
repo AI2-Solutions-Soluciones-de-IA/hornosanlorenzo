@@ -85,6 +85,7 @@ const packAdmin = (): PackAdmin => ({
   },
   sueltoCents: 4400,
   ahorroPct: 10,
+  fotoProvisional: false,
 });
 
 describe("centimosAEuros", () => {
@@ -136,7 +137,7 @@ describe("textoPersonas", () => {
 describe("borrador ↔ entrada", () => {
   it("ida y vuelta de un pack existente conserva todo, id de hueco incluido", () => {
     const p = packAdmin();
-    const { slug: _s, sueltoCents: _a, ahorroPct: _b, ...entrada } = p;
+    const { slug: _s, sueltoCents: _a, ahorroPct: _b, fotoProvisional: _c, ...entrada } = p;
     expect(aEntrada(borradorDesdePack(p))).toEqual(entrada);
   });
 

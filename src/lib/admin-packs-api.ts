@@ -21,6 +21,8 @@ export type PackAdmin = DatosPackEntrada & {
   sueltoCents: number | null;
   /** % de ahorro entero, o null si no ahorra o no se puede calcular. */
   ahorroPct: number | null;
+  /** Solo lectura: la foto es de un producto parecido (ver `foto_provisional`). */
+  fotoProvisional: boolean;
 };
 
 /** Lo que el editor necesita saber de un producto de la carta para elegir piezas. */

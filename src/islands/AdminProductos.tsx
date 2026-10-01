@@ -48,6 +48,7 @@ export type Producto = {
   imageWidth: number | null;
   imageHeight: number | null;
   fotosExtra: FotoExtra[];
+  fotoProvisional: boolean;
   activo: boolean;
   agotado: boolean;
   especialidad: string | null;
@@ -145,6 +146,7 @@ type FormularioProducto = {
   imageWidth: number | null;
   imageHeight: number | null;
   fotosExtra: FotoExtra[];
+  fotoProvisional: boolean;
   activo: boolean;
   agotado: boolean;
   especialidad: string;
@@ -169,6 +171,7 @@ const FORMULARIO_VACIO: FormularioProducto = {
   imageWidth: null,
   imageHeight: null,
   fotosExtra: [],
+  fotoProvisional: false,
   activo: true,
   agotado: false,
   especialidad: "",
@@ -194,6 +197,7 @@ function formularioDesdeProducto(p: Producto): FormularioProducto {
     imageWidth: p.imageWidth,
     imageHeight: p.imageHeight,
     fotosExtra: p.fotosExtra.map((f) => ({ ...f })),
+    fotoProvisional: p.fotoProvisional,
     activo: p.activo,
     agotado: p.agotado,
     especialidad: p.especialidad ?? "",
@@ -248,6 +252,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
   const [cargando, setCargando] = useState(false);
   const [query, setQuery] = useState("");
   const [seccionFiltro, setSeccionFiltro] = useState("");
+  const [soloProvisionales, setSoloProvisionales] = useState(false);
   const [pagina, setPagina] = useState(1);
   const [abierto, setAbierto] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -266,10 +271,11 @@ export default function AdminProductos({ productosIniciales }: Props) {
     const needle = normalize(query.trim());
     return productos.filter((p) => {
       if (seccionFiltro && p.seccion !== seccionFiltro) return false;
+      if (soloProvisionales && !p.fotoProvisional) return false;
       if (needle && !normalize(p.name).includes(needle)) return false;
       return true;
     });
-  }, [productos, query, seccionFiltro]);
+  }, [productos, query, seccionFiltro, soloProvisionales]);
 
   // `paginar` acota: si al desactivar o filtrar se quedan menos páginas, se
   // enseña la última que queda en vez de una vacía.
@@ -422,6 +428,8 @@ export default function AdminProductos({ productosIniciales }: Props) {
       imageUrl: foto.url,
       imageWidth: foto.ancho,
       imageHeight: foto.alto,
+      // Una foto subida a mano para esta ficha ya es la suya.
+      fotoProvisional: false,
     }));
   }
 
@@ -520,6 +528,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
       fotosExtra: formulario.imageUrl
         ? formulario.fotosExtra.map((f) => ({ ...f, alt: f.alt.trim() }))
         : [],
+      fotoProvisional: Boolean(formulario.imageUrl) && formulario.fotoProvisional,
       activo: formulario.activo,
       agotado: formulario.agotado,
       especialidad: formulario.especialidad.trim() || null,
@@ -589,6 +598,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
       // Igual que la etiqueta de abajo: si faltaran, el servidor las daría
       // por vacías y marcar «agotado» vaciaría el carrusel.
       fotosExtra: p.fotosExtra,
+      fotoProvisional: p.fotoProvisional,
       activo: p.activo,
       agotado: p.agotado,
       // Se reenvía tal cual: si faltara, el servidor la daría por vacía y
@@ -699,6 +709,26 @@ export default function AdminProductos({ productosIniciales }: Props) {
                   ))}
                 </select>
               </div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  alignSelf: "flex-end",
+                  paddingBottom: 10,
+                  fontSize: 14,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={soloProvisionales}
+                  onChange={(e) => {
+                    setSoloProvisionales(e.target.checked);
+                    setPagina(1);
+                  }}
+                />
+                Solo con foto provisional ({productos.filter((p) => p.fotoProvisional).length})
+              </label>
             </div>
           </div>
 
@@ -772,6 +802,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
 
                   <div style={{ display: "flex", gap: 8 }}>
                     {p.especialidad && <span style={badge}>{p.especialidad}</span>}
+                    {p.fotoProvisional && <span style={badge}>Foto provisional</span>}
                     {p.agotado && <span style={badge}>Agotado</span>}
                     {!p.activo && <span style={badge}>Desactivado</span>}
                   </div>
@@ -1153,6 +1184,19 @@ export default function AdminProductos({ productosIniciales }: Props) {
                 style={field}
               />
             </div>
+          )}
+
+          {formulario.imageUrl && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+              <input
+                type="checkbox"
+                checked={formulario.fotoProvisional}
+                onChange={(e) => actualizaCampo("fotoProvisional", e.target.checked)}
+              />
+              <span style={{ fontSize: 14 }}>
+                Foto provisional: es de un producto parecido, falta hacer la de este
+              </span>
+            </label>
           )}
 
           {formulario.imageUrl && (

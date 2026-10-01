@@ -55,6 +55,8 @@ export type Producto = {
   imageHeight: number | null;
   /** Las fotos que siguen a la principal en el carrusel de la ficha. */
   fotosExtra: FotoExtra[];
+  /** La foto principal es de un producto parecido, hasta que llegue la suya. */
+  fotoProvisional: boolean;
   activo: boolean;
   agotado: boolean;
   /** Etiqueta de la carta, p. ej. «Especialidad desde 1986». `null` = ninguna. */
@@ -94,6 +96,7 @@ const CAMPOS = `
   p.image_width  as "imageWidth",
   p.image_height as "imageHeight",
   p.fotos_extra  as "fotosExtra",
+  p.foto_provisional as "fotoProvisional",
   p.activo, p.agotado, p.especialidad,
   coalesce(
     (select json_agg(json_build_object(
@@ -254,6 +257,7 @@ const VALORES = (datos: DatosProducto) => [
   datos.especialidad,
   // `pg` pasaría un array de JS como array de Postgres, no como JSON.
   JSON.stringify(datos.fotosExtra),
+  datos.fotoProvisional,
 ];
 
 export async function crearProducto(datos: DatosProducto): Promise<Producto> {
@@ -265,8 +269,8 @@ export async function crearProducto(datos: DatosProducto): Promise<Producto> {
          (name, category, seccion, price_cents, consultar, unit,
           short_description, cuerpo, allergens, destacado, temporada, orden,
           image_url, image_alt, image_width, image_height, activo, agotado,
-          especialidad, fotos_extra, slug)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
+          especialidad, fotos_extra, foto_provisional, slug)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
        returning id, slug`,
       [...VALORES(datos), datos.slug ?? slugify(datos.name)],
     );
@@ -307,8 +311,8 @@ export async function actualizarProducto(
          allergens = $9, destacado = $10, temporada = $11, orden = $12,
          image_url = $13, image_alt = $14, image_width = $15, image_height = $16,
          activo = $17, agotado = $18, especialidad = $19, fotos_extra = $20,
-         updated_at = now()
-       where id = $21
+         foto_provisional = $21, updated_at = now()
+       where id = $22
        returning slug`,
       [...VALORES(datos), id],
     );

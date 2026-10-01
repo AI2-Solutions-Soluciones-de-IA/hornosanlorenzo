@@ -572,7 +572,8 @@ const c = new pg.Client({ connectionString: process.env.DATABASE_URL });
 await c.connect();
 const slugs = Object.keys(FOTOS);
 const { rows: filas } = await c.query(
-  `select id, slug, name, image_url, image_alt, image_width, image_height, fotos_extra
+  `select id, slug, name, image_url, image_alt, image_width, image_height, fotos_extra,
+          foto_provisional
      from productos where slug = any($1)`,
   [slugs],
 );
@@ -650,14 +651,16 @@ try {
     await c.query(
       `update productos set
          image_url = $1, image_alt = $2, image_width = $3, image_height = $4,
-         fotos_extra = $5, updated_at = now()
-       where slug = $6`,
+         fotos_extra = $5, foto_provisional = $6, updated_at = now()
+       where slug = $7`,
       [
         principal.url,
         principal.alt,
         principal.ancho,
         principal.alto,
         JSON.stringify(resto),
+        // Las prestadas se marcan para el panel («Foto provisional»).
+        s in PARECIDAS,
         s,
       ],
     );

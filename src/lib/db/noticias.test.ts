@@ -127,6 +127,7 @@ describeSiHayBD("repositorio de noticias", () => {
       imageWidth: null,
       imageHeight: null,
       fotosExtra: [],
+      fotoProvisional: false,
       activo: true,
       agotado: false,
       especialidad: null,

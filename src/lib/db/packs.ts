@@ -251,6 +251,8 @@ export async function actualizarPack(
          name = $1, price_cents = $2, short_description = $3, image_url = $4,
          image_alt = $5, image_width = $6, image_height = $7, activo = $8,
          agotado = $9, orden = $10, destacado = $11, updated_at = now(),
+         -- Una foto nueva deja de ser la provisional; la misma, sigue igual.
+         foto_provisional = foto_provisional and image_url is not distinct from $4,
          category = 'packs', seccion = 'packs', consultar = false, unit = null,
          cuerpo = '', allergens = '{}'
        where slug = $12 and category = 'packs'

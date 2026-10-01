@@ -86,6 +86,7 @@ export const GET: APIRoute = async ({ locals }) => {
         definicion,
         sueltoCents: suelto,
         ahorroPct: ahorroPct(p.priceCents ?? 0, suelto),
+        fotoProvisional: p.fotoProvisional,
       });
     }
     const cuerpo: RespuestaGetPacks = { packs, carta };

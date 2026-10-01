@@ -22,6 +22,7 @@ const p = (slug: string, seccion: string | null): Producto => ({
   imageWidth: null,
   imageHeight: null,
   fotosExtra: [],
+  fotoProvisional: false,
   activo: true,
   agotado: false,
   especialidad: null,

@@ -163,6 +163,22 @@ describeSiHayBD("repositorio de definiciones de pack", () => {
     expect(d.rows[0].destacado).toBe(false);
   });
 
+  it("actualizarPack quita la marca de foto provisional solo si cambia la foto", async () => {
+    const slug = "test-packdb-provisional";
+    const foto = (url: string) => ({ imageUrl: url, imageAlt: "Foto", imageWidth: 1600, imageHeight: 1067 });
+    await repo.crearPack(datos(slug, foto("https://blob.test/a.webp")) as never);
+    await pool.query("update productos set foto_provisional = true where slug = $1", [slug]);
+    const marca = async () =>
+      (await pool.query("select foto_provisional from productos where slug = $1", [slug])).rows[0]
+        .foto_provisional;
+
+    await repo.actualizarPack(slug, datos(slug, foto("https://blob.test/a.webp")) as never);
+    expect(await marca()).toBe(true);
+
+    await repo.actualizarPack(slug, datos(slug, foto("https://blob.test/b.webp")) as never);
+    expect(await marca()).toBe(false);
+  });
+
   it("actualizarPack de un slug que no es pack o no existe lanza", async () => {
     const slug = "test-packdb-no-pack";
     await pool.query(

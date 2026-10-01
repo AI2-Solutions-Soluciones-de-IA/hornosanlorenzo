@@ -78,6 +78,7 @@ const esquema = z
       )
       .max(MAX_FOTOS_EXTRA, `Como mucho ${MAX_FOTOS_EXTRA} fotos además de la principal.`)
       .default([]),
+    fotoProvisional: z.boolean().default(false),
     activo: z.boolean().default(true),
     agotado: z.boolean().default(false),
     // Vacía cuenta como «sin etiqueta».

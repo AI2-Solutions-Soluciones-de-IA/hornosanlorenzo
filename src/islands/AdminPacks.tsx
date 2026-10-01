@@ -293,6 +293,7 @@ function FilaPack({ p, onEditar }: { p: PackAdmin; onEditar: () => void }) {
           <span style={insignia}>Desactivado</span>
         )}
         {p.agotado && <span style={insignia}>Agotado</span>}
+        {p.fotoProvisional && <span style={insignia}>Foto provisional</span>}
       </div>
 
       <button
