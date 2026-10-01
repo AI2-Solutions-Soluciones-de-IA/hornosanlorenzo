@@ -32,6 +32,20 @@ describe("preparaAltaUsuario", () => {
     ).rejects.toMatchObject({ status: "BAD_REQUEST" });
   });
 
+  it("acepta un nombre de 100 caracteres y rechaza uno de 101", async () => {
+    const { data } = await preparaAltaUsuario({ ...bueno, name: "a".repeat(100) });
+    expect(data.name).toHaveLength(100);
+    await expect(
+      preparaAltaUsuario({ ...bueno, name: "a".repeat(101) }),
+    ).rejects.toMatchObject({ status: "BAD_REQUEST" });
+  });
+
+  it("también al editar la cuenta: un nombre de 101 caracteres no entra", async () => {
+    await expect(
+      preparaActualizacionUsuario({ name: "a".repeat(101) }),
+    ).rejects.toMatchObject({ status: "BAD_REQUEST" });
+  });
+
   it("rechaza el alta sin teléfono, aunque el campo sea opcional en el esquema", async () => {
     const { telefono, ...sinTelefono } = bueno;
     await expect(preparaAltaUsuario(sinTelefono)).rejects.toMatchObject({

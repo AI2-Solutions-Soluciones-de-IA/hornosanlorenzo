@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { authClient } from "~/lib/auth/cliente";
 import { rutaDeVuelta } from "~/lib/reanudar-checkout";
 import {
+  MAX_NOMBRE,
   MIN_PASSWORD,
   validaEntrada,
   validaRegistro,
@@ -197,6 +198,7 @@ export default function AccesoForm({
             <input
               id="af-nombre"
               value={nombre}
+              maxLength={MAX_NOMBRE}
               onChange={(e) => setNombre(e.target.value)}
               aria-invalid={!!errores.nombre}
               aria-describedby={errores.nombre ? "af-nombre-error" : undefined}

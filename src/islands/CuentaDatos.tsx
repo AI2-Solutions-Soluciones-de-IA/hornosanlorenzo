@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { esTelefonoValido } from "~/lib/entrega";
+import { MAX_NOMBRE, NOMBRE_LARGO } from "~/lib/auth/validacion";
 
 type Props = {
   nombre: string;
@@ -50,6 +51,7 @@ const MENSAJE_GENERICO = "Algo ha fallado. Inténtalo de nuevo.";
 function valida(nombre: string, telefono: string): Record<string, string> {
   const errores: Record<string, string> = {};
   if (!nombre.trim()) errores.nombre = "Dinos cómo te llamas.";
+  else if (nombre.trim().length > MAX_NOMBRE) errores.nombre = NOMBRE_LARGO;
   if (!esTelefonoValido(telefono)) {
     errores.telefono = "Escribe un móvil o fijo español de nueve dígitos.";
   }
@@ -141,6 +143,7 @@ export default function CuentaDatos({
         <input
           id="cd-nombre"
           value={nombre}
+          maxLength={MAX_NOMBRE}
           onChange={(e) => {
             setNombre(e.target.value);
             setGuardado(false);

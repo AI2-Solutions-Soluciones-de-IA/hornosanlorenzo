@@ -1,5 +1,6 @@
 import { APIError } from "better-auth/api";
 import { esTelefonoValido, normalizaTelefono } from "~/lib/entrega";
+import { MAX_NOMBRE, NOMBRE_LARGO } from "~/lib/auth/validacion";
 
 export type DatosPersonales = { name: string; telefono: string };
 
@@ -28,6 +29,11 @@ export function validaDatosPersonales(
       code: "INVALID_NAME",
       message: "Dinos cómo te llamas.",
     };
+  }
+  // Sin tope, un alta podía guardar un nombre de miles de caracteres y
+  // descuadrar el panel y los pedidos.
+  if (nombre.length > MAX_NOMBRE) {
+    return { ok: false, code: "INVALID_NAME", message: NOMBRE_LARGO };
   }
 
   const telefonoBruto =

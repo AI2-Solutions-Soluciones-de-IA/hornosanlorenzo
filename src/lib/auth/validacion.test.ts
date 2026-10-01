@@ -18,6 +18,12 @@ describe("validaRegistro", () => {
     expect(validaRegistro(bueno)).toEqual({ ok: true });
   });
 
+  it("no deja pasar un nombre de más de 100 caracteres", () => {
+    const r = validaRegistro({ ...bueno, nombre: "a".repeat(101) });
+    expect(r.ok === false && r.errores.nombre).toMatch(/100 caracteres/);
+    expect(validaRegistro({ ...bueno, nombre: "a".repeat(100) })).toEqual({ ok: true });
+  });
+
   it("exige nombre", () => {
     const r = validaRegistro({ ...bueno, nombre: " " });
     expect(r.ok).toBe(false);

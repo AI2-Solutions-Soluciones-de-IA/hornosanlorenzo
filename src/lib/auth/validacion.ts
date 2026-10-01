@@ -3,6 +3,10 @@ import { esTelefonoValido } from "~/lib/entrega";
 /** Mismo mínimo que `minPasswordLength` en el servidor. Si cambia uno, cambia el otro. */
 export const MIN_PASSWORD = 8;
 
+/** Tope del nombre, el mismo en el navegador y en el servidor (`~/lib/auth/alta`). */
+export const MAX_NOMBRE = 100;
+export const NOMBRE_LARGO = `El nombre no puede pasar de ${MAX_NOMBRE} caracteres.`;
+
 export type Resultado =
   | { ok: true }
   | { ok: false; errores: Record<string, string> };
@@ -18,6 +22,7 @@ export function validaRegistro(d: {
   const errores: Record<string, string> = {};
 
   if (!d.nombre.trim()) errores.nombre = "Dinos cómo te llamas.";
+  else if (d.nombre.trim().length > MAX_NOMBRE) errores.nombre = NOMBRE_LARGO;
   if (!esEmail(d.email)) errores.email = "Ese correo no parece válido.";
   if (!esTelefonoValido(d.telefono)) {
     errores.telefono = "Escribe un móvil o fijo español de nueve dígitos.";
