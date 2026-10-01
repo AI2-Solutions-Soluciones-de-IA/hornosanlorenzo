@@ -409,6 +409,94 @@ const FOTOS = {
   ],
 };
 
+/**
+ * Fichas que no tienen foto propia en la carpeta: llevan la más parecida
+ * hasta que llegue la suya. Solo la principal, sin carrusel, y con un texto
+ * alternativo que describe lo que se ve, no la ficha.
+ */
+const PARECIDAS = {
+  // Salado
+  ...enTodas(
+    [
+      "suprema-pollo-mostaza-y-miel",
+      "suprema-bacalao-con-pasas",
+      "suprema-morcilla-con-compota-de-pera",
+      "suprema-queso-de-cabra-y-piquillos",
+    ],
+    [["suprema-de-salmon-con-cebolla-caramelizada-y-philadelphia-1.png", "Suprema de hojaldre con una porción cortada"]],
+  ),
+  "empanada-bolonesa-sin-alergenos": [["empanada-1.png", "Empanada de hojaldre entera sobre tabla de madera"]],
+  ...enTodas(
+    [
+      "quiche-carbonara",
+      "quiche-espinacas-queso-y-pasas",
+      "quiche-trigueros-y-tomate-cherry",
+      "quiche-salchicha-y-queso",
+    ],
+    [["quiche-de-puerros-cebolla-y-bacon-1.png", "Quiche artesana entera sobre tabla de madera"]],
+  ),
+  "tarta-salada-salmon-y-gambas": [["tarta-vegetal-1.png", "Tarta salada decorada con lechuga, salmón y gambas"]],
+
+  // Tartas del obrador
+  "bombon-noir": [["tarta-de-chocolate-y-trufa-1.png", "Tarta redonda con cobertura de chocolate negro brillante"]],
+  "la-trufada": [["tarta-de-chocolate-y-trufa-2.png", "Detalle de una tarta con cobertura de chocolate"]],
+  "la-selva-negra": [["brazo-selva-negra-1.png", "Pastel de bizcocho de chocolate, nata y virutas de chocolate"]],
+  "la-nupcial": [["tarta-fresas-naturales-y-nata-1.png", "Tarta de nata coronada de fresas naturales"]],
+  "la-americana": [["bizcocho-zanahoria-1.jpg", "Bizcocho de zanahoria espolvoreado de azúcar glas"]],
+
+  // Cremosas
+  ...enTodas(
+    ["cheesecake-de-arandanos", "cheesecake-de-frambuesa"],
+    [["tarta-flan-de-queso-1.png", "Tarta de queso con caramelo"]],
+  ),
+  "los-tres-chocolates": [["mousse-de-chocolate-1.png", "Tarta de chocolate decorada con rosetones de chocolate"]],
+  "crema-y-frutas-de-temporada": [["tarta-de-frutas-y-nata-1.png", "Tarta con frutas naturales variadas"]],
+
+  // Planchas
+  ...enTodas(
+    ["plancha-san-marcos-nata", "plancha-yema-y-nata"],
+    [["plancha-de-dulce-de-leche-1.png", "Plancha con cobertura tostada y relleno de nata"]],
+  ),
+  ...enTodas(
+    [
+      "plancha-nata-y-trufa",
+      "plancha-san-marcos-trufa",
+      "plancha-chocolate-y-nata",
+      "plancha-nata-y-trufa-con-chocolate-rizado",
+    ],
+    [["plancha-de-chocolate-y-trufa-1.png", "Plancha con cobertura de chocolate"]],
+  ),
+  "plancha-yogur-y-limon": [["plancha-de-dulce-de-leche-2.png", "Corte de una plancha de bizcocho y crema"]],
+  ...enTodas(
+    ["plancha-queso-con-frambuesa", "plancha-queso-con-arandanos", "plancha-fresas-en-trocitos-con-nata"],
+    [["plancha-fresa-nata-1.png", "Plancha con cobertura roja de frutos rojos y relleno de nata"]],
+  ),
+  "plancha-frutas-con-crema": [["plancha-manzana-y-crema-1.png", "Plancha de fruta sobre crema"]],
+
+  // Brazos
+  ...enTodas(
+    ["brazo-milhojas-de-nata-y-crema", "brazo-milhojas-de-nata-crema-y-frambuesa"],
+    [["plancha-de-milhojas-y-nata-1.png", "Milhojas de nata y crema"]],
+  ),
+  "brazo-san-marcos-nata-y-trufa": [["brazo-de-gitano-1.png", "Brazo con cobertura de yema tostada"]],
+  "brazo-tres-chocolates": [["brazo-selva-negra-1.png", "Brazo de bizcocho de chocolate y nata con virutas"]],
+  "brazo-tiramisu-y-mascarpone": [["plancha-tiramisu-1.png", "Tiramisú espolvoreado de cacao"]],
+  "brazo-fresas-naturales-con-nata": [["brazo-de-frutas-variadas-1.png", "Brazo de nata con fresas y frutas"]],
+
+  // Celebración
+  "oblea-ilustrada": [["tarta-con-foto-personalizada-1.png", "Tarta con una imagen personalizada impresa"]],
+
+  // Packs
+  "pack-cumpleanos": [["tarta-con-foto-personalizada-1.png", "Tarta rectangular con una fotografía personalizada impresa"]],
+  "pack-merienda-infantil": [["plancha-oreo-1.png", "Plancha de Oreo"]],
+  "pack-futbolero": [["tarta-futbol.png", "Plancha decorada como un campo de fútbol con porterías y jugadores"]],
+  "pack-brunch-en-casa": [["suprema-de-salmon-con-cebolla-caramelizada-y-philadelphia-1.png", "Suprema de salmón, cebolla caramelizada y queso crema, con una porción cortada"]],
+  "pack-gran-celebracion": [["pastelitos-variados-1.jpg", "Bandeja de pastelitos variados del obrador"]],
+  "pack-evento-especial": [["mini-canapes-variados-1.jpg", "Mini canapés variados sobre una tabla de madera"]],
+  "pack-reunion-oficina": [["croissants-salados-1.png", "Tabla de mini croissants salados rellenos"]],
+};
+Object.assign(FOTOS, PARECIDAS);
+
 /** Fotos que vienen en la carpeta y no van a ninguna ficha, a propósito. */
 const SIN_USAR = ["tarta-de-comunion-personalizada.png"];
 
