@@ -1,8 +1,8 @@
 ---
-import { Image } from "astro:assets";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import AddToCart from "~/islands/AddToCart.tsx";
 import PackFicha from "~/components/PackFicha.astro";
+import FotosProducto, { type Foto } from "~/components/FotosProducto.astro";
 import { categoryById, isCategoryId } from "~/data/categories";
 import { seccionById, isSeccionId } from "~/data/secciones";
 import { obtenerProducto, productosDeSecciones, productosParaPedido } from "~/lib/db/productos";
@@ -115,10 +115,14 @@ const allergensLabel: Record<string, string> = {
 
 // Solo se arma el objeto de imagen cuando los tres datos están presentes:
 // sin `!`, y sin arriesgarse a pintar un `<Image>` a medio completar.
-const imagen =
+// Las del carrusel van detrás de la principal, y solo si hay principal.
+const fotos: Foto[] =
   product.imageUrl && product.imageWidth && product.imageHeight
-    ? { url: product.imageUrl, alt: product.imageAlt ?? product.name, ancho: product.imageWidth, alto: product.imageHeight }
-    : null;
+    ? [
+        { url: product.imageUrl, alt: product.imageAlt ?? product.name, ancho: product.imageWidth, alto: product.imageHeight },
+        ...product.fotosExtra,
+      ]
+    : [];
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -127,7 +131,7 @@ const jsonLd = {
   description: product.shortDescription,
   // La URL del almacén ya es absoluta: a diferencia del Markdown de antes, no
   // hay que envolverla con `new URL(..., Astro.site)`.
-  image: product.imageUrl ?? undefined,
+  image: fotos.length > 0 ? fotos.map((f) => f.url) : undefined,
   category: cat?.label,
   ...(product.priceCents !== null && !product.consultar
     ? {
@@ -190,24 +194,7 @@ const breadcrumbs = {
 
     <div class="grid gap-10 md:grid-cols-2">
       <div class="self-start rounded-[var(--radius-card)] overflow-hidden border border-[color:var(--color-line)]">
-        {imagen ? (
-          <Image quality={80}
-            src={imagen.url}
-            alt={imagen.alt}
-            width={imagen.ancho}
-            height={imagen.alto}
-            widths={[600, 900, 1200]}
-            sizes="(min-width:768px) 600px, 100vw"
-            class="w-full h-auto"
-          />
-        ) : (
-          <div
-            class="aspect-[4/3] flex items-center justify-center bg-[color:var(--color-latte)]"
-            aria-hidden="true"
-          >
-            <span class="numeracion">Foto pendiente</span>
-          </div>
-        )}
+        <FotosProducto fotos={fotos} />
       </div>
 
       <div>

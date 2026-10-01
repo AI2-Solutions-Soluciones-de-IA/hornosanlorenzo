@@ -1,0 +1,133 @@
+---
+/**
+ * La foto de la ficha de producto o, si tiene más de una, un carrusel con
+ * todas: la principal primero y luego `fotosExtra`, en su orden. Las flechas
+ * y el contador los mueve `~/scripts/carrusel` (el mismo de la home y la
+ * carta); en el móvil, además, se pasa con el dedo.
+ */
+import { Image } from "astro:assets";
+
+export type Foto = { url: string; alt: string; ancho: number; alto: number };
+
+interface Props {
+  fotos: Foto[];
+}
+
+const { fotos } = Astro.props;
+const [primera] = fotos;
+// Todas a la proporción de la principal: si cada una trajera la suya, la
+// ficha daría un salto de altura al pasar de foto.
+const proporcion = primera ? `${primera.ancho} / ${primera.alto}` : undefined;
+---
+{fotos.length === 0 ? (
+  <div
+    class="aspect-[4/3] flex items-center justify-center bg-[color:var(--color-latte)]"
+    aria-hidden="true"
+  >
+    <span class="numeracion">Foto pendiente</span>
+  </div>
+) : fotos.length === 1 ? (
+  <Image quality={80}
+    src={primera.url}
+    alt={primera.alt}
+    width={primera.ancho}
+    height={primera.alto}
+    widths={[600, 900, 1200]}
+    sizes="(min-width:768px) 600px, 100vw"
+    class="w-full h-auto"
+  />
+) : (
+  <div class="fotos-marco" data-carrusel>
+    <ul
+      class="fotos-pista flex overflow-x-auto snap-x snap-mandatory"
+      data-carrusel-pista
+      role="region"
+      aria-roledescription="carrusel"
+      aria-label="Fotos del producto"
+      tabindex="0"
+    >
+      {fotos.map((f, i) => (
+        <li class="snap-start shrink-0 basis-full" style={{ aspectRatio: proporcion }}>
+          <Image quality={80}
+            src={f.url}
+            alt={f.alt}
+            width={f.ancho}
+            height={f.alto}
+            widths={[600, 900, 1200]}
+            sizes="(min-width:768px) 600px, 100vw"
+            loading={i === 0 ? "eager" : "lazy"}
+            class="block w-full h-full object-cover"
+          />
+        </li>
+      ))}
+    </ul>
+    <button type="button" class="fotos-flecha fotos-flecha--prev" data-carrusel-prev aria-label="Foto anterior">‹</button>
+    <button type="button" class="fotos-flecha fotos-flecha--next" data-carrusel-next aria-label="Foto siguiente">›</button>
+    <p class="fotos-contador" aria-live="polite">
+      <span data-carrusel-contador>1 de {fotos.length}</span>
+    </p>
+  </div>
+)}
+
+<style>
+  .fotos-marco {
+    position: relative;
+  }
+  .fotos-pista {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .fotos-pista::-webkit-scrollbar {
+    display: none;
+  }
+  .fotos-pista:focus-visible {
+    outline: 2px solid var(--color-caramelo);
+    outline-offset: -2px;
+  }
+  .fotos-flecha {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--color-avellana);
+    background: var(--color-leche);
+    color: var(--color-moka);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .fotos-flecha--prev {
+    left: 8px;
+  }
+  .fotos-flecha--next {
+    right: 8px;
+  }
+  .fotos-flecha:hover {
+    background: var(--color-latte);
+  }
+  .fotos-flecha:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .fotos-contador {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 2px 8px;
+    background: var(--color-leche);
+    color: var(--color-moka);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fotos-pista {
+      scroll-behavior: auto;
+    }
+  }
+</style>
+
+<script>
+  import "~/scripts/carrusel";
+</script>

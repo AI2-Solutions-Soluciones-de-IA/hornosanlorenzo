@@ -26,6 +26,14 @@ export type Variante = {
   orden: number;
 };
 
+/** Una foto del carrusel de la ficha, después de la principal. */
+export type FotoExtra = {
+  url: string;
+  alt: string;
+  ancho: number;
+  alto: number;
+};
+
 export type Producto = {
   id: string;
   slug: string;
@@ -45,6 +53,8 @@ export type Producto = {
   imageAlt: string | null;
   imageWidth: number | null;
   imageHeight: number | null;
+  /** Las fotos que siguen a la principal en el carrusel de la ficha. */
+  fotosExtra: FotoExtra[];
   activo: boolean;
   agotado: boolean;
   /** Etiqueta de la carta, p. ej. «Especialidad desde 1986». `null` = ninguna. */
@@ -83,6 +93,7 @@ const CAMPOS = `
   p.image_alt    as "imageAlt",
   p.image_width  as "imageWidth",
   p.image_height as "imageHeight",
+  p.fotos_extra  as "fotosExtra",
   p.activo, p.agotado, p.especialidad,
   coalesce(
     (select json_agg(json_build_object(
@@ -241,6 +252,8 @@ const VALORES = (datos: DatosProducto) => [
   datos.activo,
   datos.agotado,
   datos.especialidad,
+  // `pg` pasaría un array de JS como array de Postgres, no como JSON.
+  JSON.stringify(datos.fotosExtra),
 ];
 
 export async function crearProducto(datos: DatosProducto): Promise<Producto> {
@@ -252,8 +265,8 @@ export async function crearProducto(datos: DatosProducto): Promise<Producto> {
          (name, category, seccion, price_cents, consultar, unit,
           short_description, cuerpo, allergens, destacado, temporada, orden,
           image_url, image_alt, image_width, image_height, activo, agotado,
-          especialidad, slug)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+          especialidad, fotos_extra, slug)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        returning id, slug`,
       [...VALORES(datos), datos.slug ?? slugify(datos.name)],
     );
@@ -293,8 +306,9 @@ export async function actualizarProducto(
          consultar = $5, unit = $6, short_description = $7, cuerpo = $8,
          allergens = $9, destacado = $10, temporada = $11, orden = $12,
          image_url = $13, image_alt = $14, image_width = $15, image_height = $16,
-         activo = $17, agotado = $18, especialidad = $19, updated_at = now()
-       where id = $20
+         activo = $17, agotado = $18, especialidad = $19, fotos_extra = $20,
+         updated_at = now()
+       where id = $21
        returning slug`,
       [...VALORES(datos), id],
     );

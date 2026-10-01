@@ -215,6 +215,68 @@ describe("guardia y validación de /api/admin/productos", () => {
     const cuerpo = await r.json();
     expect(cuerpo.error).toMatch(/identificador/i);
   });
+
+  describe("fotos del carrusel", () => {
+    const foto = { url: "https://blob.test/productos/b.webp", ancho: 1600, alto: 1067 };
+    const conFotos = (extra: Record<string, unknown>) => ({
+      name: "Tarta",
+      category: "tartas",
+      shortDescription: "Una tarta.",
+      priceCents: 1000,
+      imageUrl: "https://blob.test/productos/a.webp",
+      imageAlt: "La tarta entera",
+      imageWidth: 1600,
+      imageHeight: 1067,
+      ...extra,
+    });
+
+    it("se guardan detrás de la principal, tal cual llegan", async () => {
+      const { POST } = await import("~/pages/api/admin/productos");
+      const { crearProducto } = await import("~/lib/db/productos");
+      vi.mocked(crearProducto).mockResolvedValueOnce({ slug: "tarta" } as never);
+      const r = await POST({
+        request: peticionProducto(conFotos({ fotosExtra: [{ ...foto, alt: "Un corte" }] })),
+        locals: { usuario: admin },
+      } as never);
+      expect(r.status).toBe(201);
+      expect(vi.mocked(crearProducto).mock.calls[0][0].fotosExtra).toEqual([
+        { ...foto, alt: "Un corte" },
+      ]);
+    });
+
+    it("cada una necesita su texto alternativo", async () => {
+      const { POST } = await import("~/pages/api/admin/productos");
+      const r = await POST({
+        request: peticionProducto(conFotos({ fotosExtra: [{ ...foto, alt: "  " }] })),
+        locals: { usuario: admin },
+      } as never);
+      expect(r.status).toBe(400);
+      expect((await r.json()).error).toMatch(/carrusel/i);
+    });
+
+    it("sin foto principal no se admiten", async () => {
+      const { POST } = await import("~/pages/api/admin/productos");
+      const r = await POST({
+        request: peticionProducto(
+          conFotos({ imageUrl: null, imageAlt: null, fotosExtra: [{ ...foto, alt: "Un corte" }] }),
+        ),
+        locals: { usuario: admin },
+      } as never);
+      expect(r.status).toBe(400);
+      expect((await r.json()).error).toMatch(/principal/i);
+    });
+
+    it("como mucho cuatro además de la principal", async () => {
+      const { POST } = await import("~/pages/api/admin/productos");
+      const r = await POST({
+        request: peticionProducto(
+          conFotos({ fotosExtra: Array.from({ length: 5 }, (_, i) => ({ ...foto, alt: `Foto ${i}` })) }),
+        ),
+        locals: { usuario: admin },
+      } as never);
+      expect(r.status).toBe(400);
+    });
+  });
 });
 
 describe("PUT /api/admin/productos invalida las fichas de los packs", () => {

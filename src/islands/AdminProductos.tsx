@@ -23,6 +23,11 @@ export type Variante = {
   orden: number;
 };
 
+export type FotoExtra = { url: string; alt: string; ancho: number; alto: number };
+
+/** Con la principal, cinco: el mismo tope que pone la API. */
+const MAX_FOTOS_EXTRA = 4;
+
 export type Producto = {
   id: string;
   slug: string;
@@ -42,6 +47,7 @@ export type Producto = {
   imageAlt: string | null;
   imageWidth: number | null;
   imageHeight: number | null;
+  fotosExtra: FotoExtra[];
   activo: boolean;
   agotado: boolean;
   especialidad: string | null;
@@ -138,6 +144,7 @@ type FormularioProducto = {
   imageAlt: string;
   imageWidth: number | null;
   imageHeight: number | null;
+  fotosExtra: FotoExtra[];
   activo: boolean;
   agotado: boolean;
   especialidad: string;
@@ -161,6 +168,7 @@ const FORMULARIO_VACIO: FormularioProducto = {
   imageAlt: "",
   imageWidth: null,
   imageHeight: null,
+  fotosExtra: [],
   activo: true,
   agotado: false,
   especialidad: "",
@@ -185,6 +193,7 @@ function formularioDesdeProducto(p: Producto): FormularioProducto {
     imageAlt: p.imageAlt ?? "",
     imageWidth: p.imageWidth,
     imageHeight: p.imageHeight,
+    fotosExtra: p.fotosExtra.map((f) => ({ ...f })),
     activo: p.activo,
     agotado: p.agotado,
     especialidad: p.especialidad ?? "",
@@ -371,10 +380,13 @@ export default function AdminProductos({ productosIniciales }: Props) {
     }));
   }
 
-  async function onFoto(e: React.ChangeEvent<HTMLInputElement>) {
+  /** Sube una foto al almacén y devuelve su URL y medidas, o `null` si falla. */
+  async function subeFoto(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<{ url: string; ancho: number; alto: number } | null> {
     const fichero = e.target.files?.[0];
     e.target.value = ""; // permite volver a elegir el mismo fichero
-    if (!fichero) return;
+    if (!fichero) return null;
 
     setErrorServidor(null);
     setSubiendoFoto(true);
@@ -391,19 +403,74 @@ export default function AdminProductos({ productosIniciales }: Props) {
       const datos = await respuesta.json().catch(() => null);
       if (!respuesta.ok) {
         setErrorServidor(datos?.error ?? MENSAJE_GENERICO);
-      } else {
-        setFormulario((actual) => ({
-          ...actual,
-          imageUrl: datos.url,
-          imageWidth: datos.ancho,
-          imageHeight: datos.alto,
-        }));
+        return null;
       }
+      return { url: datos.url, ancho: datos.ancho, alto: datos.alto };
     } catch {
       setErrorServidor("No hemos podido conectar. Comprueba tu conexión.");
+      return null;
     } finally {
       setSubiendoFoto(false);
     }
+  }
+
+  async function onFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const foto = await subeFoto(e);
+    if (!foto) return;
+    setFormulario((actual) => ({
+      ...actual,
+      imageUrl: foto.url,
+      imageWidth: foto.ancho,
+      imageHeight: foto.alto,
+    }));
+  }
+
+  async function onFotoExtra(e: React.ChangeEvent<HTMLInputElement>) {
+    const foto = await subeFoto(e);
+    if (!foto) return;
+    setFormulario((actual) => ({
+      ...actual,
+      fotosExtra: [...actual.fotosExtra, { ...foto, alt: "" }],
+    }));
+  }
+
+  function actualizaFotoExtra(indice: number, cambio: Partial<FotoExtra>) {
+    setFormulario((actual) => ({
+      ...actual,
+      fotosExtra: actual.fotosExtra.map((f, i) =>
+        i === indice ? { ...f, ...cambio } : f,
+      ),
+    }));
+  }
+
+  function quitaFotoExtra(indice: number) {
+    setFormulario((actual) => ({
+      ...actual,
+      fotosExtra: actual.fotosExtra.filter((_, i) => i !== indice),
+    }));
+  }
+
+  /** La pasa a principal y la principal ocupa su sitio en el carrusel. */
+  function hazPrincipal(indice: number) {
+    setFormulario((actual) => {
+      const elegida = actual.fotosExtra[indice];
+      if (!elegida || !actual.imageUrl || !actual.imageWidth || !actual.imageHeight)
+        return actual;
+      const antigua: FotoExtra = {
+        url: actual.imageUrl,
+        alt: actual.imageAlt,
+        ancho: actual.imageWidth,
+        alto: actual.imageHeight,
+      };
+      return {
+        ...actual,
+        imageUrl: elegida.url,
+        imageAlt: elegida.alt,
+        imageWidth: elegida.ancho,
+        imageHeight: elegida.alto,
+        fotosExtra: actual.fotosExtra.map((f, i) => (i === indice ? antigua : f)),
+      };
+    });
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -450,6 +517,9 @@ export default function AdminProductos({ productosIniciales }: Props) {
       imageAlt: formulario.imageAlt.trim() || null,
       imageWidth: formulario.imageWidth,
       imageHeight: formulario.imageHeight,
+      fotosExtra: formulario.imageUrl
+        ? formulario.fotosExtra.map((f) => ({ ...f, alt: f.alt.trim() }))
+        : [],
       activo: formulario.activo,
       agotado: formulario.agotado,
       especialidad: formulario.especialidad.trim() || null,
@@ -516,6 +586,9 @@ export default function AdminProductos({ productosIniciales }: Props) {
       imageAlt: p.imageAlt,
       imageWidth: p.imageWidth,
       imageHeight: p.imageHeight,
+      // Igual que la etiqueta de abajo: si faltaran, el servidor las daría
+      // por vacías y marcar «agotado» vaciaría el carrusel.
+      fotosExtra: p.fotosExtra,
       activo: p.activo,
       agotado: p.agotado,
       // Se reenvía tal cual: si faltara, el servidor la daría por vacía y
@@ -1079,6 +1152,84 @@ export default function AdminProductos({ productosIniciales }: Props) {
                 maxLength={200}
                 style={field}
               />
+            </div>
+          )}
+
+          {formulario.imageUrl && (
+            <div style={{ marginTop: 16 }}>
+              <p style={label}>Más fotos (carrusel de la ficha)</p>
+              <p style={{ marginTop: 4, fontSize: 12, color: "var(--color-ink-muted)" }}>
+                Salen en la ficha después de la principal. En el catálogo solo se ve la principal.
+              </p>
+              {formulario.fotosExtra.map((f, i) => (
+                <div
+                  key={f.url}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    marginTop: 10,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <img
+                    src={f.url}
+                    alt=""
+                    style={{ width: 96, height: 72, objectFit: "cover", display: "block" }}
+                  />
+                  <input
+                    aria-label={`Texto alternativo de la foto ${i + 2}`}
+                    value={f.alt}
+                    onChange={(e) => actualizaFotoExtra(i, { alt: e.target.value })}
+                    placeholder="Qué se ve en la foto"
+                    maxLength={200}
+                    style={{ ...field, flex: "1 1 200px", marginTop: 0 }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secundario"
+                    onClick={() => hazPrincipal(i)}
+                  >
+                    Hacer principal
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secundario"
+                    onClick={() => quitaFotoExtra(i)}
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+              {formulario.fotosExtra.length < MAX_FOTOS_EXTRA && (
+                <div style={{ marginTop: 10 }}>
+                  <label
+                    htmlFor="ap-foto-extra"
+                    className="btn btn-secundario"
+                    style={{
+                      cursor: subiendoFoto ? "wait" : "pointer",
+                      opacity: subiendoFoto ? 0.6 : 1,
+                    }}
+                  >
+                    {subiendoFoto ? "Subiendo la foto…" : "Añadir otra foto"}
+                  </label>
+                  <input
+                    id="ap-foto-extra"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={onFotoExtra}
+                    disabled={subiendoFoto}
+                    style={{
+                      position: "absolute",
+                      width: 1,
+                      height: 1,
+                      opacity: 0,
+                      overflow: "hidden",
+                      pointerEvents: "none",
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
 

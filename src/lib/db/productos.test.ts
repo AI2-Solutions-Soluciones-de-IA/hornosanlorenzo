@@ -24,6 +24,7 @@ describeSiHayBD("repositorio de productos", () => {
     imageAlt: null,
     imageWidth: null,
     imageHeight: null,
+    fotosExtra: [],
     activo: true,
     agotado: false,
     especialidad: null,
@@ -116,6 +117,31 @@ describeSiHayBD("repositorio de productos", () => {
       "pequeno",
       "grande",
     ]);
+  });
+
+  it("guarda las fotos del carrusel en su orden y las sustituye al editar", async () => {
+    const foto = (n: number) => ({
+      url: `https://blob.test/productos/foto-${n}.webp`,
+      alt: `Foto ${n}`,
+      ancho: 1600,
+      alto: 1067,
+    });
+    const producto = await repo.crearProducto(
+      datos({ name: "Tarta con carrusel", fotosExtra: [foto(2), foto(1)] }),
+    );
+    expect(producto.fotosExtra).toEqual([foto(2), foto(1)]);
+
+    const cambiado = await repo.actualizarProducto(producto.id, {
+      ...datos({ name: "Tarta con carrusel" }),
+      fotosExtra: [foto(3)],
+    });
+    expect(cambiado?.fotosExtra).toEqual([foto(3)]);
+    expect((await repo.obtenerProducto(producto.slug))?.fotosExtra).toEqual([foto(3)]);
+  });
+
+  it("una ficha sin fotos de carrusel devuelve una lista vacía, no null", async () => {
+    const producto = await repo.crearProducto(datos({ name: "Tarta sin carrusel" }));
+    expect(producto.fotosExtra).toEqual([]);
   });
 
   it("sustituye las variantes al editar, no las acumula", async () => {

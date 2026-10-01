@@ -22,6 +22,9 @@ const json = (body: unknown, status = 200) =>
 
 const SOLO_EN_PACKS = "Los packs se crean y editan en la sección Packs.";
 
+/** Con la principal, cinco: más no cabe en los puntos del carrusel. */
+const MAX_FOTOS_EXTRA = 4;
+
 const noEncontrado = () => new Response("No encontrado", { status: 404 });
 
 const ALERGENOS = [
@@ -58,6 +61,23 @@ const esquema = z
     imageAlt: z.string().trim().max(200).nullable().default(null),
     imageWidth: z.number().int().positive().nullable().default(null),
     imageHeight: z.number().int().positive().nullable().default(null),
+    // Las del carrusel de la ficha, después de la principal. Cada una con su
+    // texto alternativo, por lo mismo que la principal.
+    fotosExtra: z
+      .array(
+        z.object({
+          url: z.string().url(),
+          alt: z
+            .string()
+            .trim()
+            .min(1, "Escribe qué se ve en cada foto del carrusel: hace falta para quien no puede verla.")
+            .max(200),
+          ancho: z.number().int().positive(),
+          alto: z.number().int().positive(),
+        }),
+      )
+      .max(MAX_FOTOS_EXTRA, `Como mucho ${MAX_FOTOS_EXTRA} fotos además de la principal.`)
+      .default([]),
     activo: z.boolean().default(true),
     agotado: z.boolean().default(false),
     // Vacía cuenta como «sin etiqueta».
@@ -85,6 +105,12 @@ const esquema = z
   .refine((d) => d.consultar || typeof d.priceCents === "number", {
     message: "Pon un precio, o marca la ficha como «precio a consultar».",
     path: ["priceCents"],
+  })
+  // Sin principal, la primera del carrusel sería la portada a medias: la de
+  // las tarjetas seguiría vacía.
+  .refine((d) => d.imageUrl || d.fotosExtra.length === 0, {
+    message: "Pon primero la foto principal; las demás van detrás de ella.",
+    path: ["fotosExtra"],
   })
   .refine((d) => !d.imageUrl || Boolean(d.imageAlt), {
     message:
