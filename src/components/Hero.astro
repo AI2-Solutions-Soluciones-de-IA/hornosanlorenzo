@@ -40,7 +40,7 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, primaryCta, se
       </div>
     </div>
     {video ? (
-      <div class="relative aspect-[4/5] md:h-[min(80vh,44rem)] md:w-auto md:justify-self-end overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
+      <div class="relative aspect-[4/5] md:aspect-[5/4] md:max-h-[80vh] overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
         <video
           class="w-full h-full object-cover"
           src={video.src}
