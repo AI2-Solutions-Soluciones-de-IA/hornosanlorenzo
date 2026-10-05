@@ -31,7 +31,9 @@ export default defineConfig({
       // Vercel solo sirve anchos de esta lista y el adaptador redondea al más
       // cercano: son los `widths` que ya usan los componentes, más dos grandes
       // para las fotos de 1600 px del panel.
-      sizes: [200, 220, 300, 320, 400, 480, 600, 640, 800, 900, 1200, 1600, 1920],
+      sizes: [
+        200, 220, 300, 320, 400, 480, 600, 640, 800, 900, 1200, 1600, 1920,
+      ],
       // Repetido a propósito respecto a `image.remotePatterns` de más abajo:
       // el adaptador (9.0.5) promete copiarlos de ahí, pero su
       // `isAcceptedPattern` descarta todo patrón que lleve `protocol`
@@ -111,6 +113,19 @@ export default defineConfig({
   image: {
     remotePatterns: [
       { protocol: "https", hostname: "**.public.blob.vercel-storage.com" },
+    ],
+  },
+  // Desde Astro 5.15 el servidor solo se fía de la cabecera Host (y de las
+  // X-Forwarded-*) si el dominio está en esta lista. Sin ella, en Vercel cada
+  // petición se ve como `https://localhost`, y la comprobación de origen de
+  // Astro rechaza con un 403 todo POST tipo formulario: subir fotos en el
+  // panel daba «Algo ha fallado» (5 de octubre de 2026). Vercel solo enruta
+  // aquí los dominios del proyecto, así que `*.vercel.app` cubre producción
+  // y previews sin abrir nada a terceros.
+  security: {
+    allowedDomains: [
+      { protocol: "https", hostname: new URL(SITE).hostname },
+      { protocol: "https", hostname: "*.vercel.app" },
     ],
   },
   trailingSlash: "never",
