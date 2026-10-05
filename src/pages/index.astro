@@ -24,8 +24,6 @@ const [productsAll, defsPacks] = await Promise.all([
 // `listarProductos` ya devuelve en el orden de la carta.
 const featured = productsAll.filter((p) => p.destacado).slice(0, 6);
 
-const heroImage = (await import("../../public/images/productos/portada.jpg")).default;
-
 const localBizJsonLd = stores.map((s) => ({
   "@context": "https://schema.org",
   "@type": "Bakery",
@@ -52,19 +50,25 @@ const localBizJsonLd = stores.map((s) => ({
     title="Más de 40 años"
     italicTail="haciéndolo bien."
     body="Comida casera para hogares y empresas. Tartas y empanadas hechas cada mañana en obrador propio, con método tradicional e ingredientes de siempre."
-    image={heroImage}
-    imageAlt="Tarta de nata con frutas naturales variadas"
+    video={{ src: "/videos/portada.mp4", poster: "/videos/portada-poster.jpg" }}
+    imageAlt="En el obrador: rellenando tartaletas a mano, hasta el sello de Horno San Lorenzo"
     primaryCta={{ href: "/catalogo", label: "Ver el catálogo" }}
     secondaryCta={{ href: "/a-quien-servimos", label: "A quién servimos" }}
   />
 
-  <!-- Claim de campaña: abre manifiesto y web -->
-  <section class="bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
+  <!-- Claim de campaña: abre manifiesto y web. Entra palabra a palabra al
+       aparecer en pantalla (ver el script del final). -->
+  <section class="claim relative overflow-hidden bg-[color:var(--color-moka)] text-[color:var(--color-leche)]" data-claim>
+    <div class="claim-brillo" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
       <p class="font-[family-name:var(--font-display)] italic text-3xl sm:text-4xl lg:text-5xl leading-[1.1]">
-        «{site.claim}»
+        <span class="sr-only">{`«${site.claim}»`}</span>
+        {`«${site.claim}»`.split(" ").map((palabra, i) => (
+          <><span class="claim-palabra" style={`--i:${i}`} aria-hidden="true">{palabra}</span>{" "}</>
+        ))}
       </p>
-      <div>
+      <div class="claim-lado">
+        <span class="claim-raya" aria-hidden="true"></span>
         <p class="text-[color:var(--color-avellana)]">
           Métodos tradicionales. Ingredientes de siempre. Comida casera hecha para la vida de hoy.
         </p>
@@ -83,7 +87,7 @@ const localBizJsonLd = stores.map((s) => ({
     </div>
     <!-- Carrusel con scroll nativo: se arrastra en el móvil y con trackpad sin
          JS; las flechas pasan de una en una. -->
-    <div class="carrusel-marco" data-carrusel>
+    <div class="carrusel-marco" data-carrusel data-carrusel-auto="4500">
     <button type="button" class="carrusel-flecha carrusel-flecha--prev" data-carrusel-prev aria-controls="carrusel-destacados" aria-label="Producto anterior">‹</button>
     <button type="button" class="carrusel-flecha carrusel-flecha--next" data-carrusel-next aria-controls="carrusel-destacados" aria-label="Producto siguiente">›</button>
     <div
@@ -109,6 +113,67 @@ const localBizJsonLd = stores.map((s) => ({
 </MarketingLayout>
 
 <style>
+  /* Claim: las palabras suben y aparecen en cadena; la raya se dibuja y un
+     brillo cálido cruza el fondo despacio. Sin JS (o con «reducir
+     movimiento») se ve todo quieto desde el principio. */
+  .claim-palabra {
+    display: inline-block;
+  }
+  .claim.listo .claim-palabra {
+    opacity: 0;
+    transform: translateY(0.6em);
+    filter: blur(4px);
+    transition:
+      opacity 0.9s ease,
+      transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+      filter 0.9s ease;
+    transition-delay: calc(var(--i) * 90ms);
+  }
+  .claim.listo .claim-lado {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.9s ease 0.7s, transform 0.9s ease 0.7s;
+  }
+  .claim-raya {
+    display: block;
+    height: 1px;
+    width: 4rem;
+    margin-bottom: 1.25rem;
+    background: var(--color-avellana);
+    transform-origin: left;
+  }
+  .claim.listo .claim-raya {
+    transform: scaleX(0);
+    transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) 0.9s;
+  }
+  .claim.visto .claim-palabra,
+  .claim.visto .claim-lado {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .claim.visto .claim-raya {
+    transform: scaleX(1);
+  }
+  .claim-brillo {
+    position: absolute;
+    inset: -50% auto -50% -40%;
+    width: 40%;
+    background: radial-gradient(closest-side, rgb(216 194 166 / 0.12), transparent);
+    animation: claim-brillo 14s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes claim-brillo {
+    to {
+      transform: translateX(350%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .claim-brillo {
+      animation: none;
+    }
+  }
+
   .carrusel {
     scroll-behavior: smooth;
     scrollbar-width: none;
@@ -189,4 +254,21 @@ const localBizJsonLd = stores.map((s) => ({
 
 <script>
   import "~/scripts/carrusel";
+
+  function animaClaim() {
+    const claim = document.querySelector<HTMLElement>("[data-claim]");
+    if (!claim || claim.classList.contains("listo")) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    claim.classList.add("listo");
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        claim.classList.add("visto");
+        io.disconnect();
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(claim);
+  }
+  document.addEventListener("astro:page-load", animaClaim);
 </script>

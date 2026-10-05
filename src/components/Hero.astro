@@ -6,12 +6,14 @@ interface Props {
   title: string;
   italicTail?: string;
   body?: string;
-  image: ImageMetadata | string;
+  image?: ImageMetadata | string;
   imageAlt: string;
+  /** Vídeo vertical en lugar de la foto: sin sonido, en bucle. */
+  video?: { src: string; poster: string };
   primaryCta?: { href: string; label: string };
   secondaryCta?: { href: string; label: string };
 }
-const { eyebrow, title, italicTail, body, image, imageAlt, primaryCta, secondaryCta } = Astro.props;
+const { eyebrow, title, italicTail, body, image, imageAlt, video, primaryCta, secondaryCta } = Astro.props;
 ---
 <section class="relative bg-[color:var(--color-leche)] overflow-hidden">
   <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
@@ -37,11 +39,40 @@ const { eyebrow, title, italicTail, body, image, imageAlt, primaryCta, secondary
         )}
       </div>
     </div>
-    <div class="relative aspect-[4/3] md:aspect-[5/4] overflow-hidden border border-[color:var(--color-avellana)]">
-      {typeof image === "string"
-        ? <img src={image} alt={imageAlt} width="900" height="700" class="w-full h-full object-cover" />
-        : <Image quality={80} src={image} alt={imageAlt} widths={[480, 800, 1200]} sizes="(min-width:768px) 600px, 100vw" class="w-full h-full object-cover" />
-      }
-    </div>
+    {video ? (
+      <div class="relative aspect-[4/5] md:h-[min(80vh,44rem)] md:w-auto md:justify-self-end overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
+        <video
+          class="w-full h-full object-cover"
+          src={video.src}
+          poster={video.poster}
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          aria-label={imageAlt}
+          data-hero-video
+        />
+      </div>
+    ) : image && (
+      <div class="relative aspect-[4/3] md:aspect-[5/4] overflow-hidden border border-[color:var(--color-avellana)]">
+        {typeof image === "string"
+          ? <img src={image} alt={imageAlt} width="900" height="700" class="w-full h-full object-cover" />
+          : <Image quality={80} src={image} alt={imageAlt} widths={[480, 800, 1200]} sizes="(min-width:768px) 600px, 100vw" class="w-full h-full object-cover" />
+        }
+      </div>
+    )}
   </div>
 </section>
+
+<script>
+  // Con «reducir movimiento» el vídeo se queda quieto en el póster.
+  function paraSiReducido() {
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.querySelectorAll<HTMLVideoElement>("[data-hero-video]").forEach((v) => {
+      v.removeAttribute("autoplay");
+      v.pause();
+    });
+  }
+  document.addEventListener("astro:page-load", paraSiReducido);
+</script>

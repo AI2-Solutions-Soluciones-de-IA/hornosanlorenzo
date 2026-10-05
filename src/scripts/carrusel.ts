@@ -60,6 +60,57 @@ function engancha(raiz: HTMLElement) {
   // colgadas en `window`.
   new ResizeObserver(actualiza).observe(pista);
   actualiza();
+
+  const cada = Number(raiz.dataset.carruselAuto);
+  if (cada > 0) autoavanza(raiz, pista, ancho, cada);
+}
+
+/**
+ * `data-carrusel-auto="<ms>"`: avanza una tarjeta cada tanto y, al llegar al
+ * final, vuelve al principio. Se para mientras el ratón o el foco están
+ * dentro, si el carrusel no se ve o la pestaña está oculta, y del todo
+ * cuando la persona lo mueve a mano (arrastre o rueda). Con «reducir
+ * movimiento» no arranca.
+ */
+function autoavanza(
+  raiz: HTMLElement,
+  pista: HTMLElement,
+  ancho: () => number,
+  cada: number,
+) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  let encima = false;
+  let visible = false;
+  let tocado = false;
+
+  raiz.addEventListener("pointerenter", () => (encima = true));
+  raiz.addEventListener("pointerleave", () => (encima = false));
+  raiz.addEventListener("pointerdown", () => (tocado = true));
+  pista.addEventListener("wheel", () => (tocado = true), { passive: true });
+  pista.addEventListener("touchstart", () => (tocado = true), {
+    passive: true,
+  });
+
+  new IntersectionObserver(([e]) => (visible = e.isIntersecting), {
+    threshold: 0.5,
+  }).observe(pista);
+
+  const reloj = setInterval(() => {
+    // Al navegar a otra página el carrusel sale del DOM: se apaga solo.
+    if (!pista.isConnected || tocado) return clearInterval(reloj);
+    if (
+      encima ||
+      !visible ||
+      document.hidden ||
+      raiz.contains(document.activeElement)
+    )
+      return;
+    const max = pista.scrollWidth - pista.clientWidth;
+    if (max <= 1) return;
+    if (pista.scrollLeft >= max - 1) pista.scrollTo({ left: 0 });
+    else pista.scrollBy({ left: ancho() });
+  }, cada);
 }
 
 export function iniciarCarruseles() {
