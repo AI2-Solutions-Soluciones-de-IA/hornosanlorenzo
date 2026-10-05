@@ -87,7 +87,7 @@ const localBizJsonLd = stores.map((s) => ({
     </div>
     <!-- Carrusel con scroll nativo: se arrastra en el móvil y con trackpad sin
          JS; las flechas pasan de una en una. -->
-    <div class="carrusel-marco" data-carrusel data-carrusel-auto="4500">
+    <div class="carrusel-marco" data-carrusel data-carrusel-auto="30">
     <button type="button" class="carrusel-flecha carrusel-flecha--prev" data-carrusel-prev aria-controls="carrusel-destacados" aria-label="Producto anterior">‹</button>
     <button type="button" class="carrusel-flecha carrusel-flecha--next" data-carrusel-next aria-controls="carrusel-destacados" aria-label="Producto siguiente">›</button>
     <div
@@ -244,6 +244,10 @@ const localBizJsonLd = stores.map((s) => ({
   .carrusel-flecha:disabled {
     opacity: 0;
     pointer-events: none;
+  }
+  .carrusel-marco:global(.carrusel--auto) .carrusel {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
   }
   @media (prefers-reduced-motion: reduce) {
     .carrusel {

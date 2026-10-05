@@ -61,56 +61,86 @@ function engancha(raiz: HTMLElement) {
   new ResizeObserver(actualiza).observe(pista);
   actualiza();
 
-  const cada = Number(raiz.dataset.carruselAuto);
-  if (cada > 0) autoavanza(raiz, pista, ancho, cada);
+  const velocidad = Number(raiz.dataset.carruselAuto);
+  if (velocidad > 0) desliza(raiz, pista, velocidad);
 }
 
 /**
- * `data-carrusel-auto="<ms>"`: avanza una tarjeta cada tanto y, al llegar al
- * final, vuelve al principio. Se para mientras el ratón o el foco están
- * dentro, si el carrusel no se ve o la pestaña está oculta, y del todo
- * cuando la persona lo mueve a mano (arrastre o rueda). Con «reducir
- * movimiento» no arranca.
+ * `data-carrusel-auto="<px/s>"`: el carrusel se desliza solo, despacio y sin
+ * saltos, hasta el final; espera un poco y vuelve igual hacia el principio.
+ * Ida y vuelta en vez de bucle infinito para no clonar tarjetas (los clones
+ * no traerían vivos los botones de «Añadir»).
+ *
+ * Se para mientras el ratón o el foco están dentro, si el carrusel no se ve
+ * o la pestaña está oculta, y del todo cuando la persona lo mueve a mano.
+ * Con «reducir movimiento» no arranca.
  */
-function autoavanza(
-  raiz: HTMLElement,
-  pista: HTMLElement,
-  ancho: () => number,
-  cada: number,
-) {
+function desliza(raiz: HTMLElement, pista: HTMLElement, velocidad: number) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+  const PAUSA_EN_EXTREMO = 2000;
   let encima = false;
   let visible = false;
   let tocado = false;
+  let sentido = 1;
+  let esperaHasta = 0;
+  let pos = pista.scrollLeft;
+  let antes = 0;
+
+  // El snap y el scroll suave pelearían con el avance de píxel en píxel.
+  raiz.classList.add("carrusel--auto");
+  const suelta = () => {
+    tocado = true;
+    raiz.classList.remove("carrusel--auto");
+  };
 
   raiz.addEventListener("pointerenter", () => (encima = true));
   raiz.addEventListener("pointerleave", () => (encima = false));
-  raiz.addEventListener("pointerdown", () => (tocado = true));
-  pista.addEventListener("wheel", () => (tocado = true), { passive: true });
-  pista.addEventListener("touchstart", () => (tocado = true), {
-    passive: true,
-  });
+  raiz.addEventListener("pointerdown", suelta);
+  pista.addEventListener("touchstart", suelta, { passive: true });
+  pista.addEventListener(
+    "wheel",
+    (e) => {
+      // Solo la rueda horizontal: la vertical es la página bajando.
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) suelta();
+    },
+    { passive: true },
+  );
 
   new IntersectionObserver(([e]) => (visible = e.isIntersecting), {
-    threshold: 0.5,
+    threshold: 0.3,
   }).observe(pista);
 
-  const reloj = setInterval(() => {
+  const paso = (ahora: number) => {
     // Al navegar a otra página el carrusel sale del DOM: se apaga solo.
-    if (!pista.isConnected || tocado) return clearInterval(reloj);
-    if (
+    if (!pista.isConnected || tocado) return;
+    const dt = antes ? Math.min(ahora - antes, 100) : 0;
+    antes = ahora;
+    requestAnimationFrame(paso);
+
+    const parado =
       encima ||
       !visible ||
       document.hidden ||
-      raiz.contains(document.activeElement)
-    )
+      raiz.contains(document.activeElement);
+    if (parado) {
+      // Al seguir, parte de donde esté (las flechas o el teclado lo movieron).
+      pos = pista.scrollLeft;
       return;
+    }
+    if (ahora < esperaHasta) return;
+
     const max = pista.scrollWidth - pista.clientWidth;
     if (max <= 1) return;
-    if (pista.scrollLeft >= max - 1) pista.scrollTo({ left: 0 });
-    else pista.scrollBy({ left: ancho() });
-  }, cada);
+    pos += (sentido * velocidad * dt) / 1000;
+    if (pos >= max || pos <= 0) {
+      pos = Math.min(Math.max(pos, 0), max);
+      sentido = -sentido;
+      esperaHasta = ahora + PAUSA_EN_EXTREMO;
+    }
+    pista.scrollLeft = pos;
+  };
+  requestAnimationFrame(paso);
 }
 
 export function iniciarCarruseles() {
