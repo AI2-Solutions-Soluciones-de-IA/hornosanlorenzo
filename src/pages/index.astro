@@ -24,6 +24,15 @@ const [productsAll, defsPacks] = await Promise.all([
 // `listarProductos` ya devuelve en el orden de la carta.
 const featured = productsAll.filter((p) => p.destacado).slice(0, 6);
 
+const lemas = [
+  "Desde 1986",
+  "Obrador propio",
+  "Hecho cada mañana",
+  "Método tradicional",
+  "Ingredientes de siempre",
+  "Alcobendas · Pozuelo",
+];
+
 const localBizJsonLd = stores.map((s) => ({
   "@context": "https://schema.org",
   "@type": "Bakery",
@@ -60,6 +69,7 @@ const localBizJsonLd = stores.map((s) => ({
        aparecer en pantalla (ver el script del final). -->
   <section class="claim relative overflow-hidden bg-[color:var(--color-moka)] text-[color:var(--color-leche)]" data-claim>
     <div class="claim-brillo" aria-hidden="true"></div>
+    <div class="claim-brillo claim-brillo--2" aria-hidden="true"></div>
     <div class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
       <p class="font-[family-name:var(--font-display)] italic text-3xl sm:text-4xl lg:text-5xl leading-[1.1]">
         <span class="sr-only">{`«${site.claim}»`}</span>
@@ -73,6 +83,17 @@ const localBizJsonLd = stores.map((s) => ({
           Métodos tradicionales. Ingredientes de siempre. Comida casera hecha para la vida de hoy.
         </p>
         <a href="/tradicion-y-calidad" class="btn btn-claro mt-6">Cómo lo hacemos</a>
+      </div>
+    </div>
+    <!-- Cinta que corre sin parar por el borde de abajo: decorativa, el
+         lector de pantalla no la lee. Va duplicada para que el bucle no salte. -->
+    <div class="claim-cinta" aria-hidden="true">
+      <div class="claim-cinta-pista">
+        {[0, 1].map(() => (
+          <span>
+            {[...lemas, ...lemas].map((l) => (<>{l}<i>✦</i></>))}
+          </span>
+        ))}
       </div>
     </div>
   </section>
@@ -157,19 +178,63 @@ const localBizJsonLd = stores.map((s) => ({
   }
   .claim-brillo {
     position: absolute;
-    inset: -50% auto -50% -40%;
-    width: 40%;
-    background: radial-gradient(closest-side, rgb(216 194 166 / 0.12), transparent);
-    animation: claim-brillo 14s ease-in-out infinite alternate;
+    inset: -60% auto -60% -30%;
+    width: 45%;
+    background: radial-gradient(closest-side, rgb(199 150 100 / 0.32), transparent);
+    animation: claim-brillo 11s ease-in-out infinite alternate;
     pointer-events: none;
   }
+  .claim-brillo--2 {
+    left: auto;
+    right: -30%;
+    background: radial-gradient(closest-side, rgb(142 36 29 / 0.35), transparent);
+    animation-duration: 15s;
+    animation-direction: alternate-reverse;
+  }
   @keyframes claim-brillo {
+    from {
+      transform: translateX(0) scale(1);
+    }
     to {
-      transform: translateX(350%);
+      transform: translateX(200%) scale(1.25);
+    }
+  }
+  .claim-cinta {
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgb(216 194 166 / 0.2);
+    padding: 0.9rem 0;
+    font-size: 0.6875rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-avellana);
+  }
+  .claim-cinta-pista {
+    display: flex;
+    width: max-content;
+    animation: claim-cinta 45s linear infinite;
+  }
+  .claim-cinta-pista > span {
+    display: flex;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .claim-cinta i {
+    font-style: normal;
+    margin: 0 2.25rem;
+    color: var(--color-caramelo);
+  }
+  .claim:hover .claim-cinta-pista {
+    animation-play-state: paused;
+  }
+  @keyframes claim-cinta {
+    to {
+      transform: translateX(-50%);
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    .claim-brillo {
+    .claim-brillo,
+    .claim-cinta-pista {
       animation: none;
     }
   }
@@ -264,13 +329,13 @@ const localBizJsonLd = stores.map((s) => ({
     if (!claim || claim.classList.contains("listo")) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     claim.classList.add("listo");
+    // Se repite cada vez que vuelve a entrar en pantalla.
     const io = new IntersectionObserver(
       ([e]) => {
-        if (!e.isIntersecting) return;
-        claim.classList.add("visto");
-        io.disconnect();
+        if (e.intersectionRatio >= 0.35) claim.classList.add("visto");
+        else if (!e.isIntersecting) claim.classList.remove("visto");
       },
-      { threshold: 0.35 },
+      { threshold: [0, 0.35] },
     );
     io.observe(claim);
   }
