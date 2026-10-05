@@ -34,9 +34,9 @@ const tarjetas = catalogo.flatMap((pack) => {
   <h1 class="sr-only">Packs San Lorenzo</h1>
 
   <section>
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-10 sm:py-14">
       {tarjetas.length > 0 ? (
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {tarjetas.map(({ pack, def, ficha }) => (
             <PackCard
               pack={pack}
@@ -57,7 +57,7 @@ const tarjetas = catalogo.flatMap((pack) => {
   </section>
 
   <section class="bg-[color:var(--color-leche)] border-t border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20">
       <div class="max-w-xl border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
         <p class="numeracion">Premium packs</p>
         <h2 class="mt-2 font-[family-name:var(--font-display)] text-2xl">

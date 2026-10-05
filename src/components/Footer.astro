@@ -16,7 +16,7 @@ const legal = [
 ];
 ---
 <footer class="bg-[color:var(--color-leche)] border-t border-[color:var(--color-avellana)] mt-24" transition:persist>
-  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 grid gap-8 md:grid-cols-4 text-sm">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 grid gap-8 md:grid-cols-4 text-sm">
     <div>
       <!-- Sello aprobado por el cliente (30-9-2026), en vez del dibujado a mano. -->
       <Image
@@ -61,7 +61,7 @@ const legal = [
 
   <!-- Formas de pago -->
   <div class="border-t border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-6 flex flex-wrap items-center gap-x-6 gap-y-3">
       <p class="numeracion">Formas de pago</p>
       <ul class="flex flex-wrap items-center gap-2">
         {paymentMarks.map((m) => (
@@ -93,7 +93,7 @@ const legal = [
   </div>
 
   <div class="border-t border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-4 text-xs text-[color:var(--color-ink-muted)] flex flex-col sm:flex-row justify-between gap-2">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-4 text-xs text-[color:var(--color-ink-muted)] flex flex-col sm:flex-row justify-between gap-2">
       <span>© {year} {site.name}. Todos los derechos reservados.</span>
       <span>Hecho con cariño en Madrid.</span>
     </div>

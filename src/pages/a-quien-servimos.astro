@@ -92,7 +92,7 @@ const ventajas = [
 >
   <!-- Lo primero: los tres canales, cada uno a su sección. -->
   <section class="bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-10 sm:py-14">
       <h1 class="numeracion">A quién servimos</h1>
       <ul class="mt-5 grid gap-4 md:grid-cols-3">
         {publicos.map((p) => (
@@ -145,7 +145,7 @@ const ventajas = [
       id={p.id}
       class="scroll-mt-40 border-b border-[color:var(--color-avellana)]"
     >
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20 grid gap-10 md:grid-cols-[1fr_1fr] items-start">
+      <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-10 md:grid-cols-[1fr_1fr] items-start">
         <div>
           <SectionLabel number={p.number} label={p.tag} />
           <h2 class="text-3xl sm:text-4xl mt-2">{p.title}</h2>
@@ -170,7 +170,7 @@ const ventajas = [
     </section>
   ))}
 
-  <section class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
+  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20">
     <SectionLabel number="04" label="Cómo funciona" />
     <h2 class="text-3xl sm:text-4xl mt-2">Te damos de alta y ya pides con tu precio.</h2>
     <div class="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2">
@@ -184,7 +184,7 @@ const ventajas = [
   </section>
 
   <section id="alta" class="bg-[color:var(--color-leche)] border-t border-[color:var(--color-avellana)] scroll-mt-40">
-    <div class="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20 grid gap-12 md:grid-cols-[1fr_1.1fr] items-start">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-12 md:grid-cols-[1fr_1.1fr] items-start">
       <div>
         <SectionLabel number="05" label="Alta de empresa" />
         <h2 class="text-3xl sm:text-4xl mt-2">Alta con CIF.</h2>

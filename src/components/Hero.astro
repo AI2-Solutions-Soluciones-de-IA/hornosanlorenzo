@@ -14,7 +14,7 @@ interface Props {
 const { eyebrow, title, italicTail, body, image, imageAlt, primaryCta, secondaryCta } = Astro.props;
 ---
 <section class="relative bg-[color:var(--color-leche)] overflow-hidden">
-  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
     <div>
       {eyebrow && (
         <p class="numeracion mb-3">{eyebrow}</p>

@@ -66,7 +66,7 @@ const isActive = (href: string) => {
   </div>
 
   <!-- Banda superior: La Firma · buscador y acceso -->
-  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-4 sm:py-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
@@ -161,7 +161,7 @@ const isActive = (href: string) => {
          barra entera, no bajo su enlace. Centrados bajo el enlace, los anchos
          (hasta 54rem) se salían por la derecha y, aunque estén ocultos
          (`invisible`), ensanchaban la página: scroll lateral a 1024 px. -->
-    <ul class="relative mx-auto max-w-6xl px-4 sm:px-6 flex items-stretch justify-center gap-8 lg:gap-12 text-[11px] font-medium uppercase tracking-[0.16em]">
+    <ul class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-8 lg:gap-12 text-[11px] font-medium uppercase tracking-[0.16em]">
       {mainNav.map((item) => {
         const active = isActive(item.href);
         const linkClass = [

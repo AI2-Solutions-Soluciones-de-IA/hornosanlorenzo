@@ -94,7 +94,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
   return seccion && isSeccionId(seccion) ? seccionById(seccion).label : undefined;
 }
 ---
-<section class="mx-auto max-w-6xl px-4 sm:px-6 py-12">
+<section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12">
   <p class="numeracion">{eyebrow}</p>
   {title && <h1 class="text-4xl sm:text-5xl mt-2">{title}</h1>}
   {intro && <p class="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">{intro}</p>}
@@ -136,7 +136,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
               </p>
             )}
           </div>
-          <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {agruparSabores(b.items).map((e) => (
               <ElementoCatalogo elemento={e} seccionLabel={seccionById(b.seccion.id).label} defsPacks={defsPacks} />
             ))}
@@ -156,7 +156,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
               Otras referencias
             </h2>
           </div>
-          <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {agruparSabores(sueltos).map((e) => (
               <ElementoCatalogo elemento={e} defsPacks={defsPacks} />
             ))}
@@ -165,7 +165,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
       )}
     </div>
   ) : (
-    <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {agruparSabores(sueltos).map((e) => (
         <ElementoCatalogo
           elemento={e}
