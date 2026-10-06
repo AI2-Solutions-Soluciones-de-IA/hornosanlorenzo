@@ -185,6 +185,13 @@
 .btn-primario:hover {
   background: var(--color-moka);
 }
+.btn-rojo {
+  background: var(--color-teja);
+  color: var(--color-leche);
+}
+.btn-rojo:hover {
+  background: var(--color-moka);
+}
 .btn-secundario {
   color: var(--color-moka);
   border-color: var(--color-avellana);
