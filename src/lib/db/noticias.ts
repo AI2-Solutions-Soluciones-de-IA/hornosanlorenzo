@@ -1,6 +1,8 @@
 import { pool } from "~/lib/db/pool";
 import { slugify } from "~/lib/slug";
 import { NoticiaError, traduce } from "~/lib/db/noticiasErrores";
+import { ofertasVigentes } from "~/lib/db/ofertas";
+import { aplicaOferta, type ConOferta } from "~/lib/ofertas";
 
 // Reexportado para que quien ya importaba `NoticiaError` desde aquí (tests,
 // y las tareas 11-18 que la citan por nombre) lo siga encontrando sin
@@ -29,8 +31,8 @@ export type ProductoEnNoticia = {
   activo: boolean;
   agotado: boolean;
   unit: string | null;
-  variantes: { id: string; label: string; priceCents: number }[];
-};
+  variantes: { id: string; label: string; priceCents: number; precioAntesCents?: number }[];
+} & ConOferta;
 
 export type Noticia = {
   id: string;
@@ -48,6 +50,12 @@ export type Noticia = {
   /** Producto de la carta que se puede añadir desde la noticia, si lo hay. */
   productoId: string | null;
   producto: ProductoEnNoticia | null;
+  /** Precio de oferta del producto enlazado, si no tiene tamaños. */
+  ofertaCents: number | null;
+  /** Precio de oferta por tamaño (`variant_id` → céntimos). */
+  ofertaVariantes: Record<string, number>;
+  /** Último día de la oferta (`YYYY-MM-DD`); `null` = mientras esté publicada. */
+  ofertaHasta: string | null;
 };
 
 export type DatosNoticia = {
@@ -63,6 +71,9 @@ export type DatosNoticia = {
   publicada: boolean;
   /** Opcional y no obligatorio en el tipo: el volcado del Markdown no lo trae. */
   productoId?: string | null;
+  ofertaCents?: number | null;
+  ofertaVariantes?: Record<string, number>;
+  ofertaHasta?: string | null;
   /** Solo lo usa el volcado inicial, para conservar las URLs de siempre. */
   slug?: string;
 };
@@ -79,6 +90,9 @@ const CAMPOS = `
   image_height as "imageHeight",
   tags, publicada,
   producto_id  as "productoId",
+  oferta_cents as "ofertaCents",
+  oferta_variantes as "ofertaVariantes",
+  to_char(oferta_hasta, 'YYYY-MM-DD') as "ofertaHasta",
   (select json_build_object(
             'slug', p.slug, 'name', p.name, 'category', p.category,
             'priceCents', p.price_cents, 'consultar', p.consultar,
@@ -93,6 +107,22 @@ const CAMPOS = `
      from productos p where p.id = noticias.producto_id) as producto
 `;
 
+/**
+ * Lo público (solo publicadas) lleva el producto enlazado con las ofertas
+ * vigentes ya aplicadas, igual que la carta: la tarjeta cobra lo que enseña.
+ * El panel lo ve sin rebajar.
+ */
+async function conOfertas(noticias: Noticia[]): Promise<Noticia[]> {
+  const slugs = noticias.flatMap((n) => (n.producto ? [n.producto.slug] : []));
+  if (slugs.length === 0) return noticias;
+  const ofertas = await ofertasVigentes(slugs);
+  return noticias.map((n) =>
+    n.producto
+      ? { ...n, producto: aplicaOferta(n.producto, ofertas.get(n.producto.slug), (v) => v.id) }
+      : n,
+  );
+}
+
 export async function listarNoticias({
   soloPublicadas,
 }: {
@@ -103,7 +133,7 @@ export async function listarNoticias({
       ${soloPublicadas ? "where publicada" : ""}
       order by fecha desc, created_at desc`,
   );
-  return rows;
+  return soloPublicadas ? conOfertas(rows) : rows;
 }
 
 export async function obtenerNoticia(
@@ -115,7 +145,19 @@ export async function obtenerNoticia(
       where slug = $1 ${soloPublicada ? "and publicada" : ""}`,
     [slug],
   );
-  return rows[0] ?? null;
+  if (!rows[0]) return null;
+  return soloPublicada ? (await conOfertas(rows))[0] : rows[0];
+}
+
+/** Sin producto no hay oferta: no se guarda una que no se aplicaría a nada. */
+function valoresOferta(datos: DatosNoticia) {
+  const conProducto = Boolean(datos.productoId);
+  return [
+    conProducto ? (datos.ofertaCents ?? null) : null,
+    // `pg` pasaría un objeto de JS tal cual; la columna es jsonb.
+    JSON.stringify(conProducto ? (datos.ofertaVariantes ?? {}) : {}),
+    conProducto ? (datos.ofertaHasta ?? null) : null,
+  ];
 }
 
 export async function crearNoticia(datos: DatosNoticia): Promise<Noticia> {
@@ -123,8 +165,9 @@ export async function crearNoticia(datos: DatosNoticia): Promise<Noticia> {
     const { rows } = await pool.query<Noticia>(
       `insert into noticias
          (slug, titulo, excerpt, cuerpo, fecha, image_url, image_alt,
-          image_width, image_height, tags, publicada, producto_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+          image_width, image_height, tags, publicada, producto_id,
+          oferta_cents, oferta_variantes, oferta_hasta)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        returning ${CAMPOS}`,
       [
         datos.slug ?? slugify(datos.titulo),
@@ -139,6 +182,7 @@ export async function crearNoticia(datos: DatosNoticia): Promise<Noticia> {
         datos.tags,
         datos.publicada,
         datos.productoId ?? null,
+        ...valoresOferta(datos),
       ],
     );
     return rows[0];
@@ -160,7 +204,9 @@ export async function actualizarNoticia(
       `update noticias set
          titulo = $2, excerpt = $3, cuerpo = $4, fecha = $5,
          image_url = $6, image_alt = $7, image_width = $8, image_height = $9,
-         tags = $10, publicada = $11, producto_id = $12, updated_at = now()
+         tags = $10, publicada = $11, producto_id = $12,
+         oferta_cents = $13, oferta_variantes = $14, oferta_hasta = $15,
+         updated_at = now()
        where id = $1
        returning ${CAMPOS}`,
       [
@@ -176,6 +222,7 @@ export async function actualizarNoticia(
         datos.tags,
         datos.publicada,
         datos.productoId ?? null,
+        ...valoresOferta(datos),
       ],
     );
     return rows[0] ?? null;

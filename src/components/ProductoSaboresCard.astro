@@ -73,11 +73,12 @@ const descripcion = [...cuenta].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
         slug: p.slug,
         name: p.name,
         priceCents: p.priceCents,
+        precioAntesCents: p.precioAntesCents,
         consultar: p.consultar,
         agotado: p.agotado,
         unit: p.unit ?? undefined,
         especialidad: p.especialidad,
-        variants: p.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents })),
+        variants: p.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents })),
       }))}
     />
   </div>

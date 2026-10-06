@@ -5,6 +5,8 @@ import {
 } from "~/lib/db/pool";
 import { slugify } from "~/lib/slug";
 import { ProductoError, traduce } from "~/lib/db/productosErrores";
+import { ofertasVigentes } from "~/lib/db/ofertas";
+import { aplicaOferta, type ConOferta } from "~/lib/ofertas";
 
 // Reexportado para que quien ya importaba `ProductoError` desde aquí (tests,
 // y las tareas 15-19 que la citan por nombre) lo siga encontrando sin
@@ -24,6 +26,8 @@ export type Variante = {
   label: string;
   priceCents: number;
   orden: number;
+  /** Con oferta de Este mes: el precio de siempre, para tacharlo. */
+  precioAntesCents?: number;
 };
 
 /** Una foto del carrusel de la ficha, después de la principal. */
@@ -62,7 +66,7 @@ export type Producto = {
   /** Etiqueta de la carta, p. ej. «Especialidad desde 1986». `null` = ninguna. */
   especialidad: string | null;
   variantes: Variante[];
-};
+} & ConOferta;
 
 /** Lo justo que necesita `priceOrder` para poner precio a una línea. */
 export type ProductoVendible = {
@@ -75,10 +79,10 @@ export type ProductoVendible = {
   consultar: boolean;
   activo: boolean;
   agotado: boolean;
-  variantes: { variantId: string; label: string; priceCents: number }[];
-};
+  variantes: { variantId: string; label: string; priceCents: number; precioAntesCents?: number }[];
+} & ConOferta;
 
-export type DatosProducto = Omit<Producto, "id" | "slug" | "variantes"> & {
+export type DatosProducto = Omit<Producto, "id" | "slug" | "variantes" | keyof ConOferta> & {
   variantes: Variante[];
   /** Solo lo usa el volcado inicial, para conservar las URLs de siempre. */
   slug?: string;
@@ -110,15 +114,27 @@ const CAMPOS = `
   ) as variantes
 `;
 
+/** El id de un tamaño, tal como lo nombra la carta. */
+const porVariantId = (v: { variantId: string }) => v.variantId;
+
+/**
+ * `conOfertas`: los precios rebajados por Este mes (`~/lib/ofertas.ts`). Lo
+ * piden las páginas públicas; el panel NO, porque edita el precio de
+ * siempre y guardaría el rebajado como si fuera el normal.
+ */
 export async function listarProductos({
   soloActivos = true,
-}: { soloActivos?: boolean } = {}): Promise<Producto[]> {
-  const { rows } = await pool.query<Producto>(
-    `select ${CAMPOS} from productos p
-      ${soloActivos ? "where p.activo" : ""}
-      order by p.orden, p.name`,
-  );
-  return rows;
+  conOfertas = false,
+}: { soloActivos?: boolean; conOfertas?: boolean } = {}): Promise<Producto[]> {
+  const [{ rows }, ofertas] = await Promise.all([
+    pool.query<Producto>(
+      `select ${CAMPOS} from productos p
+        ${soloActivos ? "where p.activo" : ""}
+        order by p.orden, p.name`,
+    ),
+    conOfertas ? ofertasVigentes() : null,
+  ]);
+  return ofertas ? rows.map((p) => aplicaOferta(p, ofertas.get(p.slug), porVariantId)) : rows;
 }
 
 /**
@@ -144,9 +160,13 @@ async function buscaPorSlug(
 
 export async function obtenerProducto(
   slug: string,
-  opts: { soloActivo?: boolean } = {},
+  { conOfertas = false, ...opts }: { soloActivo?: boolean; conOfertas?: boolean } = {},
 ): Promise<Producto | null> {
-  return buscaPorSlug(pool, slug, opts);
+  const [producto, ofertas] = await Promise.all([
+    buscaPorSlug(pool, slug, opts),
+    conOfertas ? ofertasVigentes([slug]) : null,
+  ]);
+  return producto && ofertas ? aplicaOferta(producto, ofertas.get(slug), porVariantId) : producto;
 }
 
 /**
@@ -179,13 +199,18 @@ export async function productosParaPedido(
 ): Promise<Map<string, ProductoVendible>> {
   if (slugs.length === 0) return new Map();
 
-  const { rows } = await pool.query<ProductoVendible>(
-    `${SELECT_VENDIBLE}
-      where p.slug = any($1::text[])`,
-    [slugs],
-  );
+  // Con las ofertas de Este mes ya aplicadas: es de aquí de donde
+  // `priceOrder` saca el precio que se cobra.
+  const [{ rows }, ofertas] = await Promise.all([
+    pool.query<ProductoVendible>(
+      `${SELECT_VENDIBLE}
+        where p.slug = any($1::text[])`,
+      [slugs],
+    ),
+    ofertasVigentes(slugs),
+  ]);
 
-  return new Map(rows.map((p) => [p.slug, p]));
+  return new Map(rows.map((p) => [p.slug, aplicaOferta(p, ofertas.get(p.slug), porVariantId)]));
 }
 
 /**
@@ -199,13 +224,16 @@ export async function productosDeSecciones(
 ): Promise<ProductoVendible[]> {
   if (secciones.length === 0) return [];
 
-  const { rows } = await pool.query<ProductoVendible>(
-    `${SELECT_VENDIBLE}
-      where p.seccion = any($1::text[])
-      order by p.orden, p.name`,
-    [secciones],
-  );
-  return rows;
+  const [{ rows }, ofertas] = await Promise.all([
+    pool.query<ProductoVendible>(
+      `${SELECT_VENDIBLE}
+        where p.seccion = any($1::text[])
+        order by p.orden, p.name`,
+      [secciones],
+    ),
+    ofertasVigentes(),
+  ]);
+  return rows.map((p) => aplicaOferta(p, ofertas.get(p.slug), porVariantId));
 }
 
 /**

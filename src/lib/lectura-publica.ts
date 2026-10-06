@@ -45,7 +45,7 @@ export async function catalogoPublico(
   respuesta: ConCabeceras,
 ): Promise<Producto[]> {
   try {
-    return await listarProductos({ soloActivos: true });
+    return await listarProductos({ soloActivos: true, conOfertas: true });
   } catch (error) {
     degrada(respuesta, "No se pudo cargar el catálogo:", error);
     return [];

@@ -33,6 +33,14 @@ describeSiHayBD("repositorio de productos", () => {
     ...extra,
   });
 
+  /** Lo creado por este fichero, para borrar solo eso al acabar. */
+  const creados: string[] = [];
+  const crea = async (d: Parameters<typeof repo.crearProducto>[0]) => {
+    const p = await repo.crearProducto(d);
+    creados.push(p.id);
+    return p;
+  };
+
   beforeAll(async () => {
     process.env.DATABASE_URL = URL_PRUEBAS;
     const { Pool } = await import("pg");
@@ -42,12 +50,14 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   afterAll(async () => {
-    await pool.query("delete from productos");
+    // Solo lo propio: otros ficheros (packs) usan la tabla a la vez, y
+    // vaciarla entera al acabar les quitaba sus fichas a media prueba.
+    await pool.query("delete from productos where id = any($1::uuid[])", [creados]);
     await pool.end();
   });
 
   it("productosParaPedido devuelve la categoría y la sección", async () => {
-    const p = await repo.crearProducto(
+    const p = await crea(
       datos({ name: "Quiche de prueba pedido", category: "salado", seccion: "quiches" }),
     );
     const mapa = await repo.productosParaPedido([p.slug]);
@@ -58,10 +68,10 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("productosDeSecciones trae todas las de la sección, agotadas incluidas, y ninguna de otra", async () => {
-    const activa = await repo.crearProducto(
+    const activa = await crea(
       datos({ name: "Quiche activa secciones", category: "salado", seccion: "quiches", orden: 301 }),
     );
-    const agotada = await repo.crearProducto(
+    const agotada = await crea(
       datos({
         name: "Quiche agotada secciones",
         category: "salado",
@@ -70,7 +80,7 @@ describeSiHayBD("repositorio de productos", () => {
         orden: 302,
       }),
     );
-    const plancha = await repo.crearProducto(
+    const plancha = await crea(
       datos({ name: "Plancha secciones", category: "tartas", seccion: "planchas", orden: 303 }),
     );
 
@@ -86,7 +96,7 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("guarda la etiqueta de especialidad y la quita al dejarla en null", async () => {
-    const creado = await repo.crearProducto(
+    const creado = await crea(
       datos({ name: "Flan de Queso", especialidad: "Especialidad desde 1986" }),
     );
     expect(creado.especialidad).toBe("Especialidad desde 1986");
@@ -98,7 +108,7 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("crea un producto con sus variantes y las devuelve en orden", async () => {
-    const producto = await repo.crearProducto(
+    const producto = await crea(
       datos({
         name: "Roscón de Reyes",
         variantes: [
@@ -127,7 +137,7 @@ describeSiHayBD("repositorio de productos", () => {
       ancho: 1600,
       alto: 1067,
     });
-    const producto = await repo.crearProducto(
+    const producto = await crea(
       datos({ name: "Tarta con carrusel", fotosExtra: [foto(2), foto(1)] }),
     );
     expect(producto.fotosExtra).toEqual([foto(2), foto(1)]);
@@ -141,7 +151,7 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("guarda la marca de foto provisional y la quita al editar", async () => {
-    const producto = await repo.crearProducto(
+    const producto = await crea(
       datos({ name: "Tarta con foto prestada", fotoProvisional: true }),
     );
     expect(producto.fotoProvisional).toBe(true);
@@ -153,12 +163,12 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("una ficha sin fotos de carrusel devuelve una lista vacía, no null", async () => {
-    const producto = await repo.crearProducto(datos({ name: "Tarta sin carrusel" }));
+    const producto = await crea(datos({ name: "Tarta sin carrusel" }));
     expect(producto.fotosExtra).toEqual([]);
   });
 
   it("sustituye las variantes al editar, no las acumula", async () => {
-    const producto = await repo.crearProducto(
+    const producto = await crea(
       datos({
         name: "Brazo de gitano",
         variantes: [
@@ -179,7 +189,7 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("el slug no se recalcula al editar, aunque cambie el nombre", async () => {
-    const producto = await repo.crearProducto(
+    const producto = await crea(
       datos({ name: "Torta de aceite" }),
     );
     expect(producto.slug).toBe("torta-de-aceite");
@@ -199,14 +209,14 @@ describeSiHayBD("repositorio de productos", () => {
 
   it("no deja guardar una ficha sin precio y sin «consultar»", async () => {
     await expect(
-      repo.crearProducto(
+      crea(
         datos({ name: "Sin precio", priceCents: null, consultar: false }),
       ),
     ).rejects.toMatchObject({ name: "ProductoError" });
   });
 
   it("un producto desactivado desaparece del catálogo y de su propia URL", async () => {
-    const producto = await repo.crearProducto(
+    const producto = await crea(
       datos({ name: "Retirada", activo: false }),
     );
 
@@ -223,14 +233,14 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("productosParaPedido trae solo lo pedido, con su estado de venta", async () => {
-    const vendible = await repo.crearProducto(datos({ name: "A la venta" }));
-    const agotado = await repo.crearProducto(
+    const vendible = await crea(datos({ name: "A la venta" }));
+    const agotado = await crea(
       datos({ name: "Se acabó", agotado: true }),
     );
     // La otra mitad del contrato del docstring: `priceOrder` (tarea 16)
     // también necesita poder decir «ya no está disponible» de un producto
     // desactivado, no solo «se ha agotado» de uno agotado.
-    const desactivado = await repo.crearProducto(
+    const desactivado = await crea(
       datos({ name: "Retirada del pedido", activo: false }),
     );
 
@@ -249,13 +259,93 @@ describeSiHayBD("repositorio de productos", () => {
   });
 
   it("el listado del catálogo va en el orden de la carta", async () => {
-    await pool.query("delete from productos");
-    await repo.crearProducto(datos({ name: "Segunda", orden: 200 }));
-    await repo.crearProducto(datos({ name: "Primera", orden: 100 }));
+    await pool.query("delete from productos where id = any($1::uuid[])", [creados]);
+    await crea(datos({ name: "Segunda", orden: 200 }));
+    await crea(datos({ name: "Primera", orden: 100 }));
     const lista = await repo.listarProductos({ soloActivos: true });
     // Otros ficheros comparten la tabla y pueden dejar filas suyas a media
     // ejecución: solo se mira el orden de las dos propias.
     const propias = lista.map((p) => p.name).filter((n) => n === "Primera" || n === "Segunda");
     expect(propias).toEqual(["Primera", "Segunda"]);
+  });
+
+  // Ofertas de Este mes: la noticia rebaja el producto en lo público y en el
+  // cobro, nunca en lo que lee el panel. Van en este fichero y no en uno
+  // propio porque este vacía `productos` al empezar y al acabar: en otro
+  // fichero, que corre en paralelo, se quedarían sin su producto a medias.
+  describe("ofertas de Este mes", () => {
+    let noticias: typeof import("~/lib/db/noticias");
+    const ids: string[] = [];
+    const noticia = (productoId: string, extra: Record<string, unknown>) =>
+      noticias
+        .crearNoticia({
+          titulo: `Oferta de prueba ${Math.random().toString(36).slice(2, 8)}`,
+          excerpt: "Una oferta para las pruebas del repositorio.",
+          cuerpo: "",
+          fecha: "2026-10-01",
+          imageUrl: null,
+          imageAlt: null,
+          imageWidth: null,
+          imageHeight: null,
+          tags: [],
+          publicada: true,
+          productoId,
+          ...extra,
+        })
+        .then((n) => (ids.push(n.id), n));
+    const hoyMadrid = () =>
+      new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid" }).format(new Date());
+
+    beforeAll(async () => {
+      noticias = await import("~/lib/db/noticias");
+    });
+    afterAll(async () => {
+      await pool.query("delete from noticias where id = any($1::uuid[])", [ids]);
+    });
+
+    it("rebaja en el cobro y en la carta pública, y deja el panel con el precio de siempre", async () => {
+      const p = await crea(
+        datos({
+          name: "Tarta en oferta",
+          variantes: [
+            { variantId: "s", label: "S", priceCents: 1800, orden: 0 },
+            { variantId: "m", label: "M", priceCents: 2600, orden: 1 },
+          ],
+        }),
+      );
+      await noticia(p.id, { ofertaVariantes: { m: 2200 }, ofertaHasta: hoyMadrid() });
+
+      const cobro = (await repo.productosParaPedido([p.slug])).get(p.slug)!;
+      expect(cobro.variantes.map((v) => v.priceCents)).toEqual([1800, 2200]);
+      expect(cobro.variantes[1].precioAntesCents).toBe(2600);
+
+      const ficha = await repo.obtenerProducto(p.slug, { conOfertas: true });
+      expect(ficha?.variantes[1].priceCents).toBe(2200);
+      expect(ficha?.ofertaHasta).toBe(hoyMadrid());
+
+      const panel = (await repo.listarProductos({ soloActivos: false })).find((x) => x.id === p.id);
+      expect(panel?.variantes[1].priceCents).toBe(2600);
+      expect(panel?.variantes[1].precioAntesCents).toBeUndefined();
+    });
+
+    it("no rebaja si la oferta caducó ayer o si la noticia no está publicada", async () => {
+      const caducada = await crea(datos({ name: "Oferta caducada" }));
+      await noticia(caducada.id, { ofertaCents: 1000, ofertaHasta: "2020-01-01" });
+      const borrador = await crea(datos({ name: "Oferta en borrador" }));
+      await noticia(borrador.id, { ofertaCents: 1000, publicada: false });
+
+      const mapa = await repo.productosParaPedido([caducada.slug, borrador.slug]);
+      expect(mapa.get(caducada.slug)?.priceCents).toBe(1850);
+      expect(mapa.get(borrador.slug)?.priceCents).toBe(1850);
+    });
+
+    it("la tarjeta de Este mes enseña el producto rebajado", async () => {
+      const p = await crea(datos({ name: "Empanada en oferta" }));
+      const n = await noticia(p.id, { ofertaCents: 1500 });
+      const publica = await noticias.obtenerNoticia(n.slug, { soloPublicada: true });
+      expect(publica?.producto?.priceCents).toBe(1500);
+      expect(publica?.producto?.precioAntesCents).toBe(1850);
+      expect(publica?.ofertaCents).toBe(1500);
+    });
   });
 });

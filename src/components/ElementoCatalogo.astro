@@ -66,10 +66,11 @@ const datos = sinFiltro
       imagen={imagenDe(primero)}
       shortDescription={primero.shortDescription}
       priceCents={primero.priceCents ?? undefined}
+      priceAntesCents={primero.precioAntesCents}
       consultar={primero.consultar}
       agotado={primero.agotado}
       unit={primero.unit ?? undefined}
-      variants={primero.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents }))}
+      variants={primero.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents }))}
       especialidad={primero.especialidad}
     />
   ) : (

@@ -1,6 +1,7 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import AddToCart from "~/islands/AddToCart.tsx";
+import { formatDate } from "~/lib/format";
 import PackFicha from "~/components/PackFicha.astro";
 import FotosProducto, { type Foto } from "~/components/FotosProducto.astro";
 import { categoryById, isCategoryId } from "~/data/categories";
@@ -21,7 +22,7 @@ const { slug } = Astro.params;
 let product: Awaited<ReturnType<typeof obtenerProducto>> = null;
 let fallo = false;
 try {
-  product = slug ? await obtenerProducto(slug, { soloActivo: true }) : null;
+  product = slug ? await obtenerProducto(slug, { soloActivo: true, conOfertas: true }) : null;
 } catch (error) {
   // Un fallo de Postgres aquí no puede convertirse en un 500: se trata como
   // si la ficha no existiera, igual que un slug inventado.
@@ -240,14 +241,22 @@ const breadcrumbs = {
               <a href="/contacto" class="btn btn-primario mt-4">Preguntar por este producto</a>
             </div>
           ) : (
+            <>
+            {product.ofertaHasta !== undefined && (
+              <p class="numeracion mb-2 !text-[color:var(--color-teja)]">
+                Oferta de Este mes{product.ofertaHasta && ` · hasta el ${formatDate(new Date(`${product.ofertaHasta}T00:00:00`))}`}
+              </p>
+            )}
             <AddToCart
               client:load
               slug={product.slug}
               name={product.name}
               unitPriceCents={product.priceCents}
+              unitPriceAntesCents={product.precioAntesCents}
               unit={product.unit ?? undefined}
-              variants={product.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents }))}
+              variants={product.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents }))}
             />
+            </>
           )}
         </div>
 

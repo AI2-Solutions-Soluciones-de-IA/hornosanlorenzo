@@ -3,12 +3,15 @@ import { addItem, type CartItem } from "~/lib/cart";
 import { emitToast } from "~/islands/ToastHost";
 import { formatPriceCents } from "~/lib/format";
 
-type Variant = { id: string; label: string; priceCents: number };
+/** `precioAntesCents`: con oferta de Este mes, el de siempre para tacharlo. */
+type Variant = { id: string; label: string; priceCents: number; precioAntesCents?: number };
 
 type Props = {
   slug: string;
   name: string;
   unitPriceCents: number;
+  /** Sin tamaños y con oferta: el precio de siempre, que se tacha. */
+  unitPriceAntesCents?: number;
   unit?: string;
   variants?: Variant[];
   compact?: boolean;
@@ -18,17 +21,34 @@ export default function AddToCart({
   slug,
   name,
   unitPriceCents,
+  unitPriceAntesCents,
   unit,
   variants,
   compact,
 }: Props) {
+  // Si solo algún tamaño está de oferta, se abre en ese: si no, la oferta
+  // de Este mes queda escondida detrás del desplegable.
   const [variantId, setVariantId] = useState<string | undefined>(
-    variants?.[0]?.id,
+    (variants?.find((v) => v.precioAntesCents !== undefined) ?? variants?.[0])?.id,
   );
   const [qty, setQty] = useState(1);
 
   const variant = variants?.find((v) => v.id === variantId);
   const finalPrice = variant?.priceCents ?? unitPriceCents;
+  const precioAntes = variant ? variant.precioAntesCents : unitPriceAntesCents;
+  const tachado = precioAntes !== undefined && (
+    <s
+      style={{
+        fontSize: "0.7em",
+        fontWeight: 400,
+        color: "var(--color-ink-muted)",
+        marginRight: "0.4em",
+      }}
+    >
+      <span className="sr-only">Antes </span>
+      {formatPriceCents(precioAntes)}
+    </s>
+  );
 
   function onAdd() {
     const item: Omit<CartItem, "qty"> & { qty: number } = {
@@ -111,6 +131,7 @@ export default function AddToCart({
               margin: 0,
             }}
           >
+            {tachado}
             {formatPriceCents(finalPrice)}
           </p>
           {compactButton}
@@ -129,6 +150,7 @@ export default function AddToCart({
           margin: 0,
         }}
       >
+        {tachado}
         {formatPriceCents(finalPrice)}
         {unit && (
           <span

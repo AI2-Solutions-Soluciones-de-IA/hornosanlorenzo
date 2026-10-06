@@ -102,7 +102,13 @@ const jsonLd = {
 
     {comprable && (
       <aside class="mt-10 max-w-md border border-[color:var(--color-line)] bg-[color:var(--color-paper)] p-5" aria-label="Pedir este producto">
-        <p class="numeracion">Pídelo ya</p>
+        <p class="numeracion">
+          {comprable.ofertaHasta === undefined
+            ? "Pídelo ya"
+            : comprable.ofertaHasta
+              ? `Precio de oferta hasta el ${formatDate(new Date(`${comprable.ofertaHasta}T00:00:00`))}`
+              : "Precio de oferta"}
+        </p>
         <p class="font-[family-name:var(--font-display)] text-2xl mt-1">
           <a href={`/catalogo/${comprable.slug}`} class="hover:text-[color:var(--color-accent-dark)]">{comprable.name}</a>
         </p>
@@ -114,6 +120,7 @@ const jsonLd = {
           slug={comprable.slug}
           name={comprable.name}
           priceCents={comprable.priceCents ?? undefined}
+          priceAntesCents={comprable.precioAntesCents}
           consultar={comprable.consultar}
           agotado={comprable.agotado}
           unit={comprable.unit ?? undefined}

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { formatDate } from "~/lib/format";
+import { formatDate, formatPriceCents } from "~/lib/format";
+import { eurosACentimos } from "~/lib/euros";
 
 /**
  * Misma forma que `Noticia` de `~/lib/db/noticias`, redefinida aquí en vez
@@ -23,10 +24,23 @@ export type Noticia = {
   productoId: string | null;
   /** Lo que devuelve el servidor del producto enlazado; aquí solo se enseña el nombre. */
   producto: { slug: string; name: string } | null;
+  ofertaCents: number | null;
+  ofertaVariantes: Record<string, number>;
+  ofertaHasta: string | null;
 };
 
-/** Lo justo para el desplegable «Producto de la carta». */
-export type ProductoOpcion = { id: string; name: string };
+/**
+ * Lo justo para el desplegable «Producto de la carta» y para la oferta:
+ * el precio de siempre de la ficha (y de cada tamaño) va al lado de la
+ * casilla del precio de oferta.
+ */
+export type ProductoOpcion = {
+  id: string;
+  name: string;
+  priceCents: number | null;
+  consultar: boolean;
+  variantes: { variantId: string; label: string; priceCents: number }[];
+};
 
 type Props = {
   noticiasIniciales: Noticia[];
@@ -80,6 +94,12 @@ type FormularioNoticia = {
   publicada: boolean;
   /** `""` es «ninguno»: un `<select>` no sabe de `null`. */
   productoId: string;
+  /** Precio de oferta en euros, tal como se escribe; `""` = sin oferta. */
+  ofertaEuros: string;
+  /** Lo mismo por tamaño (`variantId` → euros). */
+  ofertaVariantesEuros: Record<string, string>;
+  /** `""` = mientras esté publicada. */
+  ofertaHasta: string;
 };
 
 const FORMULARIO_VACIO: FormularioNoticia = {
@@ -94,7 +114,12 @@ const FORMULARIO_VACIO: FormularioNoticia = {
   imageHeight: null,
   publicada: false,
   productoId: "",
+  ofertaEuros: "",
+  ofertaVariantesEuros: {},
+  ofertaHasta: "",
 };
+
+const aEuros = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
 
 function formularioDesdeNoticia(n: Noticia): FormularioNoticia {
   return {
@@ -109,7 +134,42 @@ function formularioDesdeNoticia(n: Noticia): FormularioNoticia {
     imageHeight: n.imageHeight,
     publicada: n.publicada,
     productoId: n.productoId ?? "",
+    ofertaEuros: n.ofertaCents === null ? "" : aEuros(n.ofertaCents),
+    ofertaVariantesEuros: Object.fromEntries(
+      Object.entries(n.ofertaVariantes ?? {}).map(([id, c]) => [id, aEuros(c)]),
+    ),
+    ofertaHasta: n.ofertaHasta ?? "",
   };
+}
+
+/**
+ * Pasa la oferta del formulario a céntimos. Devuelve un mensaje si algún
+ * precio no se entiende; que rebaje de verdad lo comprueba el servidor.
+ */
+function ofertaDelFormulario(
+  f: FormularioNoticia,
+  producto: ProductoOpcion | undefined,
+):
+  | { error: string }
+  | { ofertaCents: number | null; ofertaVariantes: Record<string, number>; ofertaHasta: string | null } {
+  const vacia = { ofertaCents: null, ofertaVariantes: {}, ofertaHasta: null };
+  if (!producto) return vacia;
+  if (producto.variantes.length > 0) {
+    const ofertaVariantes: Record<string, number> = {};
+    for (const v of producto.variantes) {
+      const texto = f.ofertaVariantesEuros[v.variantId]?.trim() ?? "";
+      if (!texto) continue;
+      const c = eurosACentimos(texto);
+      if (c === null || c <= 0) return { error: `El precio de oferta de «${v.label}» no se entiende.` };
+      ofertaVariantes[v.variantId] = c;
+    }
+    const hay = Object.keys(ofertaVariantes).length > 0;
+    return { ofertaCents: null, ofertaVariantes, ofertaHasta: hay ? f.ofertaHasta || null : null };
+  }
+  if (!f.ofertaEuros.trim()) return vacia;
+  const c = eurosACentimos(f.ofertaEuros);
+  if (c === null || c <= 0) return { error: "El precio de oferta no se entiende." };
+  return { ofertaCents: c, ofertaVariantes: {}, ofertaHasta: f.ofertaHasta || null };
 }
 
 async function llamarNoticias(
@@ -219,6 +279,15 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
 
     setErrorServidor(null);
     setMensaje(null);
+
+    const oferta = ofertaDelFormulario(
+      formulario,
+      productos.find((p) => p.id === formulario.productoId),
+    );
+    if ("error" in oferta) {
+      setErrorServidor(oferta.error);
+      return;
+    }
     setGuardando(true);
 
     const datos = {
@@ -236,6 +305,7 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
         .filter(Boolean),
       publicada: formulario.publicada,
       productoId: formulario.productoId || null,
+      ...oferta,
     };
 
     const resultado = editandoId
@@ -478,6 +548,80 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
                 )}
             </select>
           </div>
+
+          {(() => {
+            const producto = productos.find((p) => p.id === formulario.productoId);
+            if (!producto) return null;
+            if (producto.consultar || producto.priceCents === null)
+              return (
+                <p style={{ marginTop: 8, fontSize: 13, color: "var(--color-ink-muted)" }}>
+                  Este producto se vende a consultar: no admite precio de oferta.
+                </p>
+              );
+            return (
+              <fieldset
+                style={{
+                  marginTop: 16,
+                  border: "1px solid var(--color-avellana)",
+                  padding: "12px 16px 16px",
+                }}
+              >
+                <legend style={{ ...label, padding: "0 6px" }}>Precio de oferta (opcional)</legend>
+                <p style={{ fontSize: 13, color: "var(--color-ink-muted)", margin: "0 0 4px" }}>
+                  Vale en toda la web mientras la noticia esté publicada. En la carta se ve el
+                  precio de siempre tachado. Déjalo vacío para venderlo al precio normal.
+                </p>
+                {producto.variantes.length > 0 ? (
+                  producto.variantes.map((v) => (
+                    <div key={v.variantId} style={{ marginTop: 12 }}>
+                      <label style={label} htmlFor={`an-oferta-${v.variantId}`}>
+                        {v.label} · de siempre {formatPriceCents(v.priceCents)}
+                      </label>
+                      <input
+                        id={`an-oferta-${v.variantId}`}
+                        inputMode="decimal"
+                        placeholder="Sin oferta"
+                        value={formulario.ofertaVariantesEuros[v.variantId] ?? ""}
+                        onChange={(e) =>
+                          actualizaCampo("ofertaVariantesEuros", {
+                            ...formulario.ofertaVariantesEuros,
+                            [v.variantId]: e.target.value,
+                          })
+                        }
+                        style={{ ...field, maxWidth: 200 }}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={label} htmlFor="an-oferta">
+                      Precio de oferta · de siempre {formatPriceCents(producto.priceCents)}
+                    </label>
+                    <input
+                      id="an-oferta"
+                      inputMode="decimal"
+                      placeholder="Sin oferta"
+                      value={formulario.ofertaEuros}
+                      onChange={(e) => actualizaCampo("ofertaEuros", e.target.value)}
+                      style={{ ...field, maxWidth: 200 }}
+                    />
+                  </div>
+                )}
+                <div style={{ marginTop: 12 }}>
+                  <label style={label} htmlFor="an-oferta-hasta">
+                    Válida hasta (incluido; vacío = mientras esté publicada)
+                  </label>
+                  <input
+                    id="an-oferta-hasta"
+                    type="date"
+                    value={formulario.ofertaHasta}
+                    onChange={(e) => actualizaCampo("ofertaHasta", e.target.value)}
+                    style={{ ...field, maxWidth: 200 }}
+                  />
+                </div>
+              </fieldset>
+            );
+          })()}
 
           <div style={{ marginTop: 16 }}>
             <p style={label}>Foto</p>

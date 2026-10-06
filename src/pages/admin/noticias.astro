@@ -8,14 +8,20 @@ import { listarProductos } from "~/lib/db/productos";
 export const prerender = false;
 
 let noticiasIniciales: Noticia[] = [];
-// Para el desplegable «Producto de la carta»: solo id y nombre, y solo las
-// fichas activas. El resto de la ficha no tiene por qué viajar al navegador.
+// Para el desplegable «Producto de la carta» y la oferta: id, nombre y
+// precios, solo de las fichas activas. El resto de la ficha no tiene por
+// qué viajar al navegador.
 let productos: ProductoOpcion[] = [];
 try {
   noticiasIniciales = await listarNoticias({ soloPublicadas: false });
+  // Sin ofertas aplicadas (`conOfertas` por defecto es false): la casilla
+  // de la oferta enseña al lado el precio DE SIEMPRE, no el rebajado.
   productos = (await listarProductos({ soloActivos: true })).map((p) => ({
     id: p.id,
     name: p.name,
+    priceCents: p.priceCents,
+    consultar: p.consultar,
+    variantes: p.variantes.map((v) => ({ variantId: v.variantId, label: v.label, priceCents: v.priceCents })),
   }));
 } catch (error) {
   // La isla sabe recargar la lista por su cuenta: mejor entrar con la lista

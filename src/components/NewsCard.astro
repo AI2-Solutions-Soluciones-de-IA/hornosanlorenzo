@@ -66,6 +66,7 @@ const comprable = producto && producto.activo ? producto : null;
           slug={comprable.slug}
           name={comprable.name}
           priceCents={comprable.priceCents ?? undefined}
+          priceAntesCents={comprable.precioAntesCents}
           consultar={comprable.consultar}
           agotado={comprable.agotado}
           unit={comprable.unit ?? undefined}

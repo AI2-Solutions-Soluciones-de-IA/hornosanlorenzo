@@ -13,12 +13,14 @@ interface Props {
   imagen?: { url: string; alt: string; ancho: number; alto: number } | null;
   shortDescription: string;
   priceCents?: number;
+  /** Con oferta de Este mes: el precio de siempre, que se tacha. */
+  priceAntesCents?: number;
   /** La carta no da precio: se consulta con el obrador. */
   consultar?: boolean;
   /** Se ve en la carta, pero hoy no se puede comprar. */
   agotado?: boolean;
   unit?: string;
-  variants?: { id: string; label: string; priceCents: number }[];
+  variants?: { id: string; label: string; priceCents: number; precioAntesCents?: number }[];
   /** Etiqueta de la carta, p. ej. «Especialidad desde 1986». */
   especialidad?: string | null;
 }
@@ -31,6 +33,7 @@ const {
   imagen = null,
   shortDescription,
   priceCents,
+  priceAntesCents,
   consultar = false,
   agotado = false,
   unit,
@@ -80,6 +83,7 @@ const eyebrow = seccionLabel ?? (isCategoryId(category) ? categoryById(category)
       slug={slug}
       name={name}
       priceCents={priceCents}
+      priceAntesCents={priceAntesCents}
       consultar={consultar}
       agotado={agotado}
       unit={unit}

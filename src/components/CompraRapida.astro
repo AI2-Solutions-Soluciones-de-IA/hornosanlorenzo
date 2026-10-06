@@ -13,18 +13,21 @@ interface Props {
   slug: string;
   name: string;
   priceCents?: number;
+  /** Con oferta de Este mes y sin tamaños: el precio de siempre, tachado. */
+  priceAntesCents?: number;
   /** La carta no da precio: se consulta con el obrador. */
   consultar?: boolean;
   /** Se ve, pero hoy no se puede comprar. */
   agotado?: boolean;
   unit?: string;
-  variants?: { id: string; label: string; priceCents: number }[];
+  variants?: { id: string; label: string; priceCents: number; precioAntesCents?: number }[];
 }
 
 const {
   slug,
   name,
   priceCents,
+  priceAntesCents,
   consultar = false,
   agotado = false,
   unit,
@@ -48,6 +51,9 @@ const conTamanos = Boolean(variants && variants.length > 1);
 const precioTarjeta =
   variants && variants.length === 1 ? variants[0].priceCents : priceCents;
 const sinPrecio = consultar || priceCents === undefined;
+/** El tachado sigue la misma regla que el precio: con un tamaño, el suyo. */
+const precioAntes =
+  variants && variants.length === 1 ? variants[0].precioAntesCents : priceAntesCents;
 ---
 <div class="mt-4">
   {agotado ? (
@@ -66,6 +72,9 @@ const sinPrecio = consultar || priceCents === undefined;
        solo perdería la etiqueta de agotado. */
     <div class="flex items-center justify-between">
       <p class="font-[family-name:var(--font-display)] text-xl font-semibold text-[color:var(--color-ink-muted)]">
+        {!sinPrecio && precioAntes !== undefined && (
+          <s class="text-sm font-normal mr-1.5"><span class="sr-only">Antes </span>{formatPriceCents(precioAntes)}</s>
+        )}
         {sinPrecio ? "Consultar" : formatPriceCents(precioTarjeta!)}
       </p>
       <span class="numeracion">Agotado hoy</span>
@@ -89,12 +98,16 @@ const sinPrecio = consultar || priceCents === undefined;
       slug={slug}
       name={name}
       unitPriceCents={precioTarjeta!}
+      unitPriceAntesCents={precioAntes}
       variants={variants}
       compact={true}
     />
   ) : (
     <div class="flex items-center justify-between">
       <p class="font-[family-name:var(--font-display)] text-xl font-semibold">
+        {precioAntes !== undefined && (
+          <s class="text-sm font-normal text-[color:var(--color-ink-muted)] mr-1.5"><span class="sr-only">Antes </span>{formatPriceCents(precioAntes)}</s>
+        )}
         {formatPriceCents(precioTarjeta!)}{unit && <span class="text-xs text-[color:var(--color-ink-muted)] font-normal"> / {unit}</span>}
       </p>
       <AddToCart

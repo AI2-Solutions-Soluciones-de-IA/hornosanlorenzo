@@ -3,13 +3,15 @@ import { addItem } from "~/lib/cart";
 import { emitToast } from "~/islands/ToastHost";
 import { formatPriceCents } from "~/lib/format";
 
-type Variant = { id: string; label: string; priceCents: number };
+/** `precioAntesCents`: con oferta de Este mes, el de siempre para tacharlo. */
+type Variant = { id: string; label: string; priceCents: number; precioAntesCents?: number };
 
 export type Sabor = {
   slug: string;
   name: string;
   /** null = sin precio de venta online. */
   priceCents: number | null;
+  precioAntesCents?: number;
   consultar: boolean;
   agotado: boolean;
   unit?: string;
@@ -73,6 +75,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
 
   const variant = sabor.variants.find((v) => v.id === variantId);
   const precio = variant?.priceCents ?? sabor.priceCents;
+  const precioAntes = variant ? variant.precioAntesCents : sabor.precioAntesCents;
   const nombre = `${singular} · ${sabor.name}`;
 
   function onAdd() {
@@ -150,6 +153,12 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
             margin: 0,
           }}
         >
+          {precio !== null && precioAntes !== undefined && (
+            <s style={{ fontSize: "0.7em", fontWeight: 400, color: "var(--color-ink-muted)", marginRight: "0.4em" }}>
+              <span className="sr-only">Antes </span>
+              {formatPriceCents(precioAntes)}
+            </s>
+          )}
           {precio === null ? "Consultar" : formatPriceCents(precio)}
           {sabor.unit && sabor.variants.length <= 1 && (
             <span
