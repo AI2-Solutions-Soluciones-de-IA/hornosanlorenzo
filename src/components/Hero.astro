@@ -10,10 +10,16 @@ interface Props {
   imageAlt: string;
   /** Vídeo vertical en lugar de la foto: sin sonido, en bucle. */
   video?: { src: string; poster: string };
+  /**
+   * Mensajes que rotan en lugar del título y el texto, en el orden de la
+   * arquitectura de mensajes de la marca. El primero es el `<h1>`.
+   */
+  mensajes?: { texto: string; sub?: string }[];
   primaryCta?: { href: string; label: string };
   secondaryCta?: { href: string; label: string };
 }
-const { eyebrow, title, italicTail, body, image, imageAlt, video, primaryCta, secondaryCta } = Astro.props;
+const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, primaryCta, secondaryCta } = Astro.props;
+const ROMANOS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 ---
 <section class="relative bg-[color:var(--color-leche)] overflow-hidden">
   <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
@@ -21,11 +27,61 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, primaryCta, se
       {eyebrow && (
         <p class="numeracion mb-3">{eyebrow}</p>
       )}
-      <h1 class="text-4xl sm:text-6xl lg:text-7xl leading-[0.95] text-[color:var(--color-ink)]">
-        {title}
-        {italicTail && <em class="italic text-[color:var(--color-accent-dark)] font-normal block">{italicTail}</em>}
-      </h1>
-      {body && <p class="mt-5 max-w-md text-[color:var(--color-ink-muted)] text-lg">{body}</p>}
+      {mensajes?.length ? (
+        <div class="mensajes" data-mensajes>
+          <div
+            class="mensajes-pista"
+            role="region"
+            aria-roledescription="carrusel"
+            aria-label="Lo que decimos"
+          >
+            {mensajes.map((m, i) => {
+              const Etiqueta = i === 0 ? "h1" : "p";
+              return (
+                <div
+                  class:list={["mensaje", { activo: i === 0 }]}
+                  data-mensaje
+                  role="group"
+                  aria-roledescription="mensaje"
+                  aria-label={`${i + 1} de ${mensajes.length}`}
+                  aria-hidden={i === 0 ? undefined : "true"}
+                >
+                  <Etiqueta class="font-[family-name:var(--font-display)] italic text-3xl sm:text-4xl xl:text-5xl leading-[1.12] text-[color:var(--color-ink)]">
+                    «{m.texto}»
+                  </Etiqueta>
+                  {m.sub && (
+                    <p class="mt-4 max-w-lg font-[family-name:var(--font-display)] italic text-lg text-[color:var(--color-ink-muted)]">
+                      {m.sub}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div class="mensajes-indices mt-8 flex gap-5">
+            {mensajes.map((_, i) => (
+              <button
+                type="button"
+                class:list={["mensajes-indice", { activo: i === 0 }]}
+                data-mensaje-indice={i}
+                aria-label={`Mensaje ${i + 1}`}
+                aria-current={i === 0 ? "true" : undefined}
+              >
+                <span>{ROMANOS[i]}</span>
+                <i aria-hidden="true"></i>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          <h1 class="text-4xl sm:text-6xl lg:text-7xl leading-[0.95] text-[color:var(--color-ink)]">
+            {title}
+            {italicTail && <em class="italic text-[color:var(--color-accent-dark)] font-normal block">{italicTail}</em>}
+          </h1>
+          {body && <p class="mt-5 max-w-md text-[color:var(--color-ink-muted)] text-lg">{body}</p>}
+        </>
+      )}
       <div class="mt-7 flex flex-wrap gap-3">
         {primaryCta && (
           <a href={primaryCta.href} class="btn btn-primario">
@@ -65,7 +121,136 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, primaryCta, se
   </div>
 </section>
 
+<style>
+  /* Todos los mensajes en la misma celda: la caja mide lo que el más largo y
+     el texto de abajo no salta al cambiar. */
+  .mensajes-pista {
+    display: grid;
+  }
+  .mensaje {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transform: translateY(14px);
+    visibility: hidden;
+    transition:
+      opacity 0.8s ease,
+      transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s linear 0.8s;
+  }
+  .mensaje.activo {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    transition-delay: 0.25s, 0.25s, 0s;
+  }
+  .mensajes-indice {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 2.5rem;
+    padding: 4px 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    color: var(--color-avellana);
+    transition: color 0.3s;
+  }
+  .mensajes-indice:hover,
+  .mensajes-indice.activo {
+    color: var(--color-accent-dark);
+  }
+  .mensajes-indice i {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: var(--color-latte);
+    overflow: hidden;
+  }
+  .mensajes-indice i::after {
+    content: "";
+    display: block;
+    height: 100%;
+    background: var(--color-teja);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  /* La barra se llena durante lo que dura el mensaje (`--duracion`). */
+  .mensajes-indice.activo i::after {
+    animation: mensaje-progreso var(--duracion, 6s) linear forwards;
+  }
+  .mensajes.pausado .mensajes-indice.activo i::after {
+    animation-play-state: paused;
+  }
+  .mensajes.quieto .mensajes-indice.activo i::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+  @keyframes mensaje-progreso {
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mensaje,
+    .mensaje.activo {
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+
 <script>
+  /**
+   * Rota los mensajes del hero. Avanza cuando termina la barra del activo
+   * (`animationend`), así texto y barra van siempre a la par, también al
+   * pausar con el ratón encima. Con «reducir movimiento» no rota solo: se
+   * cambia con los números.
+   */
+  function iniciaMensajes() {
+    document.querySelectorAll<HTMLElement>("[data-mensajes]").forEach((raiz) => {
+      if (raiz.dataset.listo) return;
+      raiz.dataset.listo = "1";
+      const mensajes = [...raiz.querySelectorAll<HTMLElement>("[data-mensaje]")];
+      const indices = [...raiz.querySelectorAll<HTMLButtonElement>("[data-mensaje-indice]")];
+      const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (quieto) raiz.classList.add("quieto");
+      let actual = 0;
+
+      const muestra = (n: number) => {
+        actual = (n + mensajes.length) % mensajes.length;
+        mensajes.forEach((m, i) => {
+          m.classList.toggle("activo", i === actual);
+          if (i === actual) m.removeAttribute("aria-hidden");
+          else m.setAttribute("aria-hidden", "true");
+        });
+        indices.forEach((b, i) => {
+          // Quitar y volver a poner la clase reinicia la animación de la barra.
+          b.classList.remove("activo");
+          b.removeAttribute("aria-current");
+          if (i === actual) {
+            void b.offsetWidth;
+            b.classList.add("activo");
+            b.setAttribute("aria-current", "true");
+          }
+        });
+      };
+
+      indices.forEach((b, i) => b.addEventListener("click", () => muestra(i)));
+      if (quieto) return;
+      indices.forEach((b) =>
+        b.querySelector("i")?.addEventListener("animationend", () => {
+          if (b.classList.contains("activo")) muestra(actual + 1);
+        }),
+      );
+      raiz.addEventListener("pointerenter", () => raiz.classList.add("pausado"));
+      raiz.addEventListener("pointerleave", () => raiz.classList.remove("pausado"));
+    });
+  }
+  document.addEventListener("astro:page-load", iniciaMensajes);
+
   // Con «reducir movimiento» el vídeo se queda quieto en el póster.
   function paraSiReducido() {
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;

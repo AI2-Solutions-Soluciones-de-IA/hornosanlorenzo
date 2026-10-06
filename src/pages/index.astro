@@ -24,6 +24,28 @@ const [productsAll, defsPacks] = await Promise.all([
 // `listarProductos` ya devuelve en el orden de la carta.
 const featured = productsAll.filter((p) => p.destacado).slice(0, 6);
 
+// Arquitectura de mensajes de la marca («Qué decimos, en qué orden»): de lo
+// más breve y estable a lo más argumentativo. El orden importa.
+const mensajesMarca = [
+  {
+    texto: "Más de 40 años haciéndolo bien.",
+    sub: "El secreto de comer bien lleva más de 40 años en Horno San Lorenzo.",
+  },
+  {
+    texto: "El futuro es volver a comer de verdad, con producto fresco recién salido del horno.",
+    sub: "Del horno a tu mesa: no es producto congelado, sino horneado cada mañana.",
+  },
+  {
+    texto: "Producto fresco y artesanal, recién salido del horno, para hogares y empresas.",
+  },
+  {
+    texto: "La confianza de siempre: producto artesanal fresco que sale del horno cada día, con una calidad precio difícil de igualar.",
+  },
+  {
+    texto: "Convertir 40 años de reputación en la marca de referencia de comida casera fresca, accesible y generosa.",
+  },
+];
+
 const lemas = [
   "Desde 1986",
   "Obrador propio",
@@ -58,7 +80,7 @@ const localBizJsonLd = stores.map((s) => ({
     eyebrow="Desde 1986 · Obrador artesano · Madrid"
     title="Más de 40 años"
     italicTail="haciéndolo bien."
-    body="Comida casera para hogares y empresas. Tartas y empanadas hechas cada mañana en obrador propio, con método tradicional e ingredientes de siempre."
+    mensajes={mensajesMarca}
     video={{ src: "/videos/portada.mp4", poster: "/videos/portada-poster.jpg" }}
     imageAlt="En el obrador: rellenando tartaletas a mano, hasta el sello de Horno San Lorenzo"
     primaryCta={{ href: "/catalogo", label: "Ver el catálogo" }}
