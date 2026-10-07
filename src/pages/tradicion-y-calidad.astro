@@ -48,29 +48,21 @@ import { site } from "~/data/site";
       Cada valor se traduce en una decisión concreta del negocio. Si no se puede señalar
       dónde se cumple, no es un valor: es un adorno.
     </p>
-    <!-- Carrusel con el mismo motor que el de la home (`~/scripts/carrusel`):
-         se arrastra, las flechas pasan de uno en uno y se desliza solo hasta
-         que alguien lo toca. -->
-    <div class="valores-marco mt-10" data-carrusel data-carrusel-auto="40">
-      <div class="flex justify-end gap-2 mb-4">
-        <button type="button" class="valores-flecha" data-carrusel-prev aria-controls="carrusel-valores" aria-label="Valor anterior">‹</button>
-        <button type="button" class="valores-flecha" data-carrusel-next aria-controls="carrusel-valores" aria-label="Valor siguiente">›</button>
-      </div>
-      <div
-        id="carrusel-valores"
-        class="valores flex gap-5 overflow-x-auto snap-x snap-mandatory"
-        data-carrusel-pista
-        role="region"
-        aria-roledescription="carrusel"
-        aria-label="Cinco valores"
-        tabindex="0"
-      >
-        {tradicion.valores.map((v) => (
-          <article class="valores-item snap-start shrink-0 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
-            <p class="font-[family-name:var(--font-display)] text-5xl text-[color:var(--color-avellana)]">{v.number}</p>
-            <h3 class="font-[family-name:var(--font-display)] text-2xl mt-4">{v.title}</h3>
-            <p class="mt-2 leading-relaxed text-[color:var(--color-ink-muted)]">{v.body}</p>
-          </article>
+    <!-- Cinta continua: las cinco tarjetas dos veces, desplazándose sin
+         parar; al llegar a la mitad vuelve a empezar sin que se note. La
+         copia no la lee el lector de pantalla. -->
+    <div class="valores-marco mt-10" role="region" aria-label="Cinco valores">
+      <div class="valores-pista">
+        {[0, 1].map((copia) => (
+          <div class="valores-tanda" aria-hidden={copia === 1 ? "true" : undefined}>
+            {tradicion.valores.map((v) => (
+              <article class="valores-item border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
+                <p class="font-[family-name:var(--font-display)] text-5xl text-[color:var(--color-avellana)]">{v.number}</p>
+                <h3 class="font-[family-name:var(--font-display)] text-2xl mt-4">{v.title}</h3>
+                <p class="mt-2 leading-relaxed text-[color:var(--color-ink-muted)]">{v.body}</p>
+              </article>
+            ))}
+          </div>
         ))}
       </div>
     </div>
@@ -119,63 +111,44 @@ import { site } from "~/data/site";
 </MarketingLayout>
 
 <style>
-  /* Carrusel de los cinco valores: una tarjeta y un asomo en el móvil, dos
-     en tableta y tres en escritorio. */
-  .valores {
-    scroll-behavior: smooth;
-    scrollbar-width: none;
-    padding-bottom: 2px;
+  /* Cinta de los cinco valores: avanza siempre, a velocidad constante. */
+  .valores-marco {
+    overflow: hidden;
   }
-  .valores::-webkit-scrollbar {
-    display: none;
+  .valores-pista {
+    display: flex;
+    width: max-content;
+    animation: valores-cinta 46s linear infinite;
   }
-  .valores:focus-visible {
-    outline: 2px solid var(--color-caramelo);
-    outline-offset: 4px;
+  .valores-tanda {
+    display: flex;
+    gap: 1.25rem;
+    padding-right: 1.25rem;
   }
   .valores-item {
-    flex-basis: 82%;
+    flex: none;
+    width: min(80vw, 22rem);
   }
-  @media (min-width: 640px) {
-    .valores-item {
-      flex-basis: calc((100% - 1.25rem) / 2);
+  @keyframes valores-cinta {
+    to {
+      transform: translateX(-50%);
     }
   }
-  @media (min-width: 1024px) {
-    .valores-item {
-      flex-basis: calc((100% - 2.5rem) / 3);
-    }
-  }
-  /* Mientras se desliza solo, sin snap: pelearía con el avance continuo. */
-  .valores-marco:global(.carrusel--auto) .valores {
-    scroll-snap-type: none;
-    scroll-behavior: auto;
-  }
-  .valores-flecha {
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--color-avellana);
-    background: var(--color-leche);
-    color: var(--color-moka);
-    font-size: 24px;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .valores-flecha:hover {
-    background: var(--color-latte);
-  }
-  .valores-flecha:disabled {
-    opacity: 0.35;
-    cursor: default;
-  }
+  /* Con «reducir movimiento», quieta y deslizable a mano, sin la copia. */
   @media (prefers-reduced-motion: reduce) {
-    .valores {
-      scroll-behavior: auto;
+    .valores-marco {
+      overflow-x: auto;
+    }
+    .valores-pista {
+      animation: none;
+    }
+    .valores-tanda[aria-hidden="true"] {
+      display: none;
     }
   }
 
   /* Cifras: entran escalonadas, cuentan desde cero y dibujan una raya teja
-     al aparecer en pantalla. Sin JS o con «reducir movimiento», quietas. */
+     al aparecer en pantalla, y lo repiten cada 6 s mientras se ven. Sin JS o con «reducir movimiento», quietas. */
   .cifra-raya {
     display: block;
     width: 2.5rem;
@@ -204,11 +177,14 @@ import { site } from "~/data/site";
   .cifras.visto .cifra-raya {
     transform: scaleX(1);
   }
+  /* Un instante sin raya ni transición para que vuelva a dibujarse. */
+  .cifras.redibuja .cifra-raya {
+    transform: scaleX(0);
+    transition: none;
+  }
 </style>
 
 <script>
-  import "~/scripts/carrusel";
-
   function animaCifras() {
     const dl = document.querySelector<HTMLElement>("[data-cifras]");
     if (!dl || dl.classList.contains("listo")) return;
@@ -232,15 +208,35 @@ import { site } from "~/data/site";
       setTimeout(() => requestAnimationFrame(paso), retraso);
     };
 
+    /** Vuelve a contar desde cero y redibuja las rayas. */
+    const repite = () => {
+      dl.classList.add("redibuja");
+      void dl.offsetWidth;
+      dl.classList.remove("redibuja");
+      numeros.forEach((n) => {
+        const i = Number(n.closest<HTMLElement>(".cifra")?.style.getPropertyValue("--i") || 0);
+        n.textContent = "0";
+        cuenta(n, i * 140);
+      });
+    };
+
+    // En bucle mientras se ven: cada 6 s vuelven a contar. Fuera de
+    // pantalla se para, y al volver a verlas empieza otra vez.
+    const CADA = 6000;
+    let reloj: ReturnType<typeof setInterval> | undefined;
     const io = new IntersectionObserver(
       ([e]) => {
+        clearInterval(reloj);
         if (!e.isIntersecting) return;
-        io.disconnect();
+        if (!dl.isConnected) return io.disconnect();
         dl.classList.add("visto");
-        numeros.forEach((n) => {
-          const i = Number(n.closest<HTMLElement>(".cifra")?.style.getPropertyValue("--i") || 0);
-          cuenta(n, i * 140);
-        });
+        repite();
+        reloj = setInterval(() => {
+          if (!dl.isConnected) {
+            clearInterval(reloj);
+            io.disconnect();
+          } else if (!document.hidden) repite();
+        }, CADA);
       },
       { threshold: 0.35 },
     );
