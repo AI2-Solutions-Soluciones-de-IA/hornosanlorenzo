@@ -132,8 +132,24 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
 
   try {
     const session = await stripe.checkout.sessions.create({
+      // Configuración del Checkout Studio de Stripe (7-10-2026), página
+      // alojada por Stripe. `payment_method_collection` no va: solo vale
+      // para suscripciones.
+      ui_mode: "hosted_page",
+      billing_address_collection: "auto",
+      phone_number_collection: { enabled: true },
+      automatic_tax: { enabled: false },
+      allow_promotion_codes: false,
+      submit_type: "auto",
+      saved_payment_method_options: { payment_method_save: "enabled" },
+      integration_identifier: "hosted_mobile_app_0001",
+      origin_context: "mobile_app",
       mode: "payment",
       line_items: lineItems,
+      // `customer_email`, `locale` y `metadata` no salen en el Studio pero se
+      // quedan a propósito: el correo y el idioma rellenan la página de
+      // pago, y sin los metadatos el webhook no sabe a qué pedido
+      // corresponde el pago ni puede avisar al obrador.
       customer_email: payload.email,
       success_url: `${origin}/pedido/gracias?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/carrito`,
