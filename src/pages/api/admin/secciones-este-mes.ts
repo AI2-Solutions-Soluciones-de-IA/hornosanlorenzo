@@ -5,6 +5,7 @@ import {
   crearSeccion,
   actualizarSeccion,
   borrarSeccion,
+  ordenarSecciones,
 } from "~/lib/db/seccionesEsteMes";
 import { invalidar, RUTAS_CATALOGO } from "~/lib/cache";
 import { listarProductos } from "~/lib/db/productos";
@@ -173,5 +174,23 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     console.error("[admin/secciones-este-mes] no se pudo borrar:", error);
     return json({ error: "No se pudo borrar la sección." }, 500);
+  }
+};
+
+/** Orden de las secciones: `{ orden: [id, id, …] }`, de la primera a la última. */
+export const PATCH: APIRoute = async ({ request, locals }) => {
+  if (!esAdmin(locals.usuario)) return noEncontrado();
+  const parsed = z
+    .object({ orden: z.array(z.string().uuid()).min(1).max(200) })
+    .safeParse(await cuerpo(request));
+  if (!parsed.success) return json({ error: "Falta el orden de las secciones." }, 400);
+  try {
+    await ordenarSecciones(parsed.data.orden);
+    // Solo cambia dónde salen en Este mes: precios y fichas siguen igual.
+    await invalidar(["/noticias"]);
+    return json({ ok: true });
+  } catch (error) {
+    console.error("[admin/secciones-este-mes] no se pudo ordenar:", error);
+    return json({ error: "No se pudo guardar el orden." }, 500);
   }
 };

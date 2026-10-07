@@ -442,6 +442,15 @@ describeSiHayBD("repositorio de productos", () => {
       expect(publica?.productos[0].priceCents).toBe(1500);
     });
 
+    it("el orden del panel decide dónde sale cada sección", async () => {
+      const p = await crea(datos({ name: "Para ordenar secciones" }));
+      const x = await nueva({ titulo: "Orden X", orden: 500, productoIds: [p.id] });
+      const y = await nueva({ titulo: "Orden Y", orden: 501, productoIds: [p.id] });
+      await secciones.ordenarSecciones([y.id, x.id]);
+      const ids = (await secciones.listarSecciones()).map((s) => s.id).filter((id) => id === x.id || id === y.id);
+      expect(ids).toEqual([y.id, x.id]);
+    });
+
     it("borrar un producto de la carta lo quita de la sección sin romperla", async () => {
       const p = await crea(datos({ name: "Se borrará" }));
       const s = await nueva({ titulo: "Con borrado", productoIds: [p.id] });

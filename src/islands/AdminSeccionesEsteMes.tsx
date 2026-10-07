@@ -150,12 +150,41 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
   }, [busqueda, productos, form.productoIds]);
 
   function abrir(s?: Seccion) {
-    setForm(s ? formularioDesde(s) : { ...VACIA, orden: secciones.length });
+    // Una nueva, la última; luego se mueve arrastrando en la lista.
+    setForm(s ? formularioDesde(s) : { ...VACIA, orden: Math.max(0, ...secciones.map((x) => x.orden)) + 1 });
     setEditando(s?.id ?? null);
     setBusqueda("");
     setError(null);
     setMensaje(null);
     setAbierto(true);
+  }
+
+  /** La que se está arrastrando para cambiarla de sitio. */
+  const [arrastrando, setArrastrando] = useState<string | null>(null);
+
+  /** Guarda el orden nuevo; si el servidor falla, vuelve al de antes con el aviso. */
+  async function reordenar(nuevas: Seccion[]) {
+    const antes = secciones;
+    // `orden` = posición, igual que lo guarda el servidor (empieza en 1).
+    setSecciones(nuevas.map((x, i) => ({ ...x, orden: i + 1 })));
+    setError(null);
+    setMensaje(null);
+    const r = await llamar("PATCH", { orden: nuevas.map((x) => x.id) });
+    if (!r.ok) {
+      setSecciones(antes);
+      return setError(r.error);
+    }
+    setMensaje("Orden guardado. En la web se ve en unos segundos.");
+  }
+
+  /** Mueve la sección `id` al sitio de `destino` (arrastrando o con las flechas). */
+  function moverSeccion(id: string, destino: number) {
+    const desde = secciones.findIndex((x) => x.id === id);
+    if (desde < 0 || destino < 0 || destino >= secciones.length || destino === desde) return;
+    const nuevas = [...secciones];
+    const [x] = nuevas.splice(desde, 1);
+    nuevas.splice(destino, 0, x);
+    reordenar(nuevas);
   }
 
   const mueve = (i: number, d: -1 | 1) =>
@@ -167,7 +196,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
       return { ...f, productoIds: ids };
     });
 
-  async function llamar(method: "POST" | "PUT" | "DELETE", body: Record<string, unknown>) {
+  async function llamar(method: "POST" | "PUT" | "DELETE" | "PATCH", body: Record<string, unknown>) {
     try {
       const r = await fetch("/api/admin/secciones-este-mes", {
         method,
@@ -237,9 +266,52 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
           <button type="button" className="btn btn-secundario" style={{ marginTop: 20 }} onClick={() => abrir()}>
             Nueva sección
           </button>
+          {secciones.length > 1 && (
+            <p style={{ marginTop: 16, fontSize: 13, color: "var(--color-ink-muted)" }}>
+              En la web salen en este orden. Arrástralas por ⠿ o usa las flechas para cambiarlo.
+            </p>
+          )}
           <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
-            {secciones.map((s) => (
-              <li key={s.id} style={{ border: "1px solid var(--color-avellana)", padding: "0.75rem 1rem", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            {secciones.map((s, i) => (
+              <li
+                key={s.id}
+                draggable
+                onDragStart={(e) => {
+                  setArrastrando(s.id);
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragOver={(e) => {
+                  if (arrastrando && arrastrando !== s.id) e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (arrastrando) moverSeccion(arrastrando, i);
+                  setArrastrando(null);
+                }}
+                onDragEnd={() => setArrastrando(null)}
+                style={{
+                  border: "1px solid var(--color-avellana)",
+                  padding: "0.75rem 1rem",
+                  marginTop: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  background: arrastrando === s.id ? "var(--color-latte)" : undefined,
+                  opacity: arrastrando === s.id ? 0.6 : 1,
+                }}
+              >
+                <span aria-hidden="true" title="Arrastra para cambiar el orden" style={{ cursor: "grab", color: "var(--color-ink-muted)", fontSize: 18, userSelect: "none" }}>
+                  ⠿
+                </span>
+                <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <button type="button" aria-label={`Subir «${s.titulo}»`} onClick={() => moverSeccion(s.id, i - 1)} disabled={i === 0} style={{ ...enlace, textDecoration: "none", opacity: i === 0 ? 0.3 : 1 }}>
+                    ↑
+                  </button>
+                  <button type="button" aria-label={`Bajar «${s.titulo}»`} onClick={() => moverSeccion(s.id, i + 1)} disabled={i === secciones.length - 1} style={{ ...enlace, textDecoration: "none", opacity: i === secciones.length - 1 ? 0.3 : 1 }}>
+                    ↓
+                  </button>
+                </span>
                 <button type="button" onClick={() => abrir(s)} style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", flex: 1 }}>
                   <p className="numeracion">
                     {s.publicada ? (
@@ -270,12 +342,9 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
             <input id="sm-desc" maxLength={300} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Recién salidos del obrador, para todos." style={field} />
           </div>
 
+          {/* Sin casilla de orden: se ordena arrastrando en la lista. */}
           <div style={{ marginTop: 16, display: "flex", gap: 24, alignItems: "flex-end" }}>
-            <div>
-              <label style={label} htmlFor="sm-orden">Orden</label>
-              <input id="sm-orden" type="number" value={form.orden} onChange={(e) => setForm({ ...form, orden: Number(e.target.value) || 0 })} style={{ ...field, maxWidth: 110 }} />
-            </div>
-            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14, paddingBottom: 12 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
               <input type="checkbox" checked={form.publicada} onChange={(e) => setForm({ ...form, publicada: e.target.checked })} />
               Publicada
             </label>

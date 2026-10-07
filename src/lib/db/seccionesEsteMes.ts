@@ -163,6 +163,16 @@ export async function actualizarSeccion(id: string, d: DatosSeccion): Promise<Se
   }
 }
 
+/** Guarda el orden elegido en el panel: `ids` de la primera a la última. */
+export async function ordenarSecciones(ids: string[]): Promise<void> {
+  await pool.query(
+    `update secciones_este_mes s set orden = o.pos, updated_at = now()
+       from unnest($1::uuid[]) with ordinality as o(id, pos)
+      where s.id = o.id`,
+    [ids],
+  );
+}
+
 export async function borrarSeccion(id: string): Promise<boolean> {
   const { rowCount } = await pool.query("delete from secciones_este_mes where id = $1", [id]);
   return (rowCount ?? 0) > 0;
