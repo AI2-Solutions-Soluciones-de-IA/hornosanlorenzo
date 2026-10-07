@@ -86,6 +86,14 @@ const enlacePagina = (n: number) => {
     {filtroTexto && (
       <a href={vista === "suscritos" ? "/admin/clientes?vista=suscritos" : "/admin/clientes"} class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">Quitar búsqueda</a>
     )}
+    {/* Descarga lo que casa con la pestaña y la búsqueda: todas las páginas. */}
+    <a
+      href={`/api/admin/clientes/exportar?${new URLSearchParams({ ...(vista === "suscritos" ? { vista: "suscritos" } : {}), ...(filtroTexto ? { q: filtroTexto } : {}) }).toString()}`}
+      class="btn btn-secundario ml-auto"
+      download
+    >
+      Exportar a Excel
+    </a>
   </form>
 
   {vista === "suscritos" && !fallo && (
