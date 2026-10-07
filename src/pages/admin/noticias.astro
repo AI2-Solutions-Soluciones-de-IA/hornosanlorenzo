@@ -4,6 +4,7 @@ import AdminLayout from "~/layouts/AdminLayout.astro";
 import AdminNoticias, { type ProductoOpcion } from "~/islands/AdminNoticias.tsx";
 import { listarNoticias, type Noticia } from "~/lib/db/noticias";
 import { listarProductos } from "~/lib/db/productos";
+import { nombreCompleto } from "~/lib/sabores";
 import AdminSeccionesEsteMes, { type Seccion } from "~/islands/AdminSeccionesEsteMes.tsx";
 import { listarSecciones } from "~/lib/db/seccionesEsteMes";
 
@@ -22,7 +23,8 @@ try {
   // de la oferta enseña al lado el precio DE SIEMPRE, no el rebajado.
   productos = (await listarProductos({ soloActivos: true })).map((p) => ({
     id: p.id,
-    name: p.name,
+    // «Empanada · De Carne» y no «De Carne» a secas (7-10-2026).
+    name: nombreCompleto(p),
     priceCents: p.priceCents,
     consultar: p.consultar,
     variantes: p.variantes.map((v) => ({ variantId: v.variantId, label: v.label, priceCents: v.priceCents })),

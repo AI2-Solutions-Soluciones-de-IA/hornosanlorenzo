@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { agruparSabores } from "~/lib/sabores";
+import { agruparSabores, nombreCompleto } from "~/lib/sabores";
 import type { Producto } from "~/lib/db/productos";
 
 const p = (slug: string, seccion: string | null): Producto => ({
@@ -82,5 +82,18 @@ describe("agruparSabores", () => {
     expect(
       r.map((e) => (e.tipo === "producto" ? e.producto.slug : e.titulo)),
     ).toEqual(["Mini Croissants Salados", "mini-surtido"]);
+  });
+});
+
+describe("nombreCompleto", () => {
+  it("antepone lo que es a las fichas que se llaman solo por el sabor", () => {
+    expect(nombreCompleto({ name: "De Carne", seccion: "empanadas" })).toBe("Empanada · De Carne");
+    expect(nombreCompleto({ name: "Carbonara", seccion: "quiches" })).toBe("Quiche · Carbonara");
+    expect(nombreCompleto({ name: "Calados", seccion: "las-lorenzas" })).toBe("Mini croissants · Calados");
+  });
+
+  it("deja igual el resto", () => {
+    expect(nombreCompleto({ name: "Tarta de Queso", seccion: "cremosas" })).toBe("Tarta de Queso");
+    expect(nombreCompleto({ name: "Sin sección", seccion: null })).toBe("Sin sección");
   });
 });

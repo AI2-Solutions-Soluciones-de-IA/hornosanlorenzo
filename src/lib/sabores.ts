@@ -81,3 +81,21 @@ export function agruparSabores(productos: Producto[]): ElementoCatalogo[] {
   }
   return salida;
 }
+
+/**
+ * Secciones cuyas fichas se llaman solo por el sabor («De Carne»,
+ * «Carbonara»): fuera de su tarjeta, el nombre solo no dice qué es.
+ */
+const PREFIJO_SABOR: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(GRUPOS_SABOR).map(([s, g]) => [s, g.singular])),
+  quiches: "Quiche",
+};
+
+/**
+ * El nombre con lo que es delante, para listas donde la ficha sale suelta
+ * (los desplegables del panel): «Empanada · De Carne», «Quiche · Carbonara».
+ */
+export function nombreCompleto(p: { name: string; seccion: string | null }): string {
+  const prefijo = p.seccion ? PREFIJO_SABOR[p.seccion] : undefined;
+  return prefijo ? `${prefijo} · ${p.name}` : p.name;
+}
