@@ -26,10 +26,13 @@ import { site } from "~/data/site";
 
   <section class="bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]">
     <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-16">
-      <dl class="grid gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] sm:grid-cols-2 lg:grid-cols-4">
-        {tradicion.cifras.map((c) => (
-          <div class="bg-[color:var(--color-leche)] p-6">
-            <dt class="font-[family-name:var(--font-display)] text-4xl">{c.figure}</dt>
+      <dl class="cifras grid gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] sm:grid-cols-2 lg:grid-cols-4" data-cifras>
+        {tradicion.cifras.map((c, i) => (
+          <div class="cifra bg-[color:var(--color-leche)] p-6" style={`--i:${i}`}>
+            <dt class="font-[family-name:var(--font-display)] text-4xl">
+              {/^\d+$/.test(c.figure) ? <span data-cuenta={c.figure}>{c.figure}</span> : c.figure}
+            </dt>
+            <span class="cifra-raya" aria-hidden="true"></span>
             <dd class="numeracion mt-2">{c.label}</dd>
             <dd class="mt-3 text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{c.body}</dd>
           </div>
@@ -97,3 +100,78 @@ import { site } from "~/data/site";
     </div>
   </section>
 </MarketingLayout>
+
+<style>
+  /* Cifras: entran escalonadas, cuentan desde cero y dibujan una raya teja
+     al aparecer en pantalla. Sin JS o con «reducir movimiento», quietas. */
+  .cifra-raya {
+    display: block;
+    width: 2.5rem;
+    height: 2px;
+    margin-top: 0.75rem;
+    background: var(--color-teja);
+    transform-origin: left;
+  }
+  .cifras.listo .cifra {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: calc(var(--i) * 140ms);
+  }
+  .cifras.listo .cifra-raya {
+    transform: scaleX(0);
+    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: calc(var(--i) * 140ms + 0.5s);
+  }
+  .cifras.visto .cifra {
+    opacity: 1;
+    transform: none;
+  }
+  .cifras.visto .cifra-raya {
+    transform: scaleX(1);
+  }
+</style>
+
+<script>
+  function animaCifras() {
+    const dl = document.querySelector<HTMLElement>("[data-cifras]");
+    if (!dl || dl.classList.contains("listo")) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const numeros = [...dl.querySelectorAll<HTMLElement>("[data-cuenta]")];
+    dl.classList.add("listo");
+    numeros.forEach((n) => (n.textContent = "0"));
+
+    const cuenta = (n: HTMLElement, retraso: number) => {
+      const fin = Number(n.dataset.cuenta);
+      const DURACION = 1400;
+      let inicio = 0;
+      const paso = (t: number) => {
+        if (!inicio) inicio = t;
+        const p = Math.min((t - inicio) / DURACION, 1);
+        // Frena al final: los últimos números se leen.
+        const suave = 1 - Math.pow(1 - p, 3);
+        n.textContent = String(Math.round(fin * suave));
+        if (p < 1) requestAnimationFrame(paso);
+      };
+      setTimeout(() => requestAnimationFrame(paso), retraso);
+    };
+
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        dl.classList.add("visto");
+        numeros.forEach((n) => {
+          const i = Number(n.closest<HTMLElement>(".cifra")?.style.getPropertyValue("--i") || 0);
+          cuenta(n, i * 140);
+        });
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(dl);
+  }
+  document.addEventListener("astro:page-load", animaCifras);
+</script>
+
