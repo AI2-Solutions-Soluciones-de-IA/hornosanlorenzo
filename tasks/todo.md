@@ -320,9 +320,23 @@ Sin agujeros graves explotables hoy. Por prioridad:
       producto de comunión
 - [ ] Mirar en producción, con cuenta de admin, la sección «Más fotos» y la
       marca «Foto provisional»: solo se probó en la rama de pruebas
-- [ ] `src/lib/db/productos.test.ts:40,44,239` borra la tabla `productos`
-      entera: vacía la rama de pruebas y choca con `packs.test.ts` (falla a
-      ratos también en `main`). Que borre solo lo suyo
+- [x] `src/lib/db/productos.test.ts` borraba la tabla `productos` entera al
+      acabar y chocaba con `packs.test.ts`. Desde el 6-10-2026 borra solo lo
+      suyo (`bdeaecd`); el vaciado inicial del `beforeAll` sigue
+
+## Dudas para el obrador (7-10-2026)
+- [ ] **¿Cuándo llega el envío a domicilio?** Dos versiones distintas en la web:
+      - Servicios (`src/data/services.ts`, «Reparto propio a domicilio»):
+        «Pide antes de las 11:00 y lo llevamos esa misma tarde».
+      - Checkout y Nuestras tiendas (`MODE_COPY.domicilio` y
+        `ENTREGA_DOMICILIO_COPY` en `src/lib/entrega.ts`): al día siguiente,
+        pidiendo antes de las 18:00, y entrega antes de las 14:30.
+      El checkout es el que manda (calcula fechas y valida el pedido). Si el
+      bueno es el de Servicios, hay que cambiar también la lógica de fechas,
+      no solo el texto.
+- [ ] El horario de Alcobendas en Nuestras tiendas empieza por «Recogida de
+      lunes a viernes…» (`hoursText` en `src/data/stores.ts`). ¿Es el horario
+      de la tienda o el de recogida? Si es el de la tienda, quitar «Recogida».
 
 ## Más adelante
 - [ ] **Llevar el cómputo a Cloud Run** cuando el proyecto esté asentado. Del
