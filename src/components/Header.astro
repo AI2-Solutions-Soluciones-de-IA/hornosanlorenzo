@@ -185,11 +185,11 @@ const isActive = (href: string) => {
          barra entera, no bajo su enlace. Centrados bajo el enlace, los anchos
          (hasta 54rem) se salían por la derecha y, aunque estén ocultos
          (`invisible`), ensanchaban la página: scroll lateral a 1024 px. -->
-    <ul class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-8 lg:gap-12 text-[11px] font-medium uppercase tracking-[0.16em]">
+    <ul class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-3 lg:gap-7 xl:gap-12 text-[10px] lg:text-[11px] font-medium uppercase tracking-[0.1em] lg:tracking-[0.16em]">
       {mainNav.map((item) => {
         const active = isActive(item.href);
         const linkClass = [
-          "flex items-center h-full py-4 border-b-2 transition-colors",
+          "flex items-center h-full py-4 border-b-2 transition-colors whitespace-nowrap",
           active
             ? "text-[color:var(--color-leche)] border-[color:var(--color-leche)]"
             : "text-[color:var(--color-leche)]/80 border-transparent hover:text-[color:var(--color-leche)] hover:border-[color:var(--color-leche)]/50",
