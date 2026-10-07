@@ -58,11 +58,11 @@ export default function AccesoSesion({ tono }: { tono: Tono }) {
           data-mobile-nav-link
           className={estilo.enlaceEnGrupo}
         >
-          Regístrate aquí
+          Regístrate
         </a>
         {/* Para quien ya tiene cuenta: /acceso abre en «Entrar». */}
         <a href="/acceso" data-mobile-nav-link className={estilo.salir}>
-          Entrar
+          Accede
         </a>
       </div>
     );

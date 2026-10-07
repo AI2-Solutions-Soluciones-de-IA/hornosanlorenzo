@@ -20,8 +20,9 @@ export default function ContactForm({ variant = "general" }: Props) {
   const canSend =
     name.trim() &&
     email.includes("@") &&
-    // El alta de particular no pide mensaje: con el contacto basta.
-    (isParticular ? phone.trim() !== "" : message.trim().length >= 10) &&
+    // Las altas (particular y empresa) no piden mensaje: con los datos basta.
+    // La de particular pide además el teléfono.
+    (isParticular ? phone.trim() !== "" : isEmpresa || message.trim().length >= 10) &&
     accepted &&
     (!isEmpresa || (company.trim() !== "" && cif.trim() !== ""));
 
@@ -127,24 +128,22 @@ export default function ContactForm({ variant = "general" }: Props) {
           style={inputStyle}
         />
       </div>
-      <div>
-        <label style={labelStyle} htmlFor="cn-msg">
-          {isEmpresa
-            ? "Cuéntanos qué necesitáis *"
-            : isParticular
-              ? "Algo que debamos saber (opcional)"
-              : "Mensaje *"}
-        </label>
-        <textarea
-          id="cn-msg"
-          required={!isParticular}
-          rows={isParticular ? 3 : 5}
-          minLength={isParticular ? undefined : 10}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          style={{ ...inputStyle, borderRadius: 0 }}
-        />
-      </div>
+      {!isEmpresa && (
+        <div>
+          <label style={labelStyle} htmlFor="cn-msg">
+            {isParticular ? "Algo que debamos saber (opcional)" : "Mensaje *"}
+          </label>
+          <textarea
+            id="cn-msg"
+            required={!isParticular}
+            rows={isParticular ? 3 : 5}
+            minLength={isParticular ? undefined : 10}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            style={{ ...inputStyle, borderRadius: 0 }}
+          />
+        </div>
+      )}
       <label
         style={{
           display: "flex",

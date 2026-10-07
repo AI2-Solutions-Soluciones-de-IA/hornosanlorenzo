@@ -6,7 +6,7 @@ import AccesoClientes from "~/islands/AccesoClientes";
  * `/acceso`. Dos caras según de dónde se llegue (petición de Oscar,
  * 30-9-2026):
  * - «Entrar» (sin parámetro): solo «Entra.» y el formulario de entrar.
- * - «Regístrate aquí» (`?modo=registro`): la página del alta como estaba,
+ * - «Regístrate» (`?modo=registro`): la página del alta como estaba,
  *   con «¿Cómo nos compras?» y Particulares / Empresas.
  * El modo se lee en cliente (el sitio público no lee parámetros en servidor)
  * y se guarda en la URL al cambiarlo, para que recargar no lo pierda.
