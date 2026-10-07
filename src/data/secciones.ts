@@ -1,12 +1,12 @@
 /**
  * Secciones de la carta (CARTA_PRECIOS_FINAL, septiembre de 2026).
  * Agrupan el catálogo tal y como está organizada la carta impresa; se
- * superponen a las categorías sin sustituirlas.
+ * superponen a las categorías sin sustituirlas. En la web salen en el orden
+ * de esta lista: «Sin alérgenos», la última de Dulce y de Salado (7-10-2026).
  */
 export const seccionIds = [
   "tartas-obrador",
   "cremosas",
-  "dulce-para-todos",
   "planchas",
   "bocados",
   "coleccion-especial",
@@ -14,13 +14,14 @@ export const seccionIds = [
   "brazos",
   "detalles-celebracion",
   "las-lorenzas",
+  "dulce-para-todos",
   "empanadas",
   "supremas",
-  "salado-para-todos",
   "quiches",
   "tartas-saladas",
   "para-compartir",
   "las-lorenzas-salado",
+  "salado-para-todos",
   "packs",
 ] as const;
 
@@ -36,6 +37,12 @@ export type Seccion = {
   nota?: string;
   /** Aviso con teléfono: para lo que no se puede encargar por la web. */
   aviso?: string;
+  /**
+   * La sección no tiene bloque propio en la carta: sus productos salen en el
+   * de esta otra, en la misma rejilla (las supremas, con las empanadas). El
+   * id sigue existiendo porque es lo que guarda cada ficha.
+   */
+  dentroDe?: SeccionId;
   order: number;
 };
 
@@ -55,13 +62,6 @@ export const secciones: readonly Seccion[] = [
     eyebrow: "Dulce · Cremosas",
     nota: "Suaves, frescas y de cuchara lenta · M 8–10 rac.",
     order: 200,
-  },
-  {
-    id: "dulce-para-todos",
-    label: "Dulce para todos",
-    eyebrow: "Dulce · Sin alérgenos",
-    nota: "S 6 rac.",
-    order: 300,
   },
   {
     id: "planchas",
@@ -113,10 +113,17 @@ export const secciones: readonly Seccion[] = [
     order: 1000,
   },
   {
+    id: "dulce-para-todos",
+    label: "Sin alérgenos",
+    eyebrow: "Dulce · Sin alérgenos",
+    nota: "S 6 rac.",
+    order: 1050,
+  },
+  {
     id: "empanadas",
-    label: "Empanadas de hojaldre",
+    label: "Empanadas y supremas de hojaldre",
     eyebrow: "Salado · Hojaldre",
-    nota: "Hojaldre del Horno San Lorenzo, receta artesanal asturiana · Entera 16–20 rac. · Media 8–10",
+    nota: "Hojaldre del Horno San Lorenzo, receta artesanal asturiana · Empanada entera 16–20 rac. · media 8–10 · Suprema M 8–10 rac.",
     order: 1100,
   },
   {
@@ -124,14 +131,8 @@ export const secciones: readonly Seccion[] = [
     label: "Supremas de hojaldre",
     eyebrow: "Salado · Hojaldre",
     nota: "Crujientes, redondas y absolutamente irresistibles · M 8–10 rac.",
+    dentroDe: "empanadas",
     order: 1200,
-  },
-  {
-    id: "salado-para-todos",
-    label: "Salado para todos",
-    eyebrow: "Salado · Sin alérgenos",
-    nota: "S 6 rac.",
-    order: 1300,
   },
   {
     id: "quiches",
@@ -162,6 +163,13 @@ export const secciones: readonly Seccion[] = [
     order: 1700,
   },
   {
+    id: "salado-para-todos",
+    label: "Sin alérgenos",
+    eyebrow: "Salado · Sin alérgenos",
+    nota: "S 6 rac.",
+    order: 1750,
+  },
+  {
     id: "packs",
     label: "Packs San Lorenzo",
     eyebrow: "Packs · Ocasiones",
@@ -170,8 +178,18 @@ export const secciones: readonly Seccion[] = [
   },
 ] as const;
 
+/**
+ * Nombre de la sección en el panel: las dos «Sin alérgenos» se distinguen
+ * por su antetítulo («Dulce · Sin alérgenos»).
+ */
+export const etiquetaPanel = (s: Seccion): string =>
+  secciones.filter((x) => x.label === s.label).length > 1 ? s.eyebrow : s.label;
+
 export const seccionById = (id: SeccionId): Seccion =>
   secciones.find((s) => s.id === id)!;
+
+/** El bloque de la carta donde sale una sección: el suyo, o el de `dentroDe`. */
+export const bloqueDe = (id: SeccionId): SeccionId => seccionById(id).dentroDe ?? id;
 
 export const isSeccionId = (value: string | null): value is SeccionId =>
   value !== null && (seccionIds as readonly string[]).includes(value);

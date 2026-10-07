@@ -14,6 +14,7 @@ import type { DefinicionPack } from "~/data/packs";
 import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
 import type { Producto } from "~/lib/db/productos";
 import type { ElementoCatalogo } from "~/lib/sabores";
+import { bloqueDe, isSeccionId } from "~/data/secciones";
 
 interface Props {
   elemento: ElementoCatalogo;
@@ -49,7 +50,9 @@ const datos = sinFiltro
       "data-product": "",
       "data-category": primero.category,
       "data-grupo": grupoOfCategory(primero.category as CategoryId),
-      "data-seccion": primero.seccion ?? undefined,
+      // El bloque y no la sección: el chip «Empanadas y supremas» tiene que
+      // dejar ver también las supremas (`dentroDe` en `secciones.ts`).
+      "data-seccion": isSeccionId(primero.seccion) ? bloqueDe(primero.seccion) : (primero.seccion ?? undefined),
       "data-search": search,
     };
 ---

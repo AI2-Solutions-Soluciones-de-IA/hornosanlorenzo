@@ -13,7 +13,11 @@ import type { Producto } from "~/lib/db/productos";
 export const GRUPOS_SABOR = {
   empanadas: { titulo: "Empanadas", singular: "Empanada" },
   supremas: { titulo: "Supremas", singular: "Suprema" },
-  quiches: { titulo: "Quiches", singular: "Quiche" },
+  // Las quiches no: van cada una en su tarjeta, como las tartas (7-10-2026).
+  "las-lorenzas": {
+    titulo: "Mini Croissants Dulces",
+    singular: "Mini croissants",
+  },
   "las-lorenzas-salado": {
     titulo: "Mini Croissants Salados",
     singular: "Mini croissants",

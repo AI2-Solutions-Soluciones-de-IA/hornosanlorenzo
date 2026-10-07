@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { categories, categoryIds, type CategoryId } from "~/data/categories";
-import { secciones, type SeccionId } from "~/data/secciones";
+import { secciones, etiquetaPanel, type SeccionId } from "~/data/secciones";
 import { formatPriceCents } from "~/lib/format";
 import { eurosACentimos } from "~/lib/euros";
 import { AVISO_DESACTIVAR } from "~/lib/panel-textos";
@@ -211,7 +211,8 @@ function formularioDesdeProducto(p: Producto): FormularioProducto {
 
 function seccionLabel(id: string | null): string {
   if (!id) return "Sin sección";
-  return secciones.find((s) => s.id === id)?.label ?? id;
+  const s = secciones.find((x) => x.id === id);
+  return s ? etiquetaPanel(s) : id;
 }
 
 function categoryLabel(id: string): string {
@@ -704,7 +705,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
                   <option value="">Todas</option>
                   {secciones.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.label}
+                      {etiquetaPanel(s)}
                     </option>
                   ))}
                 </select>
@@ -921,7 +922,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
                 <option value="">— Ninguna —</option>
                 {secciones.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.label}
+                    {etiquetaPanel(s)}
                   </option>
                 ))}
               </select>

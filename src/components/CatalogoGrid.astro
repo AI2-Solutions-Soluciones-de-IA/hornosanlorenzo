@@ -58,12 +58,18 @@ const products = productos
   .filter((p) => (destacados ? p.destacado : true))
   .filter((p) => !allowed || allowed.includes(p.category as CategoryId));
 
-/** Solo las secciones que tienen producto, en el orden de la carta. */
+/**
+ * Solo las secciones que tienen producto, en el orden de la carta. Una con
+ * `dentroDe` no tiene bloque: sus productos van detrás de los del suyo.
+ */
 const bloques = porSeccion
   ? secciones
+      .filter((s) => !s.dentroDe)
       .map((s) => ({
         seccion: s,
-        items: products.filter((p) => p.seccion === s.id),
+        items: [s.id, ...secciones.filter((x) => x.dentroDe === s.id).map((x) => x.id)].flatMap(
+          (id) => products.filter((p) => p.seccion === id),
+        ),
       }))
       .filter((b) => b.items.length > 0)
   : [];

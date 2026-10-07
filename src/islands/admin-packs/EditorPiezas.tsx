@@ -13,7 +13,7 @@ import {
   type PiezaFijaBorrador,
 } from "~/lib/admin-packs-borrador";
 import { opcionesDeHueco, type HuecoEleccion } from "~/data/packs";
-import { secciones } from "~/data/secciones";
+import { secciones, etiquetaPanel } from "~/data/secciones";
 import { formatPriceCents } from "~/lib/format";
 import {
   ayuda,
@@ -41,7 +41,7 @@ type Grupo = { id: string; label: string; productos: ProductoCarta[] };
 function agrupar(carta: readonly ProductoCarta[]): Grupo[] {
   const grupos: Grupo[] = secciones.map((s) => ({
     id: s.id,
-    label: s.label,
+    label: etiquetaPanel(s),
     productos: carta.filter((p) => p.seccion === s.id),
   }));
   const conocidas = new Set<string>(secciones.map((s) => s.id));
@@ -472,7 +472,7 @@ function Hueco({
             <option value="">— Elige una sección —</option>
             {SECCIONES_HUECO.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label}
+                {etiquetaPanel(s)}
               </option>
             ))}
           </select>
