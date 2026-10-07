@@ -19,7 +19,6 @@ interface Props {
   secondaryCta?: { href: string; label: string };
 }
 const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, primaryCta, secondaryCta } = Astro.props;
-const ROMANOS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 ---
 <section class="relative bg-[color:var(--color-leche)] overflow-hidden">
   <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
@@ -57,20 +56,6 @@ const ROMANOS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
                 </div>
               );
             })}
-          </div>
-          <div class="mensajes-indices mt-6 sm:mt-8 flex gap-5">
-            {mensajes.map((_, i) => (
-              <button
-                type="button"
-                class:list={["mensajes-indice", { activo: i === 0 }]}
-                data-mensaje-indice={i}
-                aria-label={`Mensaje ${i + 1}`}
-                aria-current={i === 0 ? "true" : undefined}
-              >
-                <span>{ROMANOS[i]}</span>
-                <i aria-hidden="true"></i>
-              </button>
-            ))}
           </div>
         </div>
       ) : (
@@ -143,85 +128,11 @@ const ROMANOS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
     visibility: visible;
     transition-delay: 0.25s, 0.25s, 0s;
   }
-  .mensajes-indice {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 2.5rem;
-    padding: 4px 0;
-    background: none;
-    border: 0;
-    cursor: pointer;
-    text-align: left;
-    font-family: var(--font-display);
-    font-size: 1.125rem;
-    color: var(--color-avellana);
-    transition: color 0.3s;
-  }
-  .mensajes-indice:hover,
-  .mensajes-indice.activo {
-    color: var(--color-accent-dark);
-  }
-  .mensajes-indice i {
-    display: block;
-    height: 2px;
-    width: 100%;
-    background: var(--color-latte);
-    overflow: hidden;
-  }
-  .mensajes-indice i::after {
-    content: "";
-    display: block;
-    height: 100%;
-    background: var(--color-teja);
-    transform: scaleX(0);
-    transform-origin: left;
-  }
-  /* La barra se llena durante lo que dura el mensaje (`--duracion`). */
-  .mensajes-indice.activo i::after {
-    animation: mensaje-progreso var(--duracion, 6s) linear forwards;
-  }
-  .mensajes.pausado .mensajes-indice.activo i::after {
-    animation-play-state: paused;
-  }
-  .mensajes.quieto .mensajes-indice.activo i::after {
-    animation: none;
-    transform: scaleX(1);
-  }
-  @keyframes mensaje-progreso {
-    to {
-      transform: scaleX(1);
-    }
-  }
-  /* Móvil: sin números, cinco barras finas a todo el ancho que se llenan
-     con cada mensaje, como las historias. Los números en una pantalla
-     estrecha se leían como texto y ocupaban una fila entera. El botón
-     sigue siendo alto para el dedo; lo fino es solo la barra. */
   @media (max-width: 639.98px) {
     /* La caja mide lo que el mensaje más largo: el corto va centrado y el
        hueco se reparte arriba y abajo en vez de quedar todo debajo. */
     .mensaje {
       align-self: center;
-    }
-    .mensajes-indices {
-      gap: 6px;
-    }
-    .mensajes-indice {
-      flex: 1;
-      min-width: 0;
-      padding: 10px 0;
-    }
-    .mensajes-indice span {
-      display: none;
-    }
-    .mensajes-indice i {
-      height: 3px;
-      background: var(--color-avellana);
-      opacity: 0.6;
-    }
-    .mensajes-indice.activo i {
-      opacity: 1;
-      background: var(--color-latte);
     }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -235,49 +146,46 @@ const ROMANOS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII"];
 
 <script>
   /**
-   * Rota los mensajes del hero. Avanza cuando termina la barra del activo
-   * (`animationend`), así texto y barra van siempre a la par, también al
-   * pausar con el ratón encima. Con «reducir movimiento» no rota solo: se
-   * cambia con los números.
+   * Rota los mensajes del hero cada 6 s, sin indicadores (los números y las
+   * barras se quitaron a petición de Oscar, 7-10-2026). Se para con el ratón
+   * o el foco dentro y con la pestaña oculta, y sigue donde iba. Con
+   * «reducir movimiento» rota igual, pero más despacio y sin el fundido
+   * (lo quita el CSS), porque sin indicadores no habría otra forma de ver
+   * los demás mensajes.
    */
   function iniciaMensajes() {
     document.querySelectorAll<HTMLElement>("[data-mensajes]").forEach((raiz) => {
       if (raiz.dataset.listo) return;
       raiz.dataset.listo = "1";
       const mensajes = [...raiz.querySelectorAll<HTMLElement>("[data-mensaje]")];
-      const indices = [...raiz.querySelectorAll<HTMLButtonElement>("[data-mensaje-indice]")];
-      const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (quieto) raiz.classList.add("quieto");
+      if (mensajes.length < 2) return;
+      const DURACION = matchMedia("(prefers-reduced-motion: reduce)").matches ? 10_000 : 6_000;
+      const PASO = 250;
       let actual = 0;
+      let transcurrido = 0;
+      let encima = false;
 
       const muestra = (n: number) => {
-        actual = (n + mensajes.length) % mensajes.length;
+        actual = n % mensajes.length;
         mensajes.forEach((m, i) => {
           m.classList.toggle("activo", i === actual);
           if (i === actual) m.removeAttribute("aria-hidden");
           else m.setAttribute("aria-hidden", "true");
         });
-        indices.forEach((b, i) => {
-          // Quitar y volver a poner la clase reinicia la animación de la barra.
-          b.classList.remove("activo");
-          b.removeAttribute("aria-current");
-          if (i === actual) {
-            void b.offsetWidth;
-            b.classList.add("activo");
-            b.setAttribute("aria-current", "true");
-          }
-        });
       };
 
-      indices.forEach((b, i) => b.addEventListener("click", () => muestra(i)));
-      if (quieto) return;
-      indices.forEach((b) =>
-        b.querySelector("i")?.addEventListener("animationend", () => {
-          if (b.classList.contains("activo")) muestra(actual + 1);
-        }),
-      );
-      raiz.addEventListener("pointerenter", () => raiz.classList.add("pausado"));
-      raiz.addEventListener("pointerleave", () => raiz.classList.remove("pausado"));
+      raiz.addEventListener("pointerenter", () => (encima = true));
+      raiz.addEventListener("pointerleave", () => (encima = false));
+
+      const reloj = setInterval(() => {
+        // Al navegar a otra página el hero sale del DOM: se apaga solo.
+        if (!raiz.isConnected) return clearInterval(reloj);
+        if (encima || document.hidden || raiz.contains(document.activeElement)) return;
+        transcurrido += PASO;
+        if (transcurrido < DURACION) return;
+        transcurrido = 0;
+        muestra(actual + 1);
+      }, PASO);
     });
   }
   document.addEventListener("astro:page-load", iniciaMensajes);
