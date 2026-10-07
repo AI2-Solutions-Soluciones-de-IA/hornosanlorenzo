@@ -1,9 +1,9 @@
 /**
  * Precios de oferta de «Este mes».
  *
- * Una noticia que enlaza un producto puede fijarle un precio de oferta (uno,
- * o uno por tamaño) y, si se quiere, una fecha de fin. Mientras la noticia
- * está publicada y la fecha no ha pasado, ese producto se vende a ese precio
+ * Una noticia que enlaza un producto (o una sección, a cada uno de los
+ * suyos) puede fijarle un precio de oferta (uno, o uno por tamaño) y, si se
+ * quiere, una fecha de fin. Mientras la noticia (o la sección) está publicada y la fecha no ha pasado, ese producto se vende a ese precio
  * en TODA la web: la carta, su ficha, la tarjeta de Este mes y, sobre todo,
  * el cobro (`priceOrder` lee los precios ya rebajados de
  * `productosParaPedido`). Así el cliente nunca ve un importe y paga otro.
@@ -106,4 +106,47 @@ export function aplicaOferta<
 
   if (rebajado) copia.ofertaHasta = oferta.hasta;
   return copia;
+}
+
+/** Lo que hace falta de la ficha para comprobar una oferta. */
+type FichaParaOferta = {
+  name: string;
+  consultar: boolean;
+  priceCents: number | null;
+  variantes: { variantId: string; label: string; priceCents: number }[];
+};
+
+/**
+ * Comprueba que una oferta rebaja de verdad el producto y encaja con sus
+ * tamaños: un precio por encima del normal, o para un tamaño que ya no
+ * existe, se descartaría en silencio al vender (`aplicaOferta`) y quien la
+ * escribió creería que está activa. Devuelve el mensaje para el panel, o
+ * `null` si vale. Sin precio de oferta no hay nada que comprobar.
+ */
+export function compruebaPrecioOferta(
+  producto: FichaParaOferta,
+  ofertaCents: number | null,
+  ofertaVariantes: Record<string, number>,
+): string | null {
+  const hayVariantes = Object.keys(ofertaVariantes).length > 0;
+  if (ofertaCents === null && !hayVariantes) return null;
+  if (producto.consultar || producto.priceCents === null)
+    return `«${producto.name}» no tiene precio de venta online: no se le puede poner oferta.`;
+
+  if (producto.variantes.length > 0) {
+    if (ofertaCents !== null)
+      return `«${producto.name}» tiene tamaños: pon el precio de oferta en cada tamaño.`;
+    for (const [id, cents] of Object.entries(ofertaVariantes)) {
+      const v = producto.variantes.find((x) => x.variantId === id);
+      if (!v) return `Uno de los tamaños de la oferta de «${producto.name}» ya no existe en la ficha. Revísala.`;
+      if (cents >= v.priceCents)
+        return `El precio de oferta de «${producto.name}» (${v.label}) tiene que ser menor que el de siempre.`;
+    }
+  } else {
+    if (hayVariantes || ofertaCents === null)
+      return `«${producto.name}» no tiene tamaños: pon un único precio de oferta.`;
+    if (ofertaCents >= producto.priceCents)
+      return `El precio de oferta de «${producto.name}» tiene que ser menor que el de siempre.`;
+  }
+  return null;
 }

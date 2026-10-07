@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aplicaOferta, juntaOfertas, type OfertaProducto } from "~/lib/ofertas";
+import { aplicaOferta, compruebaPrecioOferta, juntaOfertas, type OfertaProducto } from "~/lib/ofertas";
 
 const conTamanos = {
   slug: "bombon-noir",
@@ -102,5 +102,34 @@ describe("juntaOfertas", () => {
       { slug: "a", precioCents: 1600, variantes: {}, hasta: null },
     ]);
     expect(m.get("a")?.hasta).toBeNull();
+  });
+});
+
+describe("compruebaPrecioOferta", () => {
+  const simple = { name: "Tarta", consultar: false, priceCents: 1850, variantes: [] };
+  const conTamanos = {
+    name: "Roscón",
+    consultar: false,
+    priceCents: 1800,
+    variantes: [{ variantId: "m", label: "M", priceCents: 2600 }],
+  };
+
+  it("sin precio de oferta no hay nada que comprobar", () => {
+    expect(compruebaPrecioOferta(simple, null, {})).toBeNull();
+  });
+
+  it("acepta una rebaja y rechaza un precio igual o mayor", () => {
+    expect(compruebaPrecioOferta(simple, 1500, {})).toBeNull();
+    expect(compruebaPrecioOferta(simple, 1850, {})).toMatch(/menor/);
+  });
+
+  it("con tamaños pide el precio por tamaño, y que el tamaño exista", () => {
+    expect(compruebaPrecioOferta(conTamanos, 1500, {})).toMatch(/cada tamaño/);
+    expect(compruebaPrecioOferta(conTamanos, null, { m: 2000 })).toBeNull();
+    expect(compruebaPrecioOferta(conTamanos, null, { xl: 2000 })).toMatch(/ya no existe/);
+  });
+
+  it("un producto a consultar no admite oferta", () => {
+    expect(compruebaPrecioOferta({ ...simple, consultar: true }, 1000, {})).toMatch(/consultar|precio de venta/);
   });
 });

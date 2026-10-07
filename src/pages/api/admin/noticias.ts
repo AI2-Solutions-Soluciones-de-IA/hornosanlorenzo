@@ -9,6 +9,7 @@ import {
 } from "~/lib/db/noticias";
 import { invalidar, RUTAS_NOTICIAS, RUTAS_CATALOGO } from "~/lib/cache";
 import { listarProductos } from "~/lib/db/productos";
+import { compruebaPrecioOferta } from "~/lib/ofertas";
 import { esAdmin } from "~/lib/auth/guardia";
 
 export const prerender = false;
@@ -74,12 +75,7 @@ function compruebaAlt(datos: z.infer<typeof esquema>): string | null {
   return null;
 }
 
-/**
- * La oferta tiene que rebajar de verdad el producto enlazado y encajar con
- * sus tamaños: un precio de oferta por encima del normal, o para un tamaño
- * que ya no existe, se descartaría en silencio al vender (`aplicaOferta`) y
- * quien la escribió creería que está activa.
- */
+/** La oferta tiene que rebajar de verdad el producto enlazado (`compruebaPrecioOferta`). */
 async function compruebaOferta(datos: z.infer<typeof esquema>): Promise<string | null> {
   const hayOferta = datos.ofertaCents !== null || Object.keys(datos.ofertaVariantes).length > 0;
   if (!hayOferta) return null;
@@ -87,24 +83,7 @@ async function compruebaOferta(datos: z.infer<typeof esquema>): Promise<string |
 
   const producto = (await listarProductos({ soloActivos: false })).find((p) => p.id === datos.productoId);
   if (!producto) return "Ese producto ya no está en la carta. Elige otro o quita la oferta.";
-  if (producto.consultar || producto.priceCents === null)
-    return `«${producto.name}» no tiene precio de venta online: no se le puede poner oferta.`;
-
-  if (producto.variantes.length > 0) {
-    if (datos.ofertaCents !== null) return "Este producto tiene tamaños: pon el precio de oferta en cada tamaño.";
-    for (const [id, cents] of Object.entries(datos.ofertaVariantes)) {
-      const v = producto.variantes.find((x) => x.variantId === id);
-      if (!v) return "Uno de los tamaños de la oferta ya no existe en la ficha. Revísala.";
-      if (cents >= v.priceCents)
-        return `El precio de oferta de «${v.label}» tiene que ser menor que el de siempre.`;
-    }
-  } else {
-    if (Object.keys(datos.ofertaVariantes).length > 0 || datos.ofertaCents === null)
-      return "Este producto no tiene tamaños: pon un único precio de oferta.";
-    if (datos.ofertaCents >= producto.priceCents)
-      return "El precio de oferta tiene que ser menor que el de siempre.";
-  }
-  return null;
+  return compruebaPrecioOferta(producto, datos.ofertaCents, datos.ofertaVariantes);
 }
 
 /**
