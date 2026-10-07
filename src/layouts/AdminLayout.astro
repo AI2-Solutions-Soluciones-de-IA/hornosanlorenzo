@@ -2,6 +2,7 @@
 // src/layouts/AdminLayout.astro
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import AdminSalir from "~/islands/AdminSalir";
+import { puedeEntrar } from "~/lib/auth/guardia";
 
 interface Props {
   titulo: string;
@@ -14,7 +15,7 @@ const { titulo } = Astro.props;
 // Datos de clientes y pedidos: ni caché compartida ni disco del navegador.
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
-const secciones = [
+const todas = [
   { href: "/admin/resumen", label: "Resumen" },
   { href: "/admin/produccion", label: "Producción" },
   { href: "/admin/pedidos", label: "Pedidos" },
@@ -23,6 +24,9 @@ const secciones = [
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/noticias", label: "Este mes" },
 ];
+// Solo lo que el papel abre: la oficina ve Pedidos y nada más. Quien corta
+// de verdad es el middleware; esto evita enseñar enlaces que dan 404.
+const secciones = todas.filter((s) => puedeEntrar(Astro.locals.usuario, s.href));
 const actual = Astro.url.pathname;
 const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel";
 ---

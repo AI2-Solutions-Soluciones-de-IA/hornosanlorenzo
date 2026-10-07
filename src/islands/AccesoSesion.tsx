@@ -73,7 +73,9 @@ export default function AccesoSesion({ tono }: { tono: Tono }) {
   // navegador. Va aquí, en la isla, y no en el HTML de la cabecera, porque
   // la home y el catálogo se sirven desde una caché compartida (ISR): un
   // botón de admin pintado en servidor se lo vería la siguiente persona.
-  const esAdmin = (data.user as { rol?: string }).rol === "admin";
+  // La oficina también entra (solo a Pedidos: el middleware la lleva allí).
+  const rol = (data.user as { rol?: string }).rol;
+  const esAdmin = rol === "admin" || rol === "oficina";
 
   return (
     <div className={estilo.contenedor}>

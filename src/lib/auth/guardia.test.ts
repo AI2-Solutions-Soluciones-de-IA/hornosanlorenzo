@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { esAdmin, guardiaAdmin, ROL_ADMIN } from "~/lib/auth/guardia";
+import { esAdmin, guardiaAdmin, vePedidos, ROL_ADMIN, ROL_OFICINA } from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
 const admin = { id: "u2", email: "c@d.e", name: "Carmen", rol: ROL_ADMIN };
+const oficina = { id: "u3", email: "o@f.i", name: "Olga", rol: ROL_OFICINA };
 
 describe("esAdmin", () => {
   it("solo es admin quien tiene el papel exacto", () => {
@@ -56,5 +57,41 @@ describe("guardiaAdmin", () => {
     expect(
       guardiaAdmin({ usuario: admin, pathname: "/admin/pedidos" }),
     ).toBeNull();
+  });
+});
+
+describe("rol oficina", () => {
+  it("no es admin, pero ve los pedidos", () => {
+    expect(esAdmin(oficina)).toBe(false);
+    expect(vePedidos(oficina)).toBe(true);
+    expect(vePedidos(admin)).toBe(true);
+    expect(vePedidos(cliente)).toBe(false);
+  });
+
+  it("entra a Pedidos, a su API y a su Excel", () => {
+    expect(guardiaAdmin({ usuario: oficina, pathname: "/admin/pedidos" })).toBeNull();
+    expect(guardiaAdmin({ usuario: oficina, pathname: "/api/admin/pedidos" })).toBeNull();
+    expect(guardiaAdmin({ usuario: oficina, pathname: "/api/admin/pedidos/exportar" })).toBeNull();
+  });
+
+  it("al entrar al panel va a Pedidos", () => {
+    for (const pathname of ["/admin", "/admin/"]) {
+      const r = guardiaAdmin({ usuario: oficina, pathname })!;
+      expect(r.status).toBe(302);
+      expect(r.headers.get("location")).toBe("/admin/pedidos");
+    }
+  });
+
+  it("el resto del panel, 404", () => {
+    for (const pathname of [
+      "/admin/resumen",
+      "/admin/produccion",
+      "/admin/productos",
+      "/admin/clientes",
+      "/admin/pedidosx",
+      "/api/admin/productos",
+      "/api/admin/clientes/exportar",
+    ])
+      expect(guardiaAdmin({ usuario: oficina, pathname })!.status).toBe(404);
   });
 });

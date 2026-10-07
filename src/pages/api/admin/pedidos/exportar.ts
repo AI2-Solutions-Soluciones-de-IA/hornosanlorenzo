@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { listarPedidos } from "~/lib/db/pedidos";
 import { pedidosAExcel } from "~/lib/pedidos-excel";
-import { esAdmin } from "~/lib/auth/guardia";
+import { vePedidos } from "~/lib/auth/guardia";
 import { leerFiltrosPedidos } from "~/lib/filtros-pedidos";
 
 export const prerender = false;
@@ -22,7 +22,7 @@ const MAX_EXCEL = 2000;
  * .xlsx. Todas las páginas, no solo la que se está viendo.
  */
 export const GET: APIRoute = async ({ url, locals }) => {
-  if (!esAdmin(locals.usuario)) return noEncontrado();
+  if (!vePedidos(locals.usuario)) return noEncontrado();
 
   const { tipo, desde, hasta, filtros } = leerFiltrosPedidos(url.searchParams);
 

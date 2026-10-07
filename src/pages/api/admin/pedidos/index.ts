@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { cambiarEstadoAMano } from "~/lib/db/pedidos";
-import { esAdmin } from "~/lib/auth/guardia";
+import { vePedidos } from "~/lib/auth/guardia";
 
 export const prerender = false;
 
@@ -28,7 +28,7 @@ const esquema = z.object({
  * no existe), 409: el panel recarga y enseña lo que hay de verdad.
  */
 export const PATCH: APIRoute = async ({ request, locals }) => {
-  if (!esAdmin(locals.usuario)) return noEncontrado();
+  if (!vePedidos(locals.usuario)) return noEncontrado();
 
   let bruto: unknown;
   try {

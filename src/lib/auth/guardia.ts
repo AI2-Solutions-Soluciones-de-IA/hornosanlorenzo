@@ -4,6 +4,8 @@
  */
 
 export const ROL_ADMIN = "admin";
+/** La oficina entra en el panel, pero solo a Pedidos (7-10-2026). */
+export const ROL_OFICINA = "oficina";
 
 type Usuario = App.Locals["usuario"];
 
@@ -14,6 +16,21 @@ type Usuario = App.Locals["usuario"];
  */
 export function esAdmin(usuario: Usuario): boolean {
   return usuario?.rol === ROL_ADMIN;
+}
+
+/** Quien puede ver y gestionar los pedidos: el admin y la oficina. */
+export function vePedidos(usuario: Usuario): boolean {
+  return esAdmin(usuario) || usuario?.rol === ROL_OFICINA;
+}
+
+/** Lo único del panel que abre la oficina: la página de pedidos y su API. */
+const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
+
+/** Lo que abre cada papel; la entrada al panel (`/admin`) la sirve aparte. */
+export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
+  if (esAdmin(usuario)) return true;
+  if (usuario?.rol !== ROL_OFICINA) return false;
+  return RUTAS_OFICINA.some((base) => pathname === base || pathname.startsWith(`${base}/`));
 }
 
 /** Todo lo que hay debajo de estas rutas está cerrado. */
@@ -45,7 +62,14 @@ export function guardiaAdmin(contexto: {
       headers: { location: "/acceso" },
     });
   }
-  if (!esAdmin(contexto.usuario)) {
+  // La oficina, al entrar al panel, va directa a lo único que tiene.
+  if (contexto.usuario.rol === ROL_OFICINA && contexto.pathname.replace(/\/$/, "") === "/admin") {
+    return new Response(null, {
+      status: 302,
+      headers: { location: "/admin/pedidos" },
+    });
+  }
+  if (!puedeEntrar(contexto.usuario, contexto.pathname)) {
     return new Response("No encontrado", { status: 404 });
   }
   return null;
