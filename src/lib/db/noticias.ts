@@ -134,7 +134,7 @@ export async function listarNoticias({
   const { rows } = await pool.query<Noticia>(
     `select ${CAMPOS} from noticias
       ${soloPublicadas ? "where publicada" : ""}
-      order by fecha desc, created_at desc`,
+      order by orden, fecha desc, created_at desc`,
   );
   return soloPublicadas ? conOfertas(rows) : rows;
 }
@@ -169,8 +169,10 @@ export async function crearNoticia(datos: DatosNoticia): Promise<Noticia> {
       `insert into noticias
          (slug, titulo, excerpt, cuerpo, fecha, image_url, image_alt,
           image_width, image_height, tags, publicada, producto_id,
-          oferta_cents, oferta_variantes, oferta_hasta)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+          oferta_cents, oferta_variantes, oferta_hasta, orden)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,
+               -- Una nueva entra la primera (migración 020).
+               (select coalesce(min(orden), 0) - 1 from noticias))
        returning ${CAMPOS}`,
       [
         datos.slug ?? slugify(datos.titulo),
@@ -242,6 +244,19 @@ export async function actualizarNoticia(
  * recuento, la promoción con el precio mal se quedaba viva en su URL —
  * compartida e indexada— hasta el siguiente despliegue.
  */
+/**
+ * Guarda el orden elegido en el panel: `ids` de la primera a la última. Las
+ * que no vengan en la lista no se tocan.
+ */
+export async function ordenarNoticias(ids: string[]): Promise<void> {
+  await pool.query(
+    `update noticias n set orden = o.pos, updated_at = now()
+       from unnest($1::uuid[]) with ordinality as o(id, pos)
+      where n.id = o.id`,
+    [ids],
+  );
+}
+
 export async function borrarNoticia(id: string): Promise<string | null> {
   const { rows } = await pool.query<{ slug: string }>(
     "delete from noticias where id = $1 returning slug",

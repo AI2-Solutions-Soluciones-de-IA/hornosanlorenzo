@@ -107,6 +107,17 @@ describeSiHayBD("repositorio de noticias", () => {
     expect(lista.map((n) => n.titulo)).toEqual(["Nueva", "Vieja"]);
   });
 
+  it("una nueva entra la primera y el orden del panel manda sobre la fecha", async () => {
+    await pool.query("delete from noticias");
+    const a = await repo.crearNoticia(datos({ titulo: "Primera escrita", fecha: "2026-03-01" }));
+    const b = await repo.crearNoticia(datos({ titulo: "Segunda escrita", fecha: "2025-03-01" }));
+    // La nueva sale delante aunque su fecha sea más antigua.
+    expect((await repo.listarNoticias({ soloPublicadas: true })).map((n) => n.id)).toEqual([b.id, a.id]);
+
+    await repo.ordenarNoticias([a.id, b.id]);
+    expect((await repo.listarNoticias({ soloPublicadas: false })).map((n) => n.id)).toEqual([a.id, b.id]);
+  });
+
   describe("producto enlazado (Este mes)", () => {
     let productos: typeof import("~/lib/db/productos");
     const ficha = (extra: Record<string, unknown> = {}) => ({

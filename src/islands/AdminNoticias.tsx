@@ -214,6 +214,46 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
   const [guardando, setGuardando] = useState(false);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [ocupada, setOcupada] = useState<string | null>(null);
+  /** La que se está arrastrando para cambiarla de sitio. */
+  const [arrastrando, setArrastrando] = useState<string | null>(null);
+
+  /**
+   * Guarda el orden nuevo: se ve al momento y, si el servidor falla, se
+   * vuelve al de antes con el aviso.
+   */
+  async function reordenar(nuevas: Noticia[]) {
+    const antes = noticias;
+    setNoticias(nuevas);
+    setErrorServidor(null);
+    setMensaje(null);
+    try {
+      const r = await fetch("/api/admin/noticias", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orden: nuevas.map((n) => n.id) }),
+      });
+      if (!r.ok) {
+        const datos = await r.json().catch(() => null);
+        setNoticias(antes);
+        setErrorServidor(datos?.error ?? MENSAJE_GENERICO);
+        return;
+      }
+      setMensaje("Orden guardado. En la web se ve en unos segundos.");
+    } catch {
+      setNoticias(antes);
+      setErrorServidor("No hemos podido conectar. Comprueba tu conexión.");
+    }
+  }
+
+  /** Mueve la noticia `id` al sitio de `destino` (arrastrando o con las flechas). */
+  function mover(id: string, destino: number) {
+    const desde = noticias.findIndex((n) => n.id === id);
+    if (desde < 0 || destino < 0 || destino >= noticias.length || destino === desde) return;
+    const nuevas = [...noticias];
+    const [n] = nuevas.splice(desde, 1);
+    nuevas.splice(destino, 0, n);
+    reordenar(nuevas);
+  }
 
   function abrirNueva() {
     setFormulario(FORMULARIO_VACIO);
@@ -457,11 +497,31 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
         </p>
       )}
 
+      {!abierto && noticias.length > 1 && (
+        <p style={{ marginTop: 16, fontSize: 13, color: "var(--color-ink-muted)" }}>
+          En la web salen en este orden. Arrástralas por ⠿ o usa las flechas para cambiarlo.
+        </p>
+      )}
+
       {!abierto && noticias.length > 0 && (
-        <ul style={{ listStyle: "none", padding: 0, margin: "20px 0 0" }}>
-          {noticias.map((n) => (
+        <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
+          {noticias.map((n, i) => (
             <li
               key={n.id}
+              draggable
+              onDragStart={(e) => {
+                setArrastrando(n.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragOver={(e) => {
+                if (arrastrando && arrastrando !== n.id) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (arrastrando) mover(arrastrando, i);
+                setArrastrando(null);
+              }}
+              onDragEnd={() => setArrastrando(null)}
               style={{
                 border: "1px solid var(--color-avellana)",
                 padding: "0.75rem 1rem",
@@ -470,8 +530,37 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 12,
+                background: arrastrando === n.id ? "var(--color-latte)" : undefined,
+                opacity: arrastrando === n.id ? 0.6 : 1,
               }}
             >
+              <span
+                aria-hidden="true"
+                title="Arrastra para cambiar el orden"
+                style={{ cursor: "grab", color: "var(--color-ink-muted)", fontSize: 18, userSelect: "none" }}
+              >
+                ⠿
+              </span>
+              <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <button
+                  type="button"
+                  aria-label={`Subir «${n.titulo}»`}
+                  onClick={() => mover(n.id, i - 1)}
+                  disabled={i === 0}
+                  style={{ background: "none", border: "none", padding: 0, cursor: i === 0 ? "default" : "pointer", opacity: i === 0 ? 0.3 : 1, fontSize: 13 }}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Bajar «${n.titulo}»`}
+                  onClick={() => mover(n.id, i + 1)}
+                  disabled={i === noticias.length - 1}
+                  style={{ background: "none", border: "none", padding: 0, cursor: i === noticias.length - 1 ? "default" : "pointer", opacity: i === noticias.length - 1 ? 0.3 : 1, fontSize: 13 }}
+                >
+                  ↓
+                </button>
+              </span>
               <button
                 type="button"
                 onClick={() => abrirEditar(n)}

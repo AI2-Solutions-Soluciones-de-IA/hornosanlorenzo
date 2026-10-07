@@ -5,6 +5,7 @@ import {
   crearNoticia,
   actualizarNoticia,
   borrarNoticia,
+  ordenarNoticias,
   NoticiaError,
 } from "~/lib/db/noticias";
 import { invalidar, RUTAS_NOTICIAS, RUTAS_CATALOGO } from "~/lib/cache";
@@ -192,5 +193,24 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     console.error("[admin/noticias] no se pudo borrar:", error);
     return json({ error: "No se pudo borrar la noticia." }, 500);
+  }
+};
+
+/** Orden de las noticias: `{ orden: [id, id, …] }`, de la primera a la última. */
+export const PATCH: APIRoute = async ({ request, locals }) => {
+  if (!esAdmin(locals.usuario)) return noEncontrado();
+
+  const parsed = z
+    .object({ orden: z.array(z.string().uuid()).min(1).max(500) })
+    .safeParse(await cuerpoJSON(request));
+  if (!parsed.success) return json({ error: "Falta el orden de las noticias." }, 400);
+
+  try {
+    await ordenarNoticias(parsed.data.orden);
+    await invalidar(RUTAS_NOTICIAS);
+    return json({ ok: true });
+  } catch (error) {
+    console.error("[admin/noticias] no se pudo ordenar:", error);
+    return json({ error: "No se pudo guardar el orden." }, 500);
   }
 };
