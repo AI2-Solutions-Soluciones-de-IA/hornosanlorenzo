@@ -224,7 +224,7 @@ function Dato({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ minWidth: 76 }}>
+    <div style={{ minWidth: 0 }}>
       <p
         style={{
           fontSize: 10,
@@ -242,23 +242,25 @@ function Dato({
 
 function FilaPack({ p, onEditar }: { p: PackAdmin; onEditar: () => void }) {
   return (
+    // Rejilla de columnas fijas desde 1280 px: así Precio, Suelto, Ahorro,
+    // Personas, el estado y «Editar» caen en el mismo sitio en todas las
+    // filas, mida lo que mida el nombre o el texto de cada dato. Más
+    // estrecho no cabe en una línea junto al menú del panel: se apila, todo
+    // alineado a la izquierda, y las filas siguen siendo iguales.
     <li
+      className="grid gap-4 items-center xl:grid-cols-[minmax(10rem,1fr)_auto_9rem_auto]"
       style={{
         border: "1px solid var(--color-avellana)",
         padding: "0.75rem 1rem",
         marginTop: 12,
-        display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        gap: 16,
       }}
     >
-      <div style={{ flex: "1 1 220px" }}>
+      <div style={{ minWidth: 0 }}>
         <p className="numeracion">{p.definicion.ocasion || "Pack"}</p>
         <p style={{ marginTop: 4, fontWeight: 600 }}>{p.name}</p>
       </div>
 
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+      <div className="grid grid-cols-2 sm:grid-cols-[repeat(4,5.5rem)] gap-4">
         <Dato nombre="Precio">{formatPriceCents(p.priceCents)}</Dato>
         <Dato nombre="Suelto">
           {p.sueltoCents !== null ? formatPriceCents(p.sueltoCents) : "—"}
@@ -278,7 +280,7 @@ function FilaPack({ p, onEditar }: { p: PackAdmin; onEditar: () => void }) {
         </Dato>
       </div>
 
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         {p.activo ? (
           <span
             style={{
@@ -299,7 +301,7 @@ function FilaPack({ p, onEditar }: { p: PackAdmin; onEditar: () => void }) {
       <button
         type="button"
         onClick={onEditar}
-        style={botonLinea}
+        style={{ ...botonLinea, justifySelf: "start" }}
         aria-label={`Editar ${p.name}`}
       >
         Editar
