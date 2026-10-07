@@ -48,14 +48,31 @@ import { site } from "~/data/site";
       Cada valor se traduce en una decisión concreta del negocio. Si no se puede señalar
       dónde se cumple, no es un valor: es un adorno.
     </p>
-    <div class="mt-10 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-      {tradicion.valores.map((v) => (
-        <article class="border-t border-[color:var(--color-avellana)] pt-5">
-          <p class="numeracion">Nº {v.number} —</p>
-          <h3 class="font-[family-name:var(--font-display)] text-2xl mt-2">{v.title}</h3>
-          <p class="mt-2 leading-relaxed text-[color:var(--color-ink-muted)]">{v.body}</p>
-        </article>
-      ))}
+    <!-- Carrusel con el mismo motor que el de la home (`~/scripts/carrusel`):
+         se arrastra, las flechas pasan de uno en uno y se desliza solo hasta
+         que alguien lo toca. -->
+    <div class="valores-marco mt-10" data-carrusel data-carrusel-auto="40">
+      <div class="flex justify-end gap-2 mb-4">
+        <button type="button" class="valores-flecha" data-carrusel-prev aria-controls="carrusel-valores" aria-label="Valor anterior">‹</button>
+        <button type="button" class="valores-flecha" data-carrusel-next aria-controls="carrusel-valores" aria-label="Valor siguiente">›</button>
+      </div>
+      <div
+        id="carrusel-valores"
+        class="valores flex gap-5 overflow-x-auto snap-x snap-mandatory"
+        data-carrusel-pista
+        role="region"
+        aria-roledescription="carrusel"
+        aria-label="Cinco valores"
+        tabindex="0"
+      >
+        {tradicion.valores.map((v) => (
+          <article class="valores-item snap-start shrink-0 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
+            <p class="font-[family-name:var(--font-display)] text-5xl text-[color:var(--color-avellana)]">{v.number}</p>
+            <h3 class="font-[family-name:var(--font-display)] text-2xl mt-4">{v.title}</h3>
+            <p class="mt-2 leading-relaxed text-[color:var(--color-ink-muted)]">{v.body}</p>
+          </article>
+        ))}
+      </div>
     </div>
   </section>
 
@@ -102,6 +119,61 @@ import { site } from "~/data/site";
 </MarketingLayout>
 
 <style>
+  /* Carrusel de los cinco valores: una tarjeta y un asomo en el móvil, dos
+     en tableta y tres en escritorio. */
+  .valores {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .valores::-webkit-scrollbar {
+    display: none;
+  }
+  .valores:focus-visible {
+    outline: 2px solid var(--color-caramelo);
+    outline-offset: 4px;
+  }
+  .valores-item {
+    flex-basis: 82%;
+  }
+  @media (min-width: 640px) {
+    .valores-item {
+      flex-basis: calc((100% - 1.25rem) / 2);
+    }
+  }
+  @media (min-width: 1024px) {
+    .valores-item {
+      flex-basis: calc((100% - 2.5rem) / 3);
+    }
+  }
+  /* Mientras se desliza solo, sin snap: pelearía con el avance continuo. */
+  .valores-marco:global(.carrusel--auto) .valores {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+  .valores-flecha {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--color-avellana);
+    background: var(--color-leche);
+    color: var(--color-moka);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .valores-flecha:hover {
+    background: var(--color-latte);
+  }
+  .valores-flecha:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .valores {
+      scroll-behavior: auto;
+    }
+  }
+
   /* Cifras: entran escalonadas, cuentan desde cero y dibujan una raya teja
      al aparecer en pantalla. Sin JS o con «reducir movimiento», quietas. */
   .cifra-raya {
@@ -135,6 +207,8 @@ import { site } from "~/data/site";
 </style>
 
 <script>
+  import "~/scripts/carrusel";
+
   function animaCifras() {
     const dl = document.querySelector<HTMLElement>("[data-cifras]");
     if (!dl || dl.classList.contains("listo")) return;
