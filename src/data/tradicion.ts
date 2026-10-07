@@ -1,8 +1,22 @@
 export const tradicion = {
-  intro:
-    "Horno San Lorenzo es un obrador artesano fundado en 1986 en Alcobendas. Cada día, en horno propio y con método tradicional, hacemos comida casera de verdad —tartas y empanadas, nuestra especialidad— con ingredientes de siempre.",
-  intro2:
-    "No es una pastelería de diseño: es el horno de barrio que sabe lo que hace desde siempre. Cuatro décadas creciendo sin publicidad, gracias a la confianza de quien vuelve: personas que repiten, familias que recomiendan, hostelería que renueva y empresas que buscan una solución fiable, sencilla y de calidad.",
+  /**
+   * Manifiesto de la marca, tal cual en las Brand Guidelines (versión
+   * Avellana, diapositiva 8, «05 · Manifiesto»). Solo se han corregido
+   * espacios sueltos del original.
+   */
+  manifiesto: {
+    titulo: "Más de 40 años haciéndolo bien.",
+    entradilla:
+      "Personas que vuelven. Familias que nos recomiendan. Empresas que confían. Producto fresco, artesanal y generoso, con una calidad y un precio difíciles de igualar.",
+    parrafos: [
+      "San Lorenzo es el nombre de la playa de Gijón, el lugar de origen de nuestra familia y el origen de nuestro nombre. Una historia que comenzó en Asturias y que, desde 1986, seguimos construyendo en Madrid alrededor de algo muy sencillo: hacer las cosas bien, con producto fresco, artesanal y generoso.",
+      "Durante más de cuatro décadas hemos crecido gracias a la confianza de nuestros clientes. Creemos que comer bien no debería ser complicado, ni caro, ni una excepción. Debería ser lo normal, como en Asturias: en casa, en la oficina y en cualquier mesa donde compartir sea parte del día.",
+      "Queremos llegar a más personas, sin perder nuestra esencia. Modernizarnos sin perder nuestras raíces. Crecer sin perder la cercanía y la confianza que nos han traído hasta aquí.",
+    ],
+    cierre:
+      "Porque después de más de 40 años, seguimos creyendo que la mejor forma de crecer es seguir haciéndolo bien.",
+    firma: "Horno San Lorenzo, desde 1986",
+  },
 
   /** Brand promise. */
   promesa: "Lo que sale hoy del obrador sabe igual que hace cuarenta años.",
