@@ -51,7 +51,6 @@ export const secciones: readonly Seccion[] = [
     id: "tartas-obrador",
     label: "Las Tartas del Obrador",
     eyebrow: "Dulce · Tartas",
-    nota: "Bizcocho tierno del obrador y la nata recién montada de San Lorenzo · XL 15–20 rac. · M 10–12 · S 6–8",
     aviso:
       "¿Una tarta personalizada con foto? No se encarga por la web: llama directamente a la tienda y te la preparamos.",
     order: 100,
