@@ -81,7 +81,7 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
       </div>
     </div>
     {video ? (
-      <div class="relative aspect-[4/5] md:aspect-[5/4] md:max-h-[80vh] overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
+      <div class="relative aspect-[4/5] md:aspect-square md:max-h-[80vh] overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
         <video
           class="w-full h-full object-cover"
           src={video.src}
@@ -134,6 +134,14 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
   @media (min-width: 768px) {
     .hero-rojo {
       background: var(--color-teja);
+    }
+    /* La caja roja termina donde el vídeo: sin margen arriba ni abajo. Si
+       el texto es más alto que el vídeo (tabletas), manda el texto. */
+    .hero-rojo > div {
+      padding-block: 0;
+    }
+    .hero-rojo [data-hero-video] {
+      display: block;
     }
     .hero-rojo .numeracion,
     .hero-rojo .mensaje :is(h1, p) {
@@ -222,13 +230,36 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
   }
   document.addEventListener("astro:page-load", iniciaMensajes);
 
-  // Con «reducir movimiento» el vídeo se queda quieto en el póster.
-  function paraSiReducido() {
-    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  /**
+   * El vídeo del hero. Con «reducir movimiento» se queda en el póster. Si
+   * no, se insiste en que arranque: el iPhone en ahorro de batería (y algún
+   * navegador tras volver de otra página) bloquea el `autoplay` y el vídeo
+   * se quedaba quieto en el primer fotograma, que parecía colgado. Se
+   * reintenta al cargar, al volver a la pestaña y con el primer toque o
+   * desplazamiento, que cuentan como gesto de la persona.
+   */
+  function arrancaVideo() {
+    const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
     document.querySelectorAll<HTMLVideoElement>("[data-hero-video]").forEach((v) => {
-      v.removeAttribute("autoplay");
-      v.pause();
+      if (reducido) {
+        v.removeAttribute("autoplay");
+        v.pause();
+        return;
+      }
+      // `muted` como propiedad, no solo como atributo: es lo que mira el
+      // navegador para dejar arrancar sin gesto.
+      v.muted = true;
+      const intenta = () => {
+        if (v.isConnected && v.paused) v.play().catch(() => {});
+      };
+      intenta();
+      const unaVez = { once: true, passive: true } as const;
+      for (const e of ["touchstart", "pointerdown", "scroll", "keydown"])
+        window.addEventListener(e, intenta, unaVez);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) intenta();
+      });
     });
   }
-  document.addEventListener("astro:page-load", paraSiReducido);
+  document.addEventListener("astro:page-load", arrancaVideo);
 </script>
