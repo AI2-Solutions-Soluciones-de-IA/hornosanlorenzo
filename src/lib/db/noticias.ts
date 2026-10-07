@@ -264,21 +264,3 @@ export async function borrarNoticia(id: string): Promise<string | null> {
   );
   return rows[0]?.slug ?? null;
 }
-
-/**
- * Reserva el envío de una noticia a los suscritos: la marca como enviada
- * solo si no lo estaba, en una sentencia, para que dos clics seguidos no
- * manden el correo dos veces. `false` si ya estaba enviada (o no existe).
- */
-export async function reservarEnvio(id: string): Promise<boolean> {
-  const { rowCount } = await pool.query(
-    "update noticias set enviada_en = now() where id = $1 and enviada_en is null",
-    [id],
-  );
-  return (rowCount ?? 0) > 0;
-}
-
-/** Deshace la reserva cuando el envío no llegó a salir, para poder reintentar. */
-export async function anularEnvio(id: string): Promise<void> {
-  await pool.query("update noticias set enviada_en = null where id = $1", [id]);
-}
