@@ -81,7 +81,7 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
       </div>
     </div>
     {video ? (
-      <div class="relative aspect-[4/5] md:aspect-square md:max-h-[80vh] overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
+      <div class="hero-media relative aspect-[4/5] md:aspect-square md:max-h-[80vh] overflow-hidden border border-[color:var(--color-avellana)] bg-[color:var(--color-moka)]">
         <video
           class="w-full h-full object-cover"
           src={video.src}
@@ -135,13 +135,22 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     .hero-rojo {
       background: var(--color-teja);
     }
-    /* La caja roja termina donde el vídeo: sin margen arriba ni abajo. Si
-       el texto es más alto que el vídeo (tabletas), manda el texto. */
-    .hero-rojo > div {
-      padding-block: 0;
+    /* El vídeo ocupa toda la mitad derecha de la franja roja, de arriba
+       abajo y hasta el borde de la pantalla, sin marco. La altura la da el
+       texto de la izquierda (con aire), y el vídeo la rellena recortándose. */
+    .hero-rojo {
+      position: relative;
     }
-    .hero-rojo [data-hero-video] {
-      display: block;
+    .hero-rojo > div {
+      padding-block: 4.5rem;
+      min-height: min(78vh, 44rem);
+    }
+    .hero-rojo .hero-media {
+      position: absolute;
+      inset: 0 0 0 50%;
+      aspect-ratio: auto;
+      max-height: none;
+      border: 0;
     }
     .hero-rojo .numeracion,
     .hero-rojo .mensaje :is(h1, p) {
