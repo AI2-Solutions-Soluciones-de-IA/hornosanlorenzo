@@ -55,7 +55,7 @@ const sinPrecio = consultar || priceCents === undefined;
 const precioAntes =
   variants && variants.length === 1 ? variants[0].precioAntesCents : priceAntesCents;
 ---
-<div class="mt-4">
+<div class="mt-auto pt-4">
   {agotado ? (
     /* Visible pero no comprable: se ve el precio (o «Consultar»), sin
        botón de añadir.

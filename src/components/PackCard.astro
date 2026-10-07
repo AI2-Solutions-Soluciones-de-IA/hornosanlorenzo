@@ -32,7 +32,7 @@ const imagen =
     ? { url: pack.imageUrl, alt: pack.imageAlt ?? pack.name, ancho: pack.imageWidth, alto: pack.imageHeight }
     : null;
 ---
-<article class="flex flex-col bg-[color:var(--color-paper)] border border-[color:var(--color-line)] overflow-hidden">
+<article class="h-full flex flex-col bg-[color:var(--color-paper)] border border-[color:var(--color-line)] overflow-hidden">
   {imagen && (
     <a href={href} class="block aspect-[4/3] overflow-hidden" tabindex="-1" aria-hidden="true">
       <Image

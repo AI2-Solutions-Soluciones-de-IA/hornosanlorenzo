@@ -49,7 +49,7 @@ const {
 // asume que existe) y con él toda la tarjeta.
 const eyebrow = seccionLabel ?? (isCategoryId(category) ? categoryById(category).label : undefined) ?? "";
 ---
-<article class="group bg-[color:var(--color-paper)] border border-[color:var(--color-line)] rounded-[var(--radius-card)] overflow-hidden shadow-[var(--shadow-card)] hover:scale-[1.02] transition-transform duration-200">
+<article class="group h-full flex flex-col bg-[color:var(--color-paper)] border border-[color:var(--color-line)] rounded-[var(--radius-card)] overflow-hidden shadow-[var(--shadow-card)] hover:scale-[1.02] transition-transform duration-200">
   <a href={`/catalogo/${slug}`} class="block">
     <div class="aspect-[4/3] overflow-hidden">
       {imagen ? (
@@ -72,7 +72,9 @@ const eyebrow = seccionLabel ?? (isCategoryId(category) ? categoryById(category)
       )}
     </div>
   </a>
-  <div class="p-4 sm:p-5">
+  <!-- Todas las tarjetas de una fila miden lo mismo: el cuerpo crece y el
+       precio con «Añadir» (CompraRapida, `mt-auto`) se queda abajo. -->
+  <div class="p-4 sm:p-5 flex-1 flex flex-col">
     <p class="numeracion">{eyebrow}</p>
     <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">
       <a href={`/catalogo/${slug}`} class="hover:text-[color:var(--color-accent-dark)]">{name}</a>

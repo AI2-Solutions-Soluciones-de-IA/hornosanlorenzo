@@ -38,7 +38,7 @@ const cuenta = new Map<string, number>();
 for (const p of sabores) cuenta.set(p.shortDescription, (cuenta.get(p.shortDescription) ?? 0) + 1);
 const descripcion = [...cuenta].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
 ---
-<article class="group bg-[color:var(--color-paper)] border border-[color:var(--color-line)] rounded-[var(--radius-card)] overflow-hidden shadow-[var(--shadow-card)] hover:scale-[1.02] transition-transform duration-200">
+<article class="group h-full flex flex-col bg-[color:var(--color-paper)] border border-[color:var(--color-line)] rounded-[var(--radius-card)] overflow-hidden shadow-[var(--shadow-card)] hover:scale-[1.02] transition-transform duration-200">
   <div class="aspect-[4/3] overflow-hidden">
     {imagen ? (
       <Image quality={80}
@@ -59,12 +59,13 @@ const descripcion = [...cuenta].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
       </div>
     )}
   </div>
-  <div class="p-4 sm:p-5">
+  <div class="p-4 sm:p-5 flex-1 flex flex-col">
     <p class="numeracion">{eyebrow}</p>
     <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">{titulo}</h3>
     <p class="text-sm text-[color:var(--color-ink-muted)] mt-1 line-clamp-2">
       {descripcion} {sabores.length} sabores.
     </p>
+    <div class="mt-auto">
     <ElegirSabor
       client:visible
       titulo={titulo}
@@ -81,5 +82,6 @@ const descripcion = [...cuenta].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
         variants: p.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents })),
       }))}
     />
+    </div>
   </div>
 </article>
