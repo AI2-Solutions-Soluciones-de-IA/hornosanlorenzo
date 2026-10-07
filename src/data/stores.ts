@@ -20,6 +20,12 @@ export type Store = {
    * Entonces solo hay franja de mañana.
    */
   pickupUntilReducido?: string;
+  /**
+   * Hora de cierre los festivos entre semana, si la tienda cierra antes
+   * pero NO tiene horario reducido el fin de semana (Pozuelo abre el
+   * sábado por la tarde). Esos días solo se recoge de mañana.
+   */
+  cierreFestivo?: string;
   openDays: number[]; // 0=Sun ... 6=Sat
   /** Días en que se puede elegir recoger aquí. 0=domingo ... 6=sábado. */
   diasRecogida: readonly number[];
@@ -72,6 +78,7 @@ export const stores: readonly Store[] = [
     hoursText:
       "Lunes a viernes de 09:30 a 20:30 ininterrumpido · Sábados de 10:00 a 15:00 y de 17:00 a 20:30 · Domingos y festivos de 10:00 a 15:00",
     pickupUntil: "20:30",
+    cierreFestivo: "15:00",
     openDays: [0, 1, 2, 3, 4, 5, 6],
     // La tienda abre el domingo, pero de momento no se recoge ese día.
     diasRecogida: [1, 2, 3, 4, 5, 6],

@@ -109,6 +109,18 @@ describe("recogida en fin de semana y festivo", () => {
     ]);
   });
 
+  it("Pozuelo, festivo entre semana: solo de mañana (cierra a las 15:00)", () => {
+    // Lunes 12 de octubre, festivo.
+    expect(franjasRecogida("pozuelo", "2026-10-12", JUEVES)).toEqual([
+      "morning",
+    ]);
+    // Un lunes normal sigue con las dos franjas.
+    expect(franjasRecogida("pozuelo", "2026-10-05", JUEVES)).toEqual([
+      "morning",
+      "afternoon",
+    ]);
+  });
+
   it("el domingo se recoge en Alcobendas, no en Pozuelo ni a domicilio", () => {
     const domingo = new Date("2026-10-04T00:00:00");
     expect(isClosed(domingo, { mode: "recogida", storeId: "alcobendas" })).toBe(

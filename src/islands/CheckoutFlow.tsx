@@ -958,7 +958,7 @@ export default function CheckoutFlow({
                           id: "morning",
                           label: franjas.includes("afternoon")
                             ? "Mañana"
-                            : `Mañana · hasta las ${tiendaElegida?.pickupUntilReducido ?? "14:30"}`,
+                            : `Mañana · hasta las ${tiendaElegida?.pickupUntilReducido ?? tiendaElegida?.cierreFestivo ?? "14:30"}`,
                         },
                         {
                           id: "afternoon",

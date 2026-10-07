@@ -216,7 +216,7 @@ export const esDiaReducido = (dateISO: string): boolean => {
  * Franjas en que se puede recoger ese día en esa tienda.
  *
  * Con horario reducido (Alcobendas cierra a las 14:30 en fin de semana y
- * festivo) solo hay mañana. Para hoy mismo el pedido no está listo hasta las
+ * festivo; Pozuelo, a las 15:00 solo en festivo) solo hay mañana. Para hoy mismo el pedido no está listo hasta las
  * 17:00, así que solo hay tarde. Las dos cosas a la vez dejan el día vacío.
  */
 export function franjasRecogida(
@@ -225,10 +225,10 @@ export function franjasRecogida(
   now: Date = new Date(),
 ): Franja[] {
   const tienda = stores.find((s) => s.id === storeId);
-  let franjas: Franja[] =
-    tienda?.pickupUntilReducido && esDiaReducido(dateISO)
-      ? ["morning"]
-      : ["morning", "afternoon"];
+  const reducido =
+    (tienda?.pickupUntilReducido && esDiaReducido(dateISO)) ||
+    (tienda?.cierreFestivo && FESTIVOS.has(dateISO));
+  let franjas: Franja[] = reducido ? ["morning"] : ["morning", "afternoon"];
   if (dateISO === toISO(now))
     franjas = franjas.filter((f) => f === "afternoon");
   return franjas;
