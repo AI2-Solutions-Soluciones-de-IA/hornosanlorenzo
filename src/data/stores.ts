@@ -70,7 +70,7 @@ export const stores: readonly Store[] = [
     mobiles: [{ number: "+34659878272", display: "659 878 272" }],
     email: "pasteleriapozuelo@hornosanlorenzo.com",
     hoursText:
-      "Lunes a viernes de 09:30 a 20:30 ininterrumpido · Sábados y domingos de 08:00 a 14:30 y de 17:00 a 20:30",
+      "Lunes a viernes de 09:30 a 20:30 ininterrumpido · Sábados de 10:00 a 15:00 y de 17:00 a 20:30 · Domingos y festivos de 10:00 a 15:00",
     pickupUntil: "20:30",
     openDays: [0, 1, 2, 3, 4, 5, 6],
     // La tienda abre el domingo, pero de momento no se recoge ese día.
