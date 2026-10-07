@@ -28,6 +28,11 @@ try {
     priceCents: p.priceCents,
     consultar: p.consultar,
     variantes: p.variantes.map((v) => ({ variantId: v.variantId, label: v.label, priceCents: v.priceCents })),
+    // Para «Usar la foto del producto» en la noticia.
+    foto:
+      p.imageUrl && p.imageWidth && p.imageHeight
+        ? { url: p.imageUrl, ancho: p.imageWidth, alto: p.imageHeight, alt: p.imageAlt ?? p.name }
+        : null,
   }));
 } catch (error) {
   // La isla sabe recargar la lista por su cuenta: mejor entrar con la lista

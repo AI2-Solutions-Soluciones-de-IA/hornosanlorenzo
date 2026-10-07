@@ -46,6 +46,8 @@ export type ProductoOpcion = {
   priceCents: number | null;
   consultar: boolean;
   variantes: { variantId: string; label: string; priceCents: number }[];
+  /** La foto de la ficha, para poder ponerla en la noticia con un clic. */
+  foto?: { url: string; ancho: number; alto: number; alt: string } | null;
 };
 
 type Props = {
@@ -232,6 +234,19 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
   function cerrar() {
     setAbierto(false);
     setEditandoId(null);
+  }
+
+  /** Pone en la noticia la foto (y su texto alternativo) del producto elegido. */
+  function usarFotoDe(producto: ProductoOpcion | undefined) {
+    const foto = producto?.foto;
+    if (!foto) return;
+    setFormulario((actual) => ({
+      ...actual,
+      imageUrl: foto.url,
+      imageWidth: foto.ancho,
+      imageHeight: foto.alto,
+      imageAlt: foto.alt,
+    }));
   }
 
   function actualizaCampo<K extends keyof FormularioNoticia>(
@@ -612,7 +627,12 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
             <select
               id="an-producto"
               value={formulario.productoId}
-              onChange={(e) => actualizaCampo("productoId", e.target.value)}
+              onChange={(e) => {
+                actualizaCampo("productoId", e.target.value);
+                // Sin foto todavía, se pone la del producto: casi siempre es
+                // la que se quiere, y se puede cambiar abajo.
+                if (!formulario.imageUrl) usarFotoDe(productos.find((p) => p.id === e.target.value));
+              }}
               style={field}
             >
               <option value="">Ninguno: solo texto</option>
@@ -756,6 +776,19 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
                   pointerEvents: "none",
                 }}
               />
+              {(() => {
+                const foto = productos.find((p) => p.id === formulario.productoId)?.foto;
+                if (!foto || foto.url === formulario.imageUrl || subiendoFoto) return null;
+                return (
+                  <button
+                    type="button"
+                    className="btn btn-secundario"
+                    onClick={() => usarFotoDe(productos.find((p) => p.id === formulario.productoId))}
+                  >
+                    Usar la foto del producto
+                  </button>
+                );
+              })()}
               <span style={{ fontSize: 12, color: "var(--color-ink-muted)" }}>
                 JPG, PNG o WebP
               </span>
