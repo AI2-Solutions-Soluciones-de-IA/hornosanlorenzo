@@ -338,6 +338,15 @@ Sin agujeros graves explotables hoy. Por prioridad:
       lunes a viernes…» (`hoursText` en `src/data/stores.ts`). ¿Es el horario
       de la tienda o el de recogida? Si es el de la tienda, quitar «Recogida».
 
+## Pendientes de la sesión del 7-10-2026
+- [ ] **Resend** (`RESEND_API_KEY`, `ORDER_NOTIFICATION_EMAIL`, `ORDER_FROM_EMAIL` en Vercel): sin ellas no llega el correo del pedido al obrador ni la confirmación al cliente (la página de «Gracias» ya dice que se envió), y «Enviar a los suscritos» de Este mes no puede enviar
+- [ ] **Stripe a modo real**: clave `sk_live_…` y webhook `live` nuevo con URL `…/api/webhook` (hoy producción cobra con claves de prueba). Antes, los dos puntos de «Bloquea encender los cobros». Detalle en `STRIPE_INTEGRATION_TODO.md`
+- [ ] Revisar en el Checkout Studio `origin_context: mobile_app` (esto es una web) y el teléfono pedido dos veces (web y Stripe); decidir si se activa el recibo de Stripe al cliente
+- [ ] Borrar los dos pedidos de prueba de producción (`prueba.pago@example.com`, nota «PRUEBA DE PAGO — no preparar»): pendiente de confirmar con el usuario
+- [ ] Cabecera con sesión de admin: «Haz tu pedido» + «Panel de administración» + «Mi cuenta» descentran el logo. Y con los textos ya cortos («Regístrate», «Accede»), revisar si «Haz tu pedido» cabe ya entre 1024 y 1280 px (hoy oculto ahí)
+- [ ] Ofertas de Este mes: la tarjeta de un pack en oferta no tacha el precio; el carrito guarda el precio al añadir (si la oferta caduca, se cobra el normal); hasta 10 min de caché tras la medianoche del último día
+- [ ] Política de privacidad: revisión legal de la sección nueva de suscripción a las ofertas
+
 ## Más adelante
 - [ ] **Llevar el cómputo a Cloud Run** cuando el proyecto esté asentado. Del
       análisis de costes del 9 de septiembre de 2026: Vercel Pro son ~20 €/mes
