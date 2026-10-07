@@ -2,7 +2,8 @@
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import NewsCarousel from "~/components/NewsCarousel.astro";
 import type { Noticia } from "~/lib/db/noticias";
-import { noticiasPublicas } from "~/lib/lectura-publica";
+import { noticiasPublicas, seccionesEsteMesPublicas, definicionesPublicas } from "~/lib/lectura-publica";
+import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import SuscripcionOfertas from "~/islands/SuscripcionOfertas.tsx";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
@@ -12,7 +13,13 @@ export const prerender = false;
 // Que la base de datos falle no puede tumbar una página pública: se enseña la
 // sección vacía, que es feo pero navegable — y con `no-store`, para que ese
 // «no hay nada publicado» no se quede cacheado (`~/lib/lectura-publica.ts`).
-const items: Noticia[] = await noticiasPublicas(Astro.response);
+const [items, secciones, defsPacks] = await Promise.all([
+  noticiasPublicas(Astro.response) as Promise<Noticia[]>,
+  // Secciones que escribe el obrador en el panel («Productos nuevos sin
+  // gluten»…), debajo de las ofertas.
+  seccionesEsteMesPublicas(Astro.response),
+  definicionesPublicas(Astro.response),
+]);
 ---
 <MarketingLayout
   title="Noticias y promociones"
@@ -31,6 +38,18 @@ const items: Noticia[] = await noticiasPublicas(Astro.response);
       )}
     </div>
   </section>
+
+  {secciones.map((s) => (
+    <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 border-t border-[color:var(--color-avellana)]">
+      <h2 class="text-3xl sm:text-4xl">{s.titulo}</h2>
+      {s.descripcion && <p class="mt-3 max-w-2xl text-[color:var(--color-ink-muted)]">{s.descripcion}</p>}
+      <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        {s.productos.map((producto) => (
+          <ElementoCatalogo elemento={{ tipo: "producto", producto }} sinFiltro defsPacks={defsPacks} />
+        ))}
+      </div>
+    </section>
+  ))}
 
   <!-- Suscripción a las ofertas por correo (tabla `suscriptores`). -->
   <section class="bg-[color:var(--color-latte)] border-t border-[color:var(--color-avellana)]">

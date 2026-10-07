@@ -348,4 +348,71 @@ describeSiHayBD("repositorio de productos", () => {
       expect(publica?.ofertaCents).toBe(1500);
     });
   });
+
+  // Secciones de Este mes: aquí y no en un fichero propio por lo mismo que
+  // las ofertas (este fichero vacía `productos` al empezar).
+  describe("secciones de Este mes", () => {
+    let secciones: typeof import("~/lib/db/seccionesEsteMes");
+    const ids: string[] = [];
+    const nueva = async (d: Partial<import("~/lib/db/seccionesEsteMes").DatosSeccion>) => {
+      const s = await secciones.crearSeccion({
+        titulo: "Sección de prueba",
+        descripcion: "",
+        orden: 0,
+        publicada: true,
+        productoIds: [],
+        ...d,
+      });
+      ids.push(s.id);
+      return s;
+    };
+
+    beforeAll(async () => {
+      secciones = await import("~/lib/db/seccionesEsteMes");
+    });
+    afterAll(async () => {
+      await pool.query("delete from secciones_este_mes where id = any($1::uuid[])", [ids]);
+    });
+
+    it("guarda los productos en el orden elegido y los cambia al editar", async () => {
+      const a = await crea(datos({ name: "Sin gluten A" }));
+      const b = await crea(datos({ name: "Sin gluten B" }));
+      const s = await nueva({ titulo: "Nuevos sin gluten", productoIds: [b.id, a.id] });
+      expect(s.productoIds).toEqual([b.id, a.id]);
+
+      const editada = await secciones.actualizarSeccion(s.id, {
+        titulo: "Nuevos sin gluten",
+        descripcion: "Recién salidos del obrador.",
+        orden: 1,
+        publicada: true,
+        productoIds: [a.id],
+      });
+      expect(editada?.productoIds).toEqual([a.id]);
+      expect(editada?.descripcion).toBe("Recién salidos del obrador.");
+    });
+
+    it("la web solo ve las publicadas, con sus productos activos y en orden", async () => {
+      const activo = await crea(datos({ name: "Producto visible" }));
+      const inactivo = await crea(datos({ name: "Producto retirado", activo: false }));
+      const vista = await nueva({ titulo: "Visible", orden: -100, productoIds: [inactivo.id, activo.id] });
+      const oculta = await nueva({ titulo: "Oculta", publicada: false, productoIds: [activo.id] });
+      const vacia = await nueva({ titulo: "Sin activos", orden: -99, productoIds: [inactivo.id] });
+
+      const publicas = await secciones.seccionesPublicas();
+      const mia = publicas.find((s) => s.id === vista.id);
+      expect(mia?.productos.map((p) => p.id)).toEqual([activo.id]);
+      expect(publicas.some((s) => s.id === oculta.id)).toBe(false);
+      // Sin ningún producto activo, no se enseña.
+      expect(publicas.some((s) => s.id === vacia.id)).toBe(false);
+    });
+
+    it("borrar un producto de la carta lo quita de la sección sin romperla", async () => {
+      const p = await crea(datos({ name: "Se borrará" }));
+      const s = await nueva({ titulo: "Con borrado", productoIds: [p.id] });
+      await pool.query("delete from productos where id = $1", [p.id]);
+      const tras = (await secciones.listarSecciones()).find((x) => x.id === s.id);
+      expect(tras?.productoIds).toEqual([]);
+      expect(await secciones.borrarSeccion(s.id)).toBe(true);
+    });
+  });
 });

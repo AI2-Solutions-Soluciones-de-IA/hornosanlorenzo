@@ -1,5 +1,6 @@
 import { listarProductos, type Producto } from "~/lib/db/productos";
 import { listarNoticias, type Noticia } from "~/lib/db/noticias";
+import { seccionesPublicas, type SeccionPublica } from "~/lib/db/seccionesEsteMes";
 import { todasLasDefiniciones } from "~/lib/db/packs";
 import type { DefinicionPack } from "~/data/packs";
 
@@ -77,5 +78,17 @@ export async function definicionesPublicas(
   } catch (error) {
     degrada(respuesta, "No se pudieron cargar los packs:", error);
     return new Map();
+  }
+}
+
+/** Las secciones publicadas de Este mes, o ninguna y sin cachear. */
+export async function seccionesEsteMesPublicas(
+  respuesta: ConCabeceras,
+): Promise<SeccionPublica[]> {
+  try {
+    return await seccionesPublicas();
+  } catch (error) {
+    degrada(respuesta, "No se pudieron cargar las secciones de Este mes:", error);
+    return [];
   }
 }
