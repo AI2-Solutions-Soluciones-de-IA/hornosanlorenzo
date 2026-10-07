@@ -48,7 +48,9 @@ const enlace: React.CSSProperties = {
 };
 
 const MENSAJE_GENERICO = "Algo ha fallado. Inténtalo de nuevo.";
-const VACIA: Omit<Seccion, "id"> = { titulo: "", descripcion: "", orden: 0, publicada: false, productoIds: [] };
+// Publicada de serie: una sección nueva casi siempre se crea para verla en
+// la web, y desmarcada se quedaba oculta sin que nadie lo notara (7-10-2026).
+const VACIA: Omit<Seccion, "id"> = { titulo: "", descripcion: "", orden: 0, publicada: true, productoIds: [] };
 
 /** Sin acentos ni mayúsculas, para buscar «gluten» y encontrar «Glutén». */
 const normal = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -162,7 +164,12 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
               <li key={s.id} style={{ border: "1px solid var(--color-avellana)", padding: "0.75rem 1rem", marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <button type="button" onClick={() => abrir(s)} style={{ background: "none", border: "none", padding: 0, textAlign: "left", cursor: "pointer", flex: 1 }}>
                   <p className="numeracion">
-                    {s.publicada ? "Publicada" : "Oculta"} · {s.productoIds.length} producto{s.productoIds.length === 1 ? "" : "s"}
+                    {s.publicada ? (
+                      "Publicada"
+                    ) : (
+                      <span style={{ color: "var(--color-teja)" }}>Oculta · no se ve en la web</span>
+                    )}{" "}
+                    · {s.productoIds.length} producto{s.productoIds.length === 1 ? "" : "s"}
                   </p>
                   <p style={{ marginTop: 4, fontWeight: 600 }}>{s.titulo}</p>
                 </button>
