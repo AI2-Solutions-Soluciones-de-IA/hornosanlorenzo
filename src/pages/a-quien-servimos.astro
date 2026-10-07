@@ -1,10 +1,6 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import SectionLabel from "~/components/SectionLabel.astro";
-import ContactForm from "~/islands/ContactForm.tsx";
-import { stores } from "~/data/stores";
-
-const central = stores[0];
 
 /**
  * Los tres públicos de la casa, en el mismo orden que el submenú de
@@ -44,7 +40,7 @@ const publicos = [
       "Producción de obrador, sin intermediarios.",
       "Interlocutor fijo: al cliente se le conoce por su nombre.",
     ],
-    cta: { href: "#alta", label: "Pedir condiciones", style: "btn-secundario" },
+    cta: { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
     foot: "Entrega diaria L–S · formato mayorista",
   },
   {
@@ -62,7 +58,7 @@ const publicos = [
       "Packs XL con descuento por volumen aplicado a tu cuenta.",
       "Entrega en oficina con reparto propio.",
     ],
-    cta: { href: "#alta", label: "Dar de alta mi empresa", style: "btn-primario" },
+    cta: { href: "/contacto", label: "Dar de alta mi empresa", style: "btn-primario" },
     foot: "Propuesta B2B · factura mensual",
   },
 ];
@@ -179,39 +175,6 @@ const ventajas = [
     </div>
   </section>
 
-  <section id="alta" class="bg-[color:var(--color-leche)] border-t border-[color:var(--color-avellana)] scroll-mt-40">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-12 md:grid-cols-[1fr_1.1fr] items-start">
-      <div>
-        <SectionLabel number="05" label="Alta de empresa" />
-        <h2 class="text-3xl sm:text-4xl mt-2">Alta con CIF.</h2>
-        <p class="mt-4 text-[color:var(--color-ink-muted)]">
-          Danos de alta tu empresa y te asignamos tu código de descuento y tus
-          condiciones. A partir de ahí pides del mismo catálogo con tu precio, y
-          facturamos a mes vencido.
-        </p>
-        <ul class="mt-6 space-y-3 text-sm text-[color:var(--color-ink-muted)]">
-          {[
-            "Razón social y CIF para emitir factura.",
-            "Código de descuento asociado a tu cuenta.",
-            "Packs XL y packs empresa básica y premium.",
-            "Entrega con reparto propio de lunes a sábado.",
-          ].map((item) => (
-            <li class="flex gap-3">
-              <span class="mt-2 h-1.5 w-1.5 shrink-0 bg-[color:var(--color-avellana)]" aria-hidden="true"></span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-        <p class="mt-6 text-sm text-[color:var(--color-ink-muted)]">
-          ¿Prefieres hablarlo? Llama al
-          <a href={`tel:${central.phone}`} class="underline font-semibold">{central.phoneDisplay}</a>.
-        </p>
-      </div>
-      <div class="border border-[color:var(--color-avellana)] p-6 sm:p-8 bg-[color:var(--color-leche)]">
-        <ContactForm client:visible variant="empresa" />
-      </div>
-    </div>
-  </section>
 </MarketingLayout>
 
 <style>
