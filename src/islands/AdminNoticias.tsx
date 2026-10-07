@@ -27,6 +27,12 @@ export type Noticia = {
   ofertaCents: number | null;
   ofertaVariantes: Record<string, number>;
   ofertaHasta: string | null;
+  /**
+   * Cuándo se mandó a los suscritos a las ofertas; `null` = no se ha mandado.
+   * Llega como `Date` desde la página (Astro la serializa) y como texto
+   * desde la API: `new Date()` vale para los dos.
+   */
+  enviadaEn: string | Date | null;
 };
 
 /**
@@ -330,6 +336,41 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
     cerrar();
   }
 
+  /** Manda la noticia publicada a los suscritos a las ofertas (una sola vez). */
+  async function onEnviar(n: Noticia) {
+    if (ocupada) return;
+    if (
+      !window.confirm(
+        `¿Enviar «${n.titulo}» por correo a todos los suscritos a las ofertas? Solo se puede enviar una vez.`,
+      )
+    )
+      return;
+
+    setErrorServidor(null);
+    setMensaje(null);
+    setOcupada(n.id);
+    try {
+      const r = await fetch("/api/admin/noticias/enviar", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: n.id }),
+      });
+      const datos = await r.json().catch(() => null);
+      if (!r.ok) {
+        setErrorServidor(datos?.error ?? MENSAJE_GENERICO);
+        return;
+      }
+      setNoticias((actuales) =>
+        actuales.map((x) => (x.id === n.id ? { ...x, enviadaEn: new Date().toISOString() } : x)),
+      );
+      setMensaje(datos?.aviso ?? `Enviada a ${datos?.enviados} suscritos.`);
+    } catch {
+      setErrorServidor("No hemos podido conectar. Comprueba tu conexión.");
+    } finally {
+      setOcupada(null);
+    }
+  }
+
   async function onBorrar(n: Noticia) {
     if (ocupada) return;
     if (!window.confirm(`¿Borrar «${n.titulo}»? No se puede deshacer.`)) return;
@@ -364,6 +405,23 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
           }}
         >
           {mensaje}
+        </p>
+      )}
+
+      {/* Los errores de la lista (enviar, borrar): el del formulario va
+          dentro del formulario, y con él cerrado no se veía nada. */}
+      {!abierto && errorServidor && (
+        <p
+          role="alert"
+          style={{
+            marginBottom: 16,
+            padding: "0.75rem 1rem",
+            border: "1px solid var(--color-teja)",
+            color: "var(--color-teja)",
+            fontSize: 13,
+          }}
+        >
+          {errorServidor}
         </p>
       )}
 
@@ -422,6 +480,29 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
                   </p>
                 )}
               </button>
+              {n.publicada &&
+                (n.enviadaEn ? (
+                  <span className="numeracion" style={{ whiteSpace: "nowrap" }}>
+                    Enviada el {formatDate(new Date(n.enviadaEn))}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onEnviar(n)}
+                    disabled={ocupada === n.id}
+                    style={{
+                      background: "none",
+                      border: "1px solid var(--color-avellana)",
+                      padding: "0.4rem 0.75rem",
+                      fontSize: 13,
+                      cursor: ocupada === n.id ? "not-allowed" : "pointer",
+                      opacity: ocupada === n.id ? 0.6 : 1,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {ocupada === n.id ? "Enviando…" : "Enviar a los suscritos"}
+                  </button>
+                ))}
               <button
                 type="button"
                 onClick={() => onBorrar(n)}

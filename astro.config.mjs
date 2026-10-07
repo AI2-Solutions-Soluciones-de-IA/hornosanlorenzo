@@ -105,6 +105,8 @@ export default defineConfig({
         "/acceso",
         /^\/acceso\//,
         /^\/api\//,
+        // La baja de las ofertas: depende del token y recibe un POST.
+        "/baja",
       ],
     },
   }),

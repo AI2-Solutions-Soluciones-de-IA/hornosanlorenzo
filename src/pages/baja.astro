@@ -1,0 +1,62 @@
+---
+import MarketingLayout from "~/layouts/MarketingLayout.astro";
+import { darDeBaja } from "~/lib/db/suscriptores";
+
+/**
+ * Baja de las ofertas por correo. El enlace de cada correo trae el token
+ * (`/baja?t=…`). Abrir el enlace NO da de baja: solo enseña el botón. Los
+ * antivirus del correo «visitan» los enlaces al recibir el mensaje, y si el
+ * GET diera de baja, la gente se borraría sin haber hecho nada.
+ */
+export const prerender = false;
+
+let token = Astro.url.searchParams.get("t") ?? "";
+let estado: "pregunta" | "hecho" | "fallo" | "sin-token" = token ? "pregunta" : "sin-token";
+
+if (Astro.request.method === "POST") {
+  try {
+    token = String((await Astro.request.formData()).get("t") ?? "");
+    // Una baja repetida (o de un enlace viejo) también se da por hecha: lo
+    // que la persona quiere saber es que no le llegarán más correos.
+    if (token) {
+      await darDeBaja(token);
+      estado = "hecho";
+    } else estado = "sin-token";
+  } catch (error) {
+    console.error("[baja] no se pudo dar de baja:", error instanceof Error ? error.message : error);
+    estado = "fallo";
+  }
+}
+// Nunca en caché: cada respuesta depende del token y del POST.
+Astro.response.headers.set("cache-control", "no-store");
+---
+<MarketingLayout title="Darse de baja" description="Deja de recibir las ofertas de Horno San Lorenzo por correo.">
+  <section class="mx-auto max-w-xl px-4 sm:px-6 py-16 sm:py-24">
+    <p class="numeracion">Ofertas por correo</p>
+    {estado === "hecho" ? (
+      <>
+        <h1 class="text-4xl sm:text-5xl mt-2">Te hemos dado de baja.</h1>
+        <p class="mt-4 text-[color:var(--color-ink-muted)]">No te llegarán más ofertas por correo. Si cambias de idea, puedes volver a apuntarte en <a href="/noticias" class="underline">Este mes</a>.</p>
+      </>
+    ) : estado === "pregunta" ? (
+      <>
+        <h1 class="text-4xl sm:text-5xl mt-2">¿Dejar de recibir las ofertas?</h1>
+        <p class="mt-4 text-[color:var(--color-ink-muted)]">Pulsa el botón y no volveremos a escribirte.</p>
+        <form method="post" class="mt-8">
+          <input type="hidden" name="t" value={token} />
+          <button type="submit" class="btn btn-primario">Darme de baja</button>
+        </form>
+      </>
+    ) : estado === "fallo" ? (
+      <>
+        <h1 class="text-4xl sm:text-5xl mt-2">No hemos podido darte de baja.</h1>
+        <p class="mt-4 text-[color:var(--color-ink-muted)]">Vuelve a intentarlo en un momento, o escríbenos y lo hacemos nosotros.</p>
+      </>
+    ) : (
+      <>
+        <h1 class="text-4xl sm:text-5xl mt-2">Falta el enlace de baja.</h1>
+        <p class="mt-4 text-[color:var(--color-ink-muted)]">Usa el enlace que aparece al final de cualquiera de nuestros correos de ofertas.</p>
+      </>
+    )}
+  </section>
+</MarketingLayout>

@@ -3,6 +3,7 @@ import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import NewsCarousel from "~/components/NewsCarousel.astro";
 import type { Noticia } from "~/lib/db/noticias";
 import { noticiasPublicas } from "~/lib/lectura-publica";
+import SuscripcionOfertas from "~/islands/SuscripcionOfertas.tsx";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
 // (`astro.config.mjs`) y el panel invalidándola al publicar.
@@ -19,7 +20,7 @@ const items: Noticia[] = await noticiasPublicas(Astro.response);
 >
   <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12">
     <p class="numeracion">Este mes</p>
-    <h1 class="text-4xl sm:text-5xl mt-2">Lo que tenemos esta temporada.</h1>
+    <h1 class="text-4xl sm:text-5xl mt-2">Oferta del mes.</h1>
     <div class="mt-10">
       {items.length > 0 ? (
         <NewsCarousel items={items} />
@@ -28,6 +29,21 @@ const items: Noticia[] = await noticiasPublicas(Astro.response);
           Ahora mismo no hay nada publicado. Vuelve en unos días.
         </p>
       )}
+    </div>
+  </section>
+
+  <!-- Suscripción a las ofertas por correo (tabla `suscriptores`). -->
+  <section class="bg-[color:var(--color-latte)] border-t border-[color:var(--color-avellana)]">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-2 md:items-center">
+      <div>
+        <p class="numeracion">Ofertas por correo</p>
+        <h2 class="text-3xl sm:text-4xl mt-2">Que no se te escape ninguna.</h2>
+        <p class="mt-3 text-[color:var(--color-ink-muted)] max-w-md">
+          Déjanos tu correo y te avisamos cuando salga la oferta del mes. Sin
+          spam: solo las ofertas del obrador.
+        </p>
+      </div>
+      <SuscripcionOfertas client:visible />
     </div>
   </section>
 </MarketingLayout>

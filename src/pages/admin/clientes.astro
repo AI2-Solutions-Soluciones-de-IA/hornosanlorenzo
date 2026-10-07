@@ -3,6 +3,7 @@
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import Paginacion from "~/islands/Paginacion.tsx";
 import { listarClientes, contarClientes, type Cliente } from "~/lib/db/clientes";
+import { listarSuscriptores, contarSuscriptores, type Suscriptor } from "~/lib/db/suscriptores";
 import { leerPagina, paginar, resumenPagina } from "~/lib/paginacion";
 import { formatDate } from "~/lib/format";
 import { ROL_ADMIN } from "~/lib/auth/guardia";
@@ -16,15 +17,24 @@ const filtroTexto = (Astro.url.searchParams.get("q") ?? "").slice(0, 80).trim();
 // De 25 en 25: son filas de tabla, caben más que pedidos desplegados.
 const POR_PAGINA = 25;
 
+// Dos pestañas: las cuentas de la web y los suscritos a las ofertas de Este
+// mes (`?vista=suscritos`). Comparten búsqueda y paginación.
+const vista = Astro.url.searchParams.get("vista") === "suscritos" ? "suscritos" : "clientes";
+
 let clientes: Cliente[] = [];
+let suscritos: Suscriptor[] = [];
 let total = 0;
+let totalSuscritos = 0;
 let pag = paginar(0, POR_PAGINA, 1);
 let fallo = false;
 try {
   // Primero la cuenta, para acotar una `?pagina=` que se pase de la última.
-  total = await contarClientes(filtroTexto || undefined);
+  totalSuscritos = await contarSuscriptores(vista === "suscritos" ? filtroTexto || undefined : undefined);
+  total = vista === "suscritos" ? totalSuscritos : await contarClientes(filtroTexto || undefined);
   pag = paginar(total, POR_PAGINA, leerPagina(Astro.url.searchParams));
-  clientes = await listarClientes(POR_PAGINA, filtroTexto || undefined, (pag.pagina - 1) * POR_PAGINA);
+  const desde = (pag.pagina - 1) * POR_PAGINA;
+  if (vista === "suscritos") suscritos = await listarSuscriptores(POR_PAGINA, filtroTexto || undefined, desde);
+  else clientes = await listarClientes(POR_PAGINA, filtroTexto || undefined, desde);
 } catch (error) {
   fallo = true;
   console.error(
@@ -35,6 +45,7 @@ try {
 
 const enlacePagina = (n: number) => {
   const q = new URLSearchParams();
+  if (vista === "suscritos") q.set("vista", "suscritos");
   if (filtroTexto) q.set("q", filtroTexto);
   if (n > 1) q.set("pagina", String(n));
   const s = q.toString();
@@ -42,6 +53,23 @@ const enlacePagina = (n: number) => {
 };
 ---
 <AdminLayout titulo="Clientes">
+  <nav aria-label="Listas de clientes" class="mb-6 flex gap-6 border-b border-[color:var(--color-avellana)] text-sm">
+    {[
+      { id: "clientes", href: "/admin/clientes", label: "Clientes registrados" },
+      { id: "suscritos", href: "/admin/clientes?vista=suscritos", label: `Suscritos a ofertas${vista === "suscritos" && filtroTexto ? "" : ` (${totalSuscritos})`}` },
+    ].map((p) => (
+      <a
+        href={p.href}
+        aria-current={vista === p.id ? "page" : undefined}
+        class:list={[
+          "-mb-px pb-3 border-b-2 font-semibold",
+          vista === p.id ? "border-[color:var(--color-moka)]" : "border-transparent text-[color:var(--color-ink-muted)] hover:text-[color:var(--color-moka)]",
+        ]}
+      >
+        {p.label}
+      </a>
+    ))}
+  </nav>
   {fallo && (
     <p class="border-l-2 border-[color:var(--color-caramelo)] pl-3 py-2 text-sm">
       Ahora mismo no se pueden leer los clientes. Vuelve a intentarlo en un momento.
@@ -51,15 +79,50 @@ const enlacePagina = (n: number) => {
   <form method="get" class="mb-6 flex flex-wrap items-end gap-4 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-4">
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
-      <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nombre, correo o teléfono" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      {vista === "suscritos" && <input type="hidden" name="vista" value="suscritos" />}
+      <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder={vista === "suscritos" ? "Correo" : "Nombre, correo o teléfono"} class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <button type="submit" class="btn btn-primario">Buscar</button>
     {filtroTexto && (
-      <a href="/admin/clientes" class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">Quitar búsqueda</a>
+      <a href={vista === "suscritos" ? "/admin/clientes?vista=suscritos" : "/admin/clientes"} class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">Quitar búsqueda</a>
     )}
   </form>
 
-  {!fallo && clientes.length === 0 && (
+  {vista === "suscritos" && !fallo && (
+    suscritos.length === 0 ? (
+      <p class="text-[color:var(--color-ink-muted)]">
+        {filtroTexto ? "Ningún suscrito casa con esa búsqueda." : "Todavía no se ha suscrito nadie a las ofertas."}
+      </p>
+    ) : (
+      <>
+        <p class="mb-3 text-sm text-[color:var(--color-ink-muted)]">
+          {resumenPagina(pag, total, "suscrito", "suscritos")}. Se apuntan desde Este mes; quien se da de baja desaparece de la lista.
+        </p>
+        <div class="overflow-x-auto border border-[color:var(--color-avellana)]">
+          <table class="w-full text-sm">
+            <thead class="bg-[color:var(--color-latte)] text-left">
+              <tr>
+                <th class="p-3 font-semibold">Correo</th>
+                <th class="p-3 font-semibold">Cuenta en la web</th>
+                <th class="p-3 font-semibold">Suscrito el</th>
+              </tr>
+            </thead>
+            <tbody>
+              {suscritos.map((s) => (
+                <tr class="border-t border-[color:var(--color-line)]">
+                  <td class="p-3"><a href={`mailto:${s.email}`} class="underline">{s.email}</a></td>
+                  <td class="p-3">{s.esCliente ? "Sí" : <span class="text-[color:var(--color-ink-muted)]">No</span>}</td>
+                  <td class="p-3 text-[color:var(--color-ink-muted)] whitespace-nowrap">{formatDate(s.creadoEn)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    )
+  )}
+
+  {vista === "clientes" && !fallo && clientes.length === 0 && (
     <p class="text-[color:var(--color-ink-muted)]">
       {filtroTexto
         ? "No hay clientes que casen con esa búsqueda."
@@ -67,7 +130,7 @@ const enlacePagina = (n: number) => {
     </p>
   )}
 
-  {!fallo && total > 0 && (
+  {vista === "clientes" && !fallo && total > 0 && (
     <p class="mb-3 text-sm text-[color:var(--color-ink-muted)]">
       {resumenPagina(pag, total, "cliente", "clientes")}
     </p>

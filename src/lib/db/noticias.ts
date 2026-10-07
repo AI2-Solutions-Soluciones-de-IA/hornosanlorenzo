@@ -56,6 +56,8 @@ export type Noticia = {
   ofertaVariantes: Record<string, number>;
   /** Último día de la oferta (`YYYY-MM-DD`); `null` = mientras esté publicada. */
   ofertaHasta: string | null;
+  /** Cuándo se mandó a los suscritos a las ofertas; `null` = no se ha mandado. */
+  enviadaEn: Date | null;
 };
 
 export type DatosNoticia = {
@@ -93,6 +95,7 @@ const CAMPOS = `
   oferta_cents as "ofertaCents",
   oferta_variantes as "ofertaVariantes",
   to_char(oferta_hasta, 'YYYY-MM-DD') as "ofertaHasta",
+  enviada_en as "enviadaEn",
   (select json_build_object(
             'slug', p.slug, 'name', p.name, 'category', p.category,
             'priceCents', p.price_cents, 'consultar', p.consultar,
@@ -245,4 +248,22 @@ export async function borrarNoticia(id: string): Promise<string | null> {
     [id],
   );
   return rows[0]?.slug ?? null;
+}
+
+/**
+ * Reserva el envío de una noticia a los suscritos: la marca como enviada
+ * solo si no lo estaba, en una sentencia, para que dos clics seguidos no
+ * manden el correo dos veces. `false` si ya estaba enviada (o no existe).
+ */
+export async function reservarEnvio(id: string): Promise<boolean> {
+  const { rowCount } = await pool.query(
+    "update noticias set enviada_en = now() where id = $1 and enviada_en is null",
+    [id],
+  );
+  return (rowCount ?? 0) > 0;
+}
+
+/** Deshace la reserva cuando el envío no llegó a salir, para poder reintentar. */
+export async function anularEnvio(id: string): Promise<void> {
+  await pool.query("update noticias set enviada_en = null where id = $1", [id]);
 }
