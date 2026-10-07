@@ -1,4 +1,5 @@
 ---
+import VolverTienda from "~/components/VolverTienda.astro";
 import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import { agruparSabores } from "~/lib/sabores";
 import CategoryFilter from "~/islands/CategoryFilter.tsx";
@@ -9,6 +10,8 @@ import { secciones, seccionById, isSeccionId } from "~/data/secciones";
 import { stores } from "~/data/stores";
 
 interface Props {
+  /** Enlace «Volver a la tienda online» encima: en las secciones, no en `/catalogo`. */
+  volver?: boolean;
   /**
    * El catálogo activo, ya leído por la página con `catalogoPublico`. La
    * lectura NO se hace aquí: cuando falla hay que marcar la respuesta como
@@ -38,6 +41,7 @@ const {
   defsPacks,
   grupo = null,
   eyebrow,
+  volver = false,
   title,
   intro,
   porSeccion = false,
@@ -95,6 +99,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
 }
 ---
 <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12">
+  {volver && <VolverTienda class="-mt-4 mb-4" />}
   <p class="numeracion">{eyebrow}</p>
   {title && <h1 class="text-4xl sm:text-5xl mt-2">{title}</h1>}
   {intro && <p class="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">{intro}</p>}

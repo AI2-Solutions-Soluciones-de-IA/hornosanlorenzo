@@ -1,4 +1,5 @@
 ---
+import VolverTienda from "~/components/VolverTienda.astro";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import PackCard from "~/components/PackCard.astro";
 import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
@@ -35,6 +36,7 @@ const tarjetas = catalogo.flatMap((pack) => {
 
   <section>
     <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-10 sm:py-14">
+      <VolverTienda class="-mt-4 mb-4" />
       {tarjetas.length > 0 ? (
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {tarjetas.map(({ pack, def, ficha }) => (

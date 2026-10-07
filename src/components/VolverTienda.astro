@@ -1,0 +1,22 @@
+---
+/**
+ * Enlace para salir de una sección de Tienda Online (Dulce, Salado, Packs,
+ * Top Ventas) a la portada de la tienda. Va a `/catalogo` y no a
+ * `history.back()`: quien llega desde Google o un enlace compartido no
+ * tiene «atrás» dentro de la web.
+ */
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+---
+<a
+  href="/catalogo"
+  class:list={[
+    "inline-flex items-center gap-2 min-h-10 text-[11px] font-medium uppercase tracking-[0.16em] text-[color:var(--color-ink-muted)] hover:text-[color:var(--color-teja)] transition-colors",
+    className,
+  ]}
+>
+  <span aria-hidden="true" class="text-base leading-none">←</span>
+  Volver a la tienda online
+</a>
