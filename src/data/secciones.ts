@@ -2,7 +2,8 @@
  * Secciones de la carta (CARTA_PRECIOS_FINAL, septiembre de 2026).
  * Agrupan el catálogo tal y como está organizada la carta impresa; se
  * superponen a las categorías sin sustituirlas. En la web salen en el orden
- * de esta lista: «Sin alérgenos», la última de Dulce y de Salado (7-10-2026).
+ * de esta lista. Las dos «sin alérgenos» tienen su propia página
+ * (`/catalogo/sin-alergenos`, categoría `sin-alergenos`) desde el 7-10-2026.
  */
 export const seccionIds = [
   "tartas-obrador",
@@ -105,8 +106,8 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "dulce-para-todos",
-    label: "Sin alérgenos",
-    eyebrow: "Dulce · Sin alérgenos",
+    label: "Dulce sin alérgenos",
+    eyebrow: "Sin alérgenos · Dulce",
     order: 1050,
   },
   {
@@ -148,8 +149,8 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "salado-para-todos",
-    label: "Sin alérgenos",
-    eyebrow: "Salado · Sin alérgenos",
+    label: "Salado sin alérgenos",
+    eyebrow: "Sin alérgenos · Salado",
     order: 1750,
   },
   {

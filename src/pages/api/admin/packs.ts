@@ -119,7 +119,7 @@ async function validar(
 }
 
 /** Rutas estáticas bajo /catalogo/ que taparían la ficha de un pack con ese slug. */
-const RESERVADOS = new Set(["packs", "dulce", "salado", "top-ventas"]);
+const RESERVADOS = new Set(["packs", "dulce", "salado", "sin-alergenos", "top-ventas"]);
 
 /** `-2`, `-3`… hasta uno libre entre TODOS los productos, no solo los packs. */
 function slugLibre(nombre: string, ocupados: Set<string>): string {

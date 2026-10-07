@@ -40,6 +40,12 @@ export const mainNav: readonly NavItem[] = [
         categories: ["salado"],
       },
       {
+        href: "/catalogo/sin-alergenos",
+        label: "Sin alérgenos",
+        short: "Dulce y salado sin alérgenos, para que nadie se quede sin probarlo.",
+        categories: ["sin-alergenos"],
+      },
+      {
         href: "/catalogo/packs",
         label: "Packs",
         short: "Nuestras cajitas para cada ocasión, listas para llevar.",

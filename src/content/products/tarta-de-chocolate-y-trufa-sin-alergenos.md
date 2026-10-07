@@ -1,6 +1,6 @@
 ---
 name: "Tarta de Chocolate y Trufa · 6 rac."
-category: tartas
+category: sin-alergenos
 seccion: dulce-para-todos
 priceCents: 2700
 unit: "6 raciones"
