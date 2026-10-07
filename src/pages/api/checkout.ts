@@ -134,14 +134,15 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
     const session = await stripe.checkout.sessions.create({
       // Configuración del Checkout Studio de Stripe (7-10-2026), página
       // alojada por Stripe. `payment_method_collection` no va: solo vale
-      // para suscripciones.
+      // para suscripciones. `saved_payment_method_options` (guardar la
+      // tarjeta) tampoco: Stripe rechaza la sesión entera sin un `customer`,
+      // y aquí se compra sin cuenta de Stripe (rompió el cobro el 7-10-2026).
       ui_mode: "hosted_page",
       billing_address_collection: "auto",
       phone_number_collection: { enabled: true },
       automatic_tax: { enabled: false },
       allow_promotion_codes: false,
       submit_type: "auto",
-      saved_payment_method_options: { payment_method_save: "enabled" },
       integration_identifier: "hosted_mobile_app_0001",
       origin_context: "mobile_app",
       mode: "payment",
