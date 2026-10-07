@@ -51,7 +51,7 @@ export default function SuscripcionOfertas() {
     );
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-4">
+    <form onSubmit={onSubmit} noValidate className="grid gap-2">
       <div className="flex flex-col sm:flex-row gap-3">
         <label htmlFor="susc-email" className="sr-only">
           Tu correo
@@ -80,12 +80,12 @@ export default function SuscripcionOfertas() {
         onChange={(e) => setWeb(e.target.value)}
         style={{ position: "absolute", left: "-9999px", width: 1, height: 1 }}
       />
-      <label className="flex gap-3 items-start text-sm text-[color:var(--color-ink-muted)]">
+      <label className="flex gap-2 items-start text-xs leading-snug text-[color:var(--color-ink-muted)]">
         <input
           type="checkbox"
           checked={acepto}
           onChange={(e) => setAcepto(e.target.checked)}
-          className="mt-1 h-4 w-4 shrink-0"
+          className="mt-0.5 h-4 w-4 shrink-0"
         />
         <span>
           Quiero recibir por correo las ofertas de Horno San Lorenzo. Puedo darme de baja cuando

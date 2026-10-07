@@ -25,24 +25,24 @@ const [items, secciones, defsPacks] = await Promise.all([
   title="Noticias y promociones"
   description="Roscón de Reyes, San Valentín, Día del Padre, fiestas patronales y más."
 >
-  <!-- Suscripción a las ofertas por correo (tabla `suscriptores`), lo primero de la página. -->
+  <!-- Suscripción a las ofertas por correo (tabla `suscriptores`), lo primero
+       de la página. Franja baja a propósito: el precio de la oferta tiene que
+       verse sin hacer scroll (7-10-2026). -->
   <section class="bg-[color:var(--color-latte)] border-b border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-2 md:items-center">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-4 grid gap-3 md:gap-8 md:grid-cols-2 md:items-center">
       <div>
-        <p class="numeracion">Ofertas por correo</p>
-        <h2 class="text-3xl sm:text-4xl mt-2">Que no se te escape ninguna.</h2>
-        <p class="mt-3 text-[color:var(--color-ink-muted)] max-w-md">
+        <h2 class="text-2xl sm:text-3xl">Que no se te escape ninguna.</h2>
+        <p class="mt-1 text-sm text-[color:var(--color-ink-muted)] max-w-md">
           Déjanos tu correo y te avisamos cuando salga la oferta del mes. Sin
           spam: solo las ofertas del obrador.
         </p>
       </div>
-      <SuscripcionOfertas client:visible />
+      <SuscripcionOfertas client:load />
     </div>
   </section>
-  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12">
-    <p class="numeracion">Este mes</p>
-    <h1 class="text-4xl sm:text-5xl mt-2">Oferta del mes.</h1>
-    <div class="mt-10">
+  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-6 pb-12">
+    <h1 class="text-3xl sm:text-4xl">Oferta del mes.</h1>
+    <div class="mt-5">
       {items.length > 0 ? (
         <NewsCarousel items={items} />
       ) : (
