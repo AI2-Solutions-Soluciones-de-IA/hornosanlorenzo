@@ -308,7 +308,7 @@ export default function PackPedido({
               <span id="foto-pack-ayuda" style={avisoStyle}>
                 {foto.estado === "lista" && foto.pequena
                   ? "Es pequeña y puede salir borrosa al imprimirla. Si tienes otra en más calidad, cámbiala."
-                  : "Se imprime tal y como nos llega: usa la de más calidad que tengas. JPG, PNG o WebP, hasta 20 MB."}
+                  : "Se imprime con la calidad que se envíe: se recomienda mandarla en HD, en formato JPG, PNG o WebP (hasta 20 MB)."}
               </span>
               {foto.estado !== "subiendo" && (
                 <span
