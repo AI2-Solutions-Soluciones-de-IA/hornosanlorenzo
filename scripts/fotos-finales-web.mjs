@@ -484,7 +484,6 @@ const PARECIDAS = {
   "brazo-fresas-naturales-con-nata": [["brazo-de-frutas-variadas-1.png", "Brazo de nata con fresas y frutas"]],
 
   // Celebración
-  "oblea-ilustrada": [["tarta-con-foto-personalizada-1.png", "Tarta con una imagen personalizada impresa"]],
 
   // Packs
   "pack-cumpleanos": [["tarta-con-foto-personalizada-1.png", "Tarta rectangular con una fotografía personalizada impresa"]],

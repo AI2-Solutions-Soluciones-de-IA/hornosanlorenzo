@@ -182,7 +182,6 @@ const CAMBIOS = {
 
   // Dulce · Ocasiones para celebrar (el precio de la foto se queda: ver aviso)
   "tarta-retrato": { name: "Tarta con Fotografía personalizada" },
-  "oblea-ilustrada": { name: "Oblea Infantil" },
   "plancha-de-celebracion-tematica": {
     name: "Plancha Campo de Fútbol",
     short: "24 raciones.",
