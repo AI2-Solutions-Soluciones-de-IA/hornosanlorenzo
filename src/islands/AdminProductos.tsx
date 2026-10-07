@@ -1026,19 +1026,8 @@ export default function AdminProductos({ productosIniciales }: Props) {
             />
           </div>
 
-          <div style={{ marginTop: 16 }}>
-            <label style={label} htmlFor="ap-cuerpo">
-              Cuerpo (Markdown)
-            </label>
-            <textarea
-              id="ap-cuerpo"
-              value={formulario.cuerpo}
-              onChange={(e) => actualizaCampo("cuerpo", e.target.value)}
-              rows={8}
-              style={{ ...field, resize: "vertical", fontFamily: "monospace" }}
-            />
-          </div>
-
+          {/* Sin casilla de cuerpo: la ficha pública ya no lo enseña. Se
+              sigue mandando el que tenga, para no borrarlo al guardar. */}
           <div style={{ marginTop: 16 }}>
             <p style={label}>Alérgenos</p>
             <div

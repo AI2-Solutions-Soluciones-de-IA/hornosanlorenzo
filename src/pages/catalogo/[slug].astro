@@ -11,7 +11,6 @@ import { seccionesDeHuecos, slugsFijos, type DefinicionPack } from "~/data/packs
 import { definicionesPorSlugs } from "~/lib/db/packs";
 import { fichaPack, type FichaPack } from "~/lib/pack-ficha";
 import { SIN_CACHE } from "~/lib/lectura-publica";
-import { aHtml } from "~/lib/markdown";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
 // (`astro.config.mjs`) y el panel invalidándola al guardar.
@@ -93,7 +92,6 @@ if (esPack && def) {
   }
 }
 
-const cuerpo = await aHtml(product.cuerpo);
 // `category`/`seccion` son texto libre en la base de datos (sin CHECK ni FK):
 // el compilador ya no puede garantizar que existan en `categories.ts`/
 // `secciones.ts`. `isCategoryId`/`isSeccionId` son la comprobación en tiempo
@@ -266,8 +264,8 @@ const breadcrumbs = {
             <p class="mt-1 text-sm">Contiene: {product.allergens.map((a) => allergensLabel[a] ?? a).join(", ")}.</p>
           </div>
         )}
-
-        <article class="mt-8 prose prose-stone max-w-none [&_p]:my-3 text-[color:var(--color-ink)]" set:html={cuerpo} />
+        {/* Sin el cuerpo en Markdown: con la descripción basta (7-10-2026).
+            El texto sigue en la base de datos, por si vuelve. */}
       </div>
     </div>
   </section>
