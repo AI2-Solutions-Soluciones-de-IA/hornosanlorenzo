@@ -73,7 +73,9 @@ const isActive = (href: string) => {
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
-    <div class="relative justify-self-start" data-buscador>
+    <!-- Izquierda: la lupa y, desde tableta, Instagram y Facebook. -->
+    <div class="justify-self-start flex items-center gap-3">
+    <div class="relative" data-buscador>
       <button
         type="button"
         class="inline-flex items-center justify-center w-10 h-10 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
@@ -111,6 +113,8 @@ const isActive = (href: string) => {
         </button>
       </form>
     </div>
+    <SocialLinks tono="leche" class="hidden md:flex" />
+    </div>
 
     <a href="/" aria-label={`${site.name} — inicio`} class="justify-self-center">
       <!-- Logo del cliente en su versión clara, para fondo oscuro (30-9-2026):
@@ -126,6 +130,17 @@ const isActive = (href: string) => {
     </a>
 
     <div class="flex items-center justify-end gap-2">
+      <!-- La puerta del pedido en escritorio, al lado de «Regístrate»: mismo
+           tamaño y letra, pero rellena, porque es la acción principal. En el
+           móvil va en su propia barra, debajo. Entre 1024 y 1280 px no cabe
+           junto a «Regístrate» y «Entrar» sin descentrar el logo: ahí se
+           oculta (siguen el menú y el «Ver el catálogo» de la portada). -->
+      <a
+        href="/catalogo"
+        class="hidden md:inline-flex lg:hidden xl:inline-flex items-center h-10 px-4 whitespace-nowrap bg-[color:var(--color-leche)] text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-teja)] hover:bg-[color:var(--color-latte)] transition-colors"
+      >
+        Haz tu pedido
+      </a>
       <AccesoSesion tono="claro" client:load />
 
       <CartBadge client:only="react" />

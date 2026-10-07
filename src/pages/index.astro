@@ -87,39 +87,6 @@ const localBizJsonLd = stores.map((s) => ({
     secondaryCta={{ href: "/a-quien-servimos", label: "A quién servimos" }}
   />
 
-  <!-- Claim de campaña: abre manifiesto y web. Entra palabra a palabra al
-       aparecer en pantalla (ver el script del final). -->
-  <section class="claim relative overflow-hidden bg-[color:var(--color-moka)] text-[color:var(--color-leche)]" data-claim>
-    <div class="claim-brillo" aria-hidden="true"></div>
-    <div class="claim-brillo claim-brillo--2" aria-hidden="true"></div>
-    <div class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
-      <p class="font-[family-name:var(--font-display)] italic text-3xl sm:text-4xl lg:text-5xl leading-[1.1]">
-        <span class="sr-only">{`«${site.claim}»`}</span>
-        {`«${site.claim}»`.split(" ").map((palabra, i) => (
-          <><span class="claim-palabra" style={`--i:${i}`} aria-hidden="true">{palabra}</span>{" "}</>
-        ))}
-      </p>
-      <div class="claim-lado">
-        <span class="claim-raya" aria-hidden="true"></span>
-        <p class="text-[color:var(--color-avellana)]">
-          Métodos tradicionales. Ingredientes de siempre. Comida casera hecha para la vida de hoy.
-        </p>
-        <a href="/tradicion-y-calidad" class="btn btn-claro mt-6">Cómo lo hacemos</a>
-      </div>
-    </div>
-    <!-- Cinta que corre sin parar por el borde de abajo: decorativa, el
-         lector de pantalla no la lee. Va duplicada para que el bucle no salte. -->
-    <div class="claim-cinta" aria-hidden="true">
-      <div class="claim-cinta-pista">
-        {[0, 1].map(() => (
-          <span>
-            {[...lemas, ...lemas].map((l) => (<>{l}<i>✦</i></>))}
-          </span>
-        ))}
-      </div>
-    </div>
-  </section>
-
   <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24">
     <div class="flex items-end justify-between gap-4 mb-8">
       <div>
@@ -151,6 +118,40 @@ const localBizJsonLd = stores.map((s) => ({
     </div>
     <div class="mt-10 text-center">
       <a href="/catalogo" class="btn btn-primario">Haz tu pedido</a>
+    </div>
+  </section>
+
+  <!-- Claim de campaña: cierra la home, justo antes del pie (`-mb-24`
+       anula el `mt-24` del Footer solo aquí, para que vayan pegados). Entra palabra a palabra al
+       aparecer en pantalla (ver el script del final). -->
+  <section class="claim relative overflow-hidden -mb-24 bg-[color:var(--color-moka)] text-[color:var(--color-leche)]" data-claim>
+    <div class="claim-brillo" aria-hidden="true"></div>
+    <div class="claim-brillo claim-brillo--2" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
+      <p class="font-[family-name:var(--font-display)] italic text-3xl sm:text-4xl lg:text-5xl leading-[1.1]">
+        <span class="sr-only">{`«${site.claim}»`}</span>
+        {`«${site.claim}»`.split(" ").map((palabra, i) => (
+          <><span class="claim-palabra" style={`--i:${i}`} aria-hidden="true">{palabra}</span>{" "}</>
+        ))}
+      </p>
+      <div class="claim-lado">
+        <span class="claim-raya" aria-hidden="true"></span>
+        <p class="text-[color:var(--color-avellana)]">
+          Métodos tradicionales. Ingredientes de siempre. Comida casera hecha para la vida de hoy.
+        </p>
+        <a href="/tradicion-y-calidad" class="btn btn-claro mt-6">Cómo lo hacemos</a>
+      </div>
+    </div>
+    <!-- Cinta que corre sin parar por el borde de abajo: decorativa, el
+         lector de pantalla no la lee. Va duplicada para que el bucle no salte. -->
+    <div class="claim-cinta" aria-hidden="true">
+      <div class="claim-cinta-pista">
+        {[0, 1].map(() => (
+          <span>
+            {[...lemas, ...lemas].map((l) => (<>{l}<i>✦</i></>))}
+          </span>
+        ))}
+      </div>
     </div>
   </section>
 </MarketingLayout>
