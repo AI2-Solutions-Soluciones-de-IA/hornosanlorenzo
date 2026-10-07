@@ -223,8 +223,12 @@ describeSiHayBD("repositorio de pedidos", () => {
         "update pedidos set created_at = created_at - interval '1 day' where id = $1",
         [entregaOtro],
       );
-      const hoy = new Date().toISOString().slice(0, 10);
-      const ayer = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+      // El día de Madrid, como filtra el repositorio: con el de UTC, entre
+      // las 00:00 y las 02:00 de Madrid «ayer» caía un día antes y fallaba.
+      const diaMadrid = (ms: number) =>
+        new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Madrid" }).format(new Date(ms));
+      const hoy = diaMadrid(Date.now());
+      const ayer = diaMadrid(Date.now() - 86_400_000);
 
       const porEntrega = await repo.listarPedidos(50, {
         entregaDesde: "2031-01-05",
