@@ -29,11 +29,12 @@ Configurados en el Checkout Studio y puestos tal cual.
 | automatic_tax | `{ enabled: false }` |
 | allow_promotion_codes | `false` |
 | submit_type | `auto` |
-| saved_payment_method_options | `{ payment_method_save: "enabled" }` |
 | integration_identifier | `hosted_mobile_app_0001` |
 | origin_context | `mobile_app` |
 
 `payment_method_collection` (`always`) **no** se incluye: solo vale con `mode: "subscription"`.
+
+`saved_payment_method_options` (`payment_method_save: enabled`) **tampoco**: Stripe rechaza la sesión entera con «requires a customer» si no hay `customer`, y aquí se compra sin cuenta de Stripe. Lo comprobamos el 7-10-2026: con él nadie podía pagar. Si algún día se quiere guardar la tarjeta, hay que crear un Customer de Stripe por cliente.
 
 Se conservan, aunque no salen en el Studio: `customer_email` y `locale: "es"` (rellenan la página de pago) y `metadata` (el webhook la necesita para saber a qué pedido corresponde el pago y avisar al obrador; sin ella los pedidos no se marcarían como pagados).
 
@@ -41,13 +42,15 @@ Se conservan, aunque no salen en el Studio: `customer_email` y `locale: "es"` (r
 
 - **`origin_context: mobile_app`**: esto es una web, no una app móvil. Si se eligió por error, cambiarlo a `web` en el Studio (y aquí).
 - **`phone_number_collection: enabled`**: la web ya pide el teléfono en el checkout; Stripe lo volverá a pedir.
-- **`payment_method_save: enabled`**: según [la documentación de Stripe](https://docs.stripe.com/payments/checkout/save-during-payment), sin `customer` ni `customer_creation: "always"` la sesión no guarda la tarjeta. No da error, pero tampoco guarda nada.
 
 ## Puesta en marcha
 
+Estado a 7-10-2026: **claves de prueba puestas en producción** (`sk_test_…` y `whsec_…`) y pago de prueba completo comprobado (sesión, pago con 4242, vuelta a «Gracias» y pedido marcado como pagado por el webhook). Falta pasar a claves reales y configurar el correo.
+
 1. **Claves** (Vercel → proyecto → Settings → Environment Variables, entorno Production; luego volver a desplegar):
    - `STRIPE_SECRET_KEY` — Dashboard → Desarrolladores → Claves de API (`sk_test_…` para probar, `sk_live_…` para cobrar).
-   - `STRIPE_WEBHOOK_SECRET` — Dashboard → Desarrolladores → Webhooks → añadir endpoint `https://hornosanlorenzo.vercel.app/api/webhook` con el evento `checkout.session.completed`; la firma empieza por `whsec_…`.
+   - `STRIPE_WEBHOOK_SECRET` — Dashboard → Desarrolladores → Webhooks → añadir endpoint `https://hornosanlorenzo.vercel.app/api/webhook` con el evento `checkout.session.completed`; la firma empieza por `whsec_…` (no confundir con el id del webhook, `we_…`). **La URL tiene que acabar en `/api/webhook`**: apuntando a la raíz de la web, Stripe recibe un 200 de la portada, da el aviso por entregado y el pedido no pasa a pagado.
+   - Modo prueba y modo real tienen claves y webhooks distintos: al pasar a real, repetir los dos pasos en modo real.
    - La clave publicable (`pk_…`) **no** hace falta: el pago es en la página de Stripe.
 2. **Correo del pedido** (opcional pero recomendable): `RESEND_API_KEY`, `ORDER_NOTIFICATION_EMAIL`, `ORDER_FROM_EMAIL`. Sin ellas se cobra, pero no llega aviso al obrador.
 3. **Versión de la API**: el cliente de Stripe se crea sin `apiVersion` (usa la del SDK).
