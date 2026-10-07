@@ -173,8 +173,11 @@ const isActive = (href: string) => {
   <!-- Banda de navegación: las cuatro secciones -->
   <nav
     aria-label="Principal"
-    class="hidden md:block bg-[color:var(--color-latte)] border-t border-[color:var(--color-avellana)]"
+    class="hidden md:block bg-[color:var(--color-caramelo)] border-t border-[color:var(--color-leche)]/20"
   >
+    <!-- Caramelo, «CTA y activos» en la guía de marca (Brand Guidelines,
+         p. de color), con el texto en leche: 5,3:1. Nada de avellana sobre
+         o junto al caramelo, que la guía prohíbe (2,91:1). -->
     <!-- `relative` aquí y no en cada <li>: los desplegables se centran en la
          barra entera, no bajo su enlace. Centrados bajo el enlace, los anchos
          (hasta 54rem) se salían por la derecha y, aunque estén ocultos
@@ -185,8 +188,8 @@ const isActive = (href: string) => {
         const linkClass = [
           "flex items-center h-full py-4 border-b-2 transition-colors",
           active
-            ? "text-[color:var(--color-moka)] border-[color:var(--color-moka)]"
-            : "text-[color:var(--color-ink-muted)] border-transparent hover:text-[color:var(--color-moka)]",
+            ? "text-[color:var(--color-leche)] border-[color:var(--color-leche)]"
+            : "text-[color:var(--color-leche)]/80 border-transparent hover:text-[color:var(--color-leche)] hover:border-[color:var(--color-leche)]/50",
         ];
 
         if (!item.children) {
