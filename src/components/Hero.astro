@@ -20,7 +20,7 @@ interface Props {
 }
 const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, primaryCta, secondaryCta } = Astro.props;
 ---
-<section class="relative bg-[color:var(--color-leche)] overflow-hidden">
+<section class:list={["relative bg-[color:var(--color-leche)] overflow-hidden", { "hero-rojo": mensajes?.length }]}>
   <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-2 items-center">
     <div>
       {eyebrow && (
@@ -127,6 +127,38 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     transform: none;
     visibility: visible;
     transition-delay: 0.25s, 0.25s, 0s;
+  }
+  /* Escritorio: los mensajes sobre rojo teja y en blanco. Los botones se
+     invierten para leerse sobre el rojo: el principal, blanco relleno; el
+     secundario, contorno blanco. En el móvil no cambia nada. */
+  @media (min-width: 768px) {
+    .hero-rojo {
+      background: var(--color-teja);
+    }
+    .hero-rojo .numeracion,
+    .hero-rojo .mensaje :is(h1, p) {
+      color: var(--color-leche);
+    }
+    .hero-rojo .numeracion {
+      opacity: 0.75;
+    }
+    .hero-rojo .mensaje p:not(:first-child) {
+      opacity: 0.85;
+    }
+    .hero-rojo .btn-rojo {
+      background: var(--color-leche);
+      color: var(--color-teja);
+    }
+    .hero-rojo .btn-rojo:hover {
+      background: var(--color-latte);
+    }
+    .hero-rojo .btn-secundario {
+      color: var(--color-leche);
+      border-color: rgb(254 252 248 / 0.55);
+    }
+    .hero-rojo .btn-secundario:hover {
+      border-color: var(--color-leche);
+    }
   }
   @media (max-width: 639.98px) {
     /* La caja mide lo que el mensaje más largo: el corto va centrado y el
