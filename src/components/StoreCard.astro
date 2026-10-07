@@ -1,6 +1,7 @@
 ---
 import MapEmbed from "~/components/MapEmbed.astro";
 import type { Store } from "~/data/stores";
+import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 
 interface Props { store: Store; }
 const { store } = Astro.props;
@@ -18,11 +19,10 @@ const { store } = Astro.props;
         <dd>{store.hoursText}</dd>
       </div>
       <div>
-        <dt class="numeracion">Recogida de pedidos</dt>
-        <dd>
-          Hasta las {store.pickupUntil}
-          {store.pickupUntilReducido && ` · sábados, domingos y festivos hasta las ${store.pickupUntilReducido}`}
-        </dd>
+        {/* Mismo texto que el checkout (`MODE_COPY`): si cambian las
+            condiciones del reparto, cambian en los dos sitios a la vez. */}
+        <dt class="numeracion">{MODE_COPY.domicilio.label}</dt>
+        <dd>{ENTREGA_DOMICILIO_COPY}. {MODE_COPY.domicilio.body}</dd>
       </div>
       <div>
         <dt class="numeracion">Teléfono</dt>
