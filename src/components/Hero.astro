@@ -128,13 +128,11 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     visibility: visible;
     transition-delay: 0.25s, 0.25s, 0s;
   }
-  /* Escritorio: los mensajes sobre moka (antes rojo teja, cambiado el
-     8-10-2026) y en blanco. Los botones se invierten para leerse sobre el
-     fondo oscuro: el principal, blanco relleno; el secundario, contorno
-     blanco. En el móvil no cambia nada. */
+  /* Escritorio: los mensajes sobre blanco y en moka (antes sobre rojo teja;
+     cambiado el 8-10-2026). Los botones van con su estilo de siempre. */
   @media (min-width: 768px) {
     .hero-rojo {
-      background: var(--color-moka);
+      background: #fff;
     }
     /* El vídeo ocupa toda la mitad derecha de la franja roja, de arriba
        abajo y hasta el borde de la pantalla, sin marco. La altura la da el
@@ -155,27 +153,13 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     }
     .hero-rojo .numeracion,
     .hero-rojo .mensaje :is(h1, p) {
-      color: var(--color-leche);
+      color: var(--color-moka);
     }
     .hero-rojo .numeracion {
       opacity: 0.75;
     }
     .hero-rojo .mensaje p:not(:first-child) {
       opacity: 0.85;
-    }
-    .hero-rojo .btn-rojo {
-      background: var(--color-leche);
-      color: var(--color-teja);
-    }
-    .hero-rojo .btn-rojo:hover {
-      background: var(--color-latte);
-    }
-    .hero-rojo .btn-secundario {
-      color: var(--color-leche);
-      border-color: rgb(254 252 248 / 0.55);
-    }
-    .hero-rojo .btn-secundario:hover {
-      border-color: var(--color-leche);
     }
   }
   @media (max-width: 639.98px) {
