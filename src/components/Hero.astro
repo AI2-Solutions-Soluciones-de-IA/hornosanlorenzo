@@ -128,12 +128,13 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     visibility: visible;
     transition-delay: 0.25s, 0.25s, 0s;
   }
-  /* Escritorio: los mensajes sobre rojo teja y en blanco. Los botones se
-     invierten para leerse sobre el rojo: el principal, blanco relleno; el
-     secundario, contorno blanco. En el móvil no cambia nada. */
+  /* Escritorio: los mensajes sobre moka (antes rojo teja, cambiado el
+     8-10-2026) y en blanco. Los botones se invierten para leerse sobre el
+     fondo oscuro: el principal, blanco relleno; el secundario, contorno
+     blanco. En el móvil no cambia nada. */
   @media (min-width: 768px) {
     .hero-rojo {
-      background: var(--color-teja);
+      background: var(--color-moka);
     }
     /* El vídeo ocupa toda la mitad derecha de la franja roja, de arriba
        abajo y hasta el borde de la pantalla, sin marco. La altura la da el
