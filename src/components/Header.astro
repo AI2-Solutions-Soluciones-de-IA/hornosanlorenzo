@@ -56,6 +56,9 @@ const isActive = (href: string) => {
   const path = href.split("?")[0];
   return path === "/" ? here === "/" : here.startsWith(path);
 };
+// El menú se parte en dos alrededor del sello: estas entradas a la izquierda
+// y el resto a la derecha (con este reparto las dos mitades miden parecido).
+const MITAD_MENU = 3;
 ---
 <header
   class="sticky top-0 z-50 bg-[color:var(--color-teja)]/95 backdrop-blur border-b border-[color:var(--color-avellana)]"
@@ -72,7 +75,7 @@ const isActive = (href: string) => {
   </div>
 
   <!-- Banda superior: La Firma · buscador y acceso -->
-  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-4 sm:py-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-4 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_10rem_1fr] xl:grid-cols-[1fr_11rem_1fr] items-center gap-4">
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
@@ -119,19 +122,27 @@ const isActive = (href: string) => {
     <SocialLinks tono="leche" class="hidden md:flex" />
     </div>
 
-    <a href="/" aria-label={`${site.name} — inicio`} class="justify-self-center">
-      <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). `alt`
-           vacío: el enlace ya se nombra con aria-label. -->
+    <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). Desde
+         1024 px va grande y flotando en el centro, montado sobre la franja
+         roja y la barra del menú, que se abre a sus dos lados. `alt` vacío:
+         el enlace ya se nombra con aria-label. -->
+    <a
+      href="/"
+      aria-label={`${site.name} — inicio`}
+      class="justify-self-center lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:top-2 lg:z-10"
+    >
       <Image quality={85}
         src={sello}
         alt=""
-        widths={[128, 192, 256]}
-        sizes="(min-width:1024px) 96px, (min-width:640px) 84px, 64px"
-        class="w-16 h-16 sm:w-[84px] sm:h-[84px] lg:w-24 lg:h-24"
+        widths={[128, 192, 256, 384]}
+        sizes="(min-width:1280px) 160px, (min-width:1024px) 144px, (min-width:640px) 84px, 64px"
+        class="w-16 h-16 sm:w-[84px] sm:h-[84px] lg:w-36 lg:h-36 xl:w-40 xl:h-40"
       />
     </a>
 
-    <div class="flex items-center justify-end gap-2">
+    <!-- `col-start-3`: desde 1024 px el sello flota y deja la columna del
+         centro vacía; sin esto, estos botones se metían debajo de él. -->
+    <div class="flex items-center justify-end gap-2 lg:col-start-3">
       <!-- La puerta del pedido en escritorio, al lado de «Regístrate»: mismo
            tamaño y letra, pero rellena, porque es la acción principal. En el
            móvil va en su propia barra, debajo. Entre 1024 y 1280 px no cabe
@@ -183,8 +194,14 @@ const isActive = (href: string) => {
          barra entera, no bajo su enlace. Centrados bajo el enlace, los anchos
          (hasta 54rem) se salían por la derecha y, aunque estén ocultos
          (`invisible`), ensanchaban la página: scroll lateral a 1024 px. -->
-    <ul class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-3 lg:gap-7 xl:gap-12 text-[10px] lg:text-[11px] font-medium uppercase tracking-[0.1em] lg:tracking-[0.16em]">
-      {mainNav.map((item) => {
+    <!-- Hasta 1024 px, una sola fila centrada (los `<ul>` son `contents`).
+         Desde ahí, dos mitades con el hueco del sello en medio. -->
+    <div class="relative mx-auto max-w-6xl lg:max-w-none px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-3 lg:grid lg:grid-cols-[1fr_10rem_1fr] xl:grid-cols-[1fr_11rem_1fr] lg:gap-0 text-[10px] xl:text-[11px] font-medium uppercase tracking-[0.1em] xl:tracking-[0.14em] 2xl:tracking-[0.16em]">
+    {[mainNav.slice(0, MITAD_MENU), mainNav.slice(MITAD_MENU)].map((grupo, g) => (
+    <>
+    {g === 1 && <div class="hidden lg:block" aria-hidden="true"></div>}
+    <ul class:list={["contents lg:flex lg:items-stretch lg:gap-4 xl:gap-7 2xl:gap-10", g === 0 ? "lg:justify-end lg:pr-4 xl:pr-6" : "lg:justify-start lg:pl-4 xl:pl-6"]}>
+      {grupo.map((item) => {
         const active = isActive(item.href);
         const linkClass = [
           "flex items-center h-full py-4 border-b-2 transition-colors whitespace-nowrap",
@@ -217,7 +234,7 @@ const isActive = (href: string) => {
               class:list={[...linkClass, "gap-1.5"]}
             >
               {item.label}
-              <svg viewBox="0 0 12 12" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <svg viewBox="0 0 12 12" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" class="shrink-0">
                 <path d="m2 4.5 4 3.5 4-3.5" />
               </svg>
             </a>
@@ -256,6 +273,9 @@ const isActive = (href: string) => {
         );
       })}
     </ul>
+    </>
+    ))}
+    </div>
   </nav>
 
   <!-- Menú móvil (plegado) -->
