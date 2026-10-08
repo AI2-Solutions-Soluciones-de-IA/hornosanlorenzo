@@ -6,7 +6,7 @@ import SocialLinks from "~/components/SocialLinks.astro";
 import { site } from "~/data/site";
 import { mainNav } from "~/data/navigation";
 
-import logoHsl from "../../public/images/logo-hsl.png";
+import sello from "../../public/images/sello-hsl.png";
 import imgDulce from "../../public/images/productos/menu-dulce.jpg";
 import imgSalado from "../../public/images/productos/menu-salado.jpg";
 import imgSinAlergenos from "../../public/images/productos/menu-sin-alergenos.jpg";
@@ -120,15 +120,14 @@ const isActive = (href: string) => {
     </div>
 
     <a href="/" aria-label={`${site.name} — inicio`} class="justify-self-center">
-      <!-- Logo del cliente en su versión clara, para fondo oscuro (30-9-2026):
-           se lee sobre el rojo teja tal cual, sin invertirlo por CSS como la
-           firma de antes. `alt` vacío: el enlace ya se nombra con aria-label. -->
+      <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). `alt`
+           vacío: el enlace ya se nombra con aria-label. -->
       <Image quality={85}
-        src={logoHsl}
+        src={sello}
         alt=""
-        widths={[200, 320, 480, 640]}
-        sizes="(min-width:1024px) 210px, (min-width:640px) 190px, 160px"
-        class="w-[160px] sm:w-[190px] lg:w-[210px] h-auto"
+        widths={[128, 192, 256]}
+        sizes="(min-width:1024px) 96px, (min-width:640px) 84px, 64px"
+        class="w-16 h-16 sm:w-[84px] sm:h-[84px] lg:w-24 lg:h-24"
       />
     </a>
 
