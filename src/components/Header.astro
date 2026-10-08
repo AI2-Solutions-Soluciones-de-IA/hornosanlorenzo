@@ -182,6 +182,39 @@ const MITAD_MENU = 3;
     >
       Haz tu pedido
     </a>
+
+    <!-- Selector de secciones, en blanco con letras rojas (9-10-2026): el
+         menú entero a un toque, sin abrir el ☰. Un <details> nativo, que
+         funciona sin JavaScript; el script solo lo cierra al navegar y pone
+         en la etiqueta la sección en la que se está. -->
+    <details class="relative mt-2 group/selector" data-selector-movil>
+      <summary class="flex items-center justify-between gap-3 min-h-10 px-4 bg-white text-[color:var(--color-teja)] text-[13px] font-semibold uppercase tracking-[0.12em] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <span data-selector-actual>Secciones</span>
+        <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" class="shrink-0 transition-transform group-open/selector:rotate-180">
+          <path d="m2 4.5 4 3.5 4-3.5" />
+        </svg>
+      </summary>
+      <ul class="absolute left-0 right-0 top-full z-50 mt-px bg-white border border-[color:var(--color-avellana)] shadow-lg max-h-[60dvh] overflow-y-auto overscroll-contain">
+        {mainNav.map((item) => (
+          <li class="border-b border-[color:var(--color-avellana)]/60 last:border-b-0">
+            <a href={item.href} data-selector-enlace class="block px-4 py-3 text-[13px] font-semibold uppercase tracking-[0.1em] text-[color:var(--color-teja)] hover:bg-[color:var(--color-latte)]">
+              {item.label}
+            </a>
+            {item.children && (
+              <ul class="pb-2">
+                {item.children.map((child) => (
+                  <li>
+                    <a href={child.href} data-selector-enlace class="block pl-8 pr-4 py-2 text-sm text-[color:var(--color-teja)] hover:bg-[color:var(--color-latte)]">
+                      {child.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
+    </details>
   </div>
 
   <!-- Banda de navegación: las cuatro secciones -->
@@ -403,6 +436,35 @@ const MITAD_MENU = 3;
     // Close immediately on tap (before navigation finishes)
     if (target?.closest("[data-mobile-nav-link]")) closeMobileNav();
   });
+
+  // Selector de secciones del móvil: se cierra al elegir y al tocar fuera.
+  const selector = () => document.querySelector<HTMLDetailsElement>("[data-selector-movil]");
+  document.addEventListener("click", (e) => {
+    const sel = selector();
+    if (!sel?.open) return;
+    const target = e.target as HTMLElement | null;
+    if (target?.closest("[data-selector-enlace]") || !target?.closest("[data-selector-movil]")) sel.open = false;
+  });
+  /**
+   * La cabecera persiste entre páginas (`transition:persist`), así que la
+   * etiqueta se pone aquí, en cada carga: la sección más concreta que
+   * coincida con la URL («Salado» antes que «Tienda Online»).
+   */
+  const etiquetaSelector = () => {
+    const sel = selector();
+    if (!sel) return;
+    sel.open = false;
+    const ruta = location.pathname + location.hash;
+    let mejor: { texto: string; largo: number } | null = null;
+    for (const a of sel.querySelectorAll<HTMLAnchorElement>("[data-selector-enlace]")) {
+      const href = a.getAttribute("href") ?? "";
+      const casa = href === "/" ? location.pathname === "/" : ruta.startsWith(href);
+      if (casa && (!mejor || href.length > mejor.largo)) mejor = { texto: a.textContent?.trim() ?? "", largo: href.length };
+    }
+    const span = sel.querySelector("[data-selector-actual]");
+    if (span) span.textContent = mejor?.texto || "Secciones";
+  };
+  document.addEventListener("astro:page-load", etiquetaSelector);
 
   // Also close after every view-transition page swap (covers back/forward)
   document.addEventListener("astro:page-load", closeMobileNav);
