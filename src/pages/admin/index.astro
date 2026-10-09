@@ -14,27 +14,15 @@ export const prerender = false;
   </p>
   <ul class="mt-8 grid gap-px bg-[color:var(--color-avellana)] sm:grid-cols-2 border border-[color:var(--color-avellana)]">
     <li class="bg-[color:var(--color-leche)]">
-      <a href="/admin/resumen" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
-        <span class="font-[family-name:var(--font-display)] text-xl">Resumen</span>
-        <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Pedidos, recaudación, pendiente de cobro y top productos, por fechas.</span>
-      </a>
-    </li>
-    <li class="bg-[color:var(--color-leche)]">
-      <a href="/admin/produccion" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
-        <span class="font-[family-name:var(--font-display)] text-xl">Producción</span>
-        <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Qué hornear y cuánto para un día de entrega, por tienda o reparto. Se imprime.</span>
-      </a>
-    </li>
-    <li class="bg-[color:var(--color-leche)]">
       <a href="/admin/pedidos" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
         <span class="font-[family-name:var(--font-display)] text-xl">Pedidos</span>
         <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Lo que ha entrado por la web, del más reciente al más antiguo.</span>
       </a>
     </li>
     <li class="bg-[color:var(--color-leche)]">
-      <a href="/admin/clientes" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
-        <span class="font-[family-name:var(--font-display)] text-xl">Clientes</span>
-        <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Quién se ha registrado, con su correo y su teléfono.</span>
+      <a href="/admin/produccion" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
+        <span class="font-[family-name:var(--font-display)] text-xl">Producción</span>
+        <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Qué hornear y cuánto para un día de entrega, por tienda o reparto. Se imprime.</span>
       </a>
     </li>
     {/* Productos y Noticias son las dos pantallas del día a día del obrador y
@@ -47,9 +35,21 @@ export const prerender = false;
       </a>
     </li>
     <li class="bg-[color:var(--color-leche)]">
+      <a href="/admin/clientes" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
+        <span class="font-[family-name:var(--font-display)] text-xl">Clientes</span>
+        <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Quién se ha registrado, con su correo y su teléfono.</span>
+      </a>
+    </li>
+    <li class="bg-[color:var(--color-leche)]">
       <a href="/admin/noticias" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
         <span class="font-[family-name:var(--font-display)] text-xl">Este mes</span>
         <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Promociones y temporada: lo que sale en la portada y en /noticias.</span>
+      </a>
+    </li>
+    <li class="bg-[color:var(--color-leche)]">
+      <a href="/admin/resumen" class="flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors">
+        <span class="font-[family-name:var(--font-display)] text-xl">Resumen</span>
+        <span class="mt-2 text-sm text-[color:var(--color-ink-muted)]">Pedidos, recaudación, pendiente de cobro y top productos, por fechas.</span>
       </a>
     </li>
   </ul>

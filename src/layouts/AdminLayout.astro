@@ -15,14 +15,15 @@ const { titulo } = Astro.props;
 // Datos de clientes y pedidos: ni caché compartida ni disco del navegador.
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
+// Pedidos lo primero y Resumen lo último (9-10-2026).
 const todas = [
-  { href: "/admin/resumen", label: "Resumen" },
-  { href: "/admin/produccion", label: "Producción" },
   { href: "/admin/pedidos", label: "Pedidos" },
+  { href: "/admin/produccion", label: "Producción" },
   { href: "/admin/productos", label: "Productos" },
   { href: "/admin/packs", label: "Packs" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/noticias", label: "Este mes" },
+  { href: "/admin/resumen", label: "Resumen" },
 ];
 // Solo lo que el papel abre: la oficina ve Pedidos y nada más. Quien corta
 // de verdad es el middleware; esto evita enseñar enlaces que dan 404.
