@@ -65,6 +65,8 @@ function entradaEnMadrid(fecha: Date): string {
 
 function estadoLegible(p: PedidoConLineas): string {
   if (p.estado === "sin_pago") return "Sin pagar";
+  if (p.devueltoCents >= p.totalCents && p.devueltoCents > 0) return "Devuelto";
+  if (p.devueltoCents > 0) return `Devuelto en parte (${(p.devueltoCents / 100).toFixed(2).replace(".", ",")} €)`;
   return p.stripeSessionId ? "Pagado por Stripe" : "Cobrado en tienda";
 }
 

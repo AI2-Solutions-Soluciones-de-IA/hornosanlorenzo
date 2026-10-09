@@ -9,10 +9,12 @@ vi.mock("~/lib/email/enviar", () => ({
 const marcarPagado = vi.fn();
 const marcarAvisado = vi.fn();
 const crearPedidoReconstruido = vi.fn();
+const marcarDevuelto = vi.fn();
 vi.mock("~/lib/db/pedidos", () => ({
   marcarPagado,
   marcarAvisado,
   crearPedidoReconstruido,
+  marcarDevuelto,
 }));
 
 beforeEach(() => {
@@ -266,5 +268,28 @@ describe("etiquetaPagoEnStripe", () => {
     await expect(
       etiquetaPagoEnStripe(stripe, { id: "cs_1", payment_intent: "pi_1" } as unknown as Stripe.Checkout.Session, { id: "x", notificadoEn: null }),
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("anotarDevolucion", () => {
+  it("busca la sesión del cobro y apunta lo devuelto en total", async () => {
+    const { anotarDevolucion } = await import("~/pages/api/webhook");
+    const list = vi.fn().mockResolvedValue({ data: [{ id: "cs_test_9" }] });
+    const stripe = { checkout: { sessions: { list } } } as unknown as Stripe;
+    marcarDevuelto.mockReset().mockResolvedValue({ id: "p9", numero: 9 });
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    const r = await anotarDevolucion(stripe, { payment_intent: "pi_9", amount_refunded: 500 } as unknown as Stripe.Charge);
+    expect(r.status).toBe(200);
+    expect(list).toHaveBeenCalledWith({ payment_intent: "pi_9", limit: 1 });
+    expect(marcarDevuelto).toHaveBeenCalledWith("cs_test_9", 500);
+  });
+
+  it("si la base de datos falla, 500 para que Stripe lo reintente", async () => {
+    const { anotarDevolucion } = await import("~/pages/api/webhook");
+    const stripe = { checkout: { sessions: { list: vi.fn().mockResolvedValue({ data: [{ id: "cs_1" }] }) } } } as unknown as Stripe;
+    marcarDevuelto.mockReset().mockRejectedValue(new Error("caída"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const r = await anotarDevolucion(stripe, { payment_intent: "pi_1", amount_refunded: 100 } as unknown as Stripe.Charge);
+    expect(r.status).toBe(500);
   });
 });

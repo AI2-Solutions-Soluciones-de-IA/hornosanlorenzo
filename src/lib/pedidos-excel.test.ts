@@ -6,6 +6,7 @@ import type { PedidoConLineas } from "~/lib/db/pedidos";
 const pedido = (extra: Partial<PedidoConLineas> = {}): PedidoConLineas => ({
   id: "b560ca67-4e60-460a-93d8-2395ebfe2133",
   numero: 7,
+  devueltoCents: 0,
   userId: null,
   stripeSessionId: null,
   mode: "recogida",

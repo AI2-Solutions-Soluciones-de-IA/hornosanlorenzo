@@ -134,6 +134,14 @@ describeSiHayBD("resumen del panel", () => {
     expect(r.porDispositivo).toEqual({ movil: 1, tablet: 0, ordenador: 1, sinDato: 1 });
   });
 
+  it("lo devuelto desde Stripe se resta de la recaudación", async () => {
+    await pedidos.marcarDevuelto("cs_stats_1", 200);
+    const r = await stats.resumen({ desde: DIA, hasta: DIA });
+    expect(r.recaudacionCents).toBe(600 + 4200 - 200);
+    expect(r.devoluciones).toEqual({ pedidos: 1, cents: 200 });
+    await pedidos.marcarDevuelto("cs_stats_1", 0);
+  });
+
   it("un rango vacío devuelve ceros, no nulos", async () => {
     const r = await stats.resumen({ desde: "2020-01-01", hasta: "2020-01-02" });
     expect(r.pedidos.total).toBe(0);

@@ -6,6 +6,7 @@ import {
   marcarPagado,
   marcarAvisado,
   crearPedidoReconstruido,
+  marcarDevuelto,
   type PedidoAnotado,
 } from "~/lib/db/pedidos";
 
@@ -47,6 +48,10 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response("invalid signature", { status: 400 });
   }
 
+  if (event.type === "charge.refunded") {
+    return anotarDevolucion(stripe, event.data.object as Stripe.Charge);
+  }
+
   if (event.type !== "checkout.session.completed") {
     return new Response("ignored", { status: 200 });
   }
@@ -78,6 +83,28 @@ export const POST: APIRoute = async ({ request }) => {
 
   return new Response("ok", { status: 200 });
 };
+
+/**
+ * Devolución hecha desde el panel de Stripe (9-10-2026): se busca la sesión
+ * de pago de ese cobro y se apunta lo devuelto en el pedido. Si falla la
+ * base de datos se responde 500 para que Stripe lo reintente.
+ */
+export async function anotarDevolucion(stripe: Stripe, charge: Stripe.Charge): Promise<Response> {
+  const pago = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+  if (!pago) return new Response("sin pago", { status: 200 });
+  try {
+    const sesiones = await stripe.checkout.sessions.list({ payment_intent: pago, limit: 1 });
+    const sesion = sesiones.data[0]?.id;
+    if (!sesion) return new Response("sin sesión", { status: 200 });
+    const pedido = await marcarDevuelto(sesion, charge.amount_refunded ?? 0);
+    if (!pedido) return new Response("pedido desconocido", { status: 200 });
+    console.info(`[webhook] devolución apuntada en el pedido nº ${pedido.numero ?? pedido.id}: ${charge.amount_refunded} céntimos`);
+    return new Response("devolución apuntada", { status: 200 });
+  } catch (err) {
+    console.error("[webhook] no se pudo apuntar la devolución:", err instanceof Error ? err.message : err);
+    return new Response("error", { status: 500 });
+  }
+}
 
 /**
  * Pone en el pago de Stripe el número de pedido y la referencia de la web

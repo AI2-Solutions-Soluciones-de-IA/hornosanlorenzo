@@ -46,6 +46,8 @@ export type PedidoConLineas = {
   totalCents: number;
   /** El panel solo lista `pagado` y `sin_pago`; `iniciado` es un carrito abandonado. */
   estado: "pagado" | "sin_pago";
+  /** Lo devuelto desde Stripe (migración 024); 0 si nada. */
+  devueltoCents: number;
   reconstruido: boolean;
   createdAt: Date;
   lineas: LineaPedido[];
@@ -198,6 +200,26 @@ export async function marcarPagado(ref: {
 }
 
 /**
+ * Apunta una devolución hecha desde Stripe (evento `charge.refunded`).
+ * `totalDevueltoCents` es lo devuelto en total en ese pago, no esta
+ * devolución suelta: Stripe lo da ya acumulado, así que repetir el aviso no
+ * suma dos veces. Devuelve el pedido tocado, o null si la sesión no es nuestra.
+ */
+export async function marcarDevuelto(
+  sessionId: string,
+  totalDevueltoCents: number,
+): Promise<{ id: string; numero: number | null } | null> {
+  const { rows } = await pool.query<{ id: string; numero: number | null }>(
+    `update pedidos
+        set devuelto_cents = $2, devuelto_en = now()
+      where stripe_session_id = $1
+      returning id, numero`,
+    [sessionId, totalDevueltoCents],
+  );
+  return rows[0] ?? null;
+}
+
+/**
  * Último recurso: el cobro salió bien pero el pedido no llegó a anotarse
  * (Postgres caído en ese momento). Se reconstruye con lo que da Stripe, que
  * es menos —no hay slugs ni desglose de envío— y por eso queda marcado.
@@ -333,6 +355,7 @@ const PROYECCION_PEDIDO = `
   p.envio_cents    as "envioCents",
   p.total_cents    as "totalCents",
   p.estado,
+  p.devuelto_cents as "devueltoCents",
   p.reconstruido,
   p.created_at     as "createdAt",
   coalesce(

@@ -14,7 +14,9 @@ export type Rango = { desde: string; hasta: string };
 
 export type Resumen = {
   pedidos: { total: number; cobrados: number; sinPagar: number; abandonados: number };
+  /** Lo cobrado menos lo devuelto desde Stripe. */
   recaudacionCents: number;
+  devoluciones: { pedidos: number; cents: number };
   pendienteCents: number;
   ticketMedioCents: number;
   porModalidad: { recogida: number; domicilio: number };
@@ -44,7 +46,9 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
               count(*) filter (where p.estado = 'pagado')         as cobrados,
               count(*) filter (where p.estado = 'sin_pago')       as sin_pagar,
               count(*) filter (where p.estado = 'iniciado')       as abandonados,
-              coalesce(sum(p.total_cents) filter (where p.estado = 'pagado'), 0)   as recaudacion,
+              coalesce(sum(p.total_cents - p.devuelto_cents) filter (where p.estado = 'pagado'), 0) as recaudacion,
+              count(*) filter (where p.estado = 'pagado' and p.devuelto_cents > 0) as devueltos,
+              coalesce(sum(p.devuelto_cents) filter (where p.estado = 'pagado'), 0) as devuelto,
               coalesce(sum(p.total_cents) filter (where p.estado = 'sin_pago'), 0) as pendiente,
               coalesce(avg(p.total_cents) filter (where ${CON_IMPORTE}), 0)        as ticket_medio
          from pedidos p
@@ -118,6 +122,7 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
       abandonados: n(t.abandonados),
     },
     recaudacionCents: n(t.recaudacion),
+    devoluciones: { pedidos: n(t.devueltos), cents: n(t.devuelto) },
     pendienteCents: n(t.pendiente),
     ticketMedioCents: Math.round(n(t.ticket_medio)),
     porModalidad: { recogida: n(modo.recogida), domicilio: n(modo.domicilio) },

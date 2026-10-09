@@ -106,7 +106,11 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
         <li class={kpi}>
           <p class="numeracion">Recaudación</p>
           <p class={cifra}>{formatPriceCents(datos.recaudacionCents)}</p>
-          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">Stripe y cobrado en tienda</p>
+          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">
+            Stripe y cobrado en tienda
+            {datos.devoluciones.pedidos > 0 &&
+              `, ya restado lo devuelto (${formatPriceCents(datos.devoluciones.cents)} en ${datos.devoluciones.pedidos} ${datos.devoluciones.pedidos === 1 ? "pedido" : "pedidos"})`}
+          </p>
         </li>
         <li class={kpi}>
           <p class="numeracion">Pendiente de cobro</p>

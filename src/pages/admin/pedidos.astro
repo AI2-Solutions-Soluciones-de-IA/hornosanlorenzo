@@ -215,6 +215,14 @@ function modalidad(p: PedidoConLineas): string {
                 deStripe={p.stripeSessionId !== null}
               />
             </dd>
+            {/* Devolución hecha desde Stripe (webhook `charge.refunded`). */}
+            {p.devueltoCents > 0 && (
+              <dd class="mt-2 inline-block px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] border border-[color:var(--color-teja)] text-[color:var(--color-teja)]">
+                {p.devueltoCents >= p.totalCents
+                  ? "Devuelto"
+                  : `Devuelto en parte · ${formatPriceCents(p.devueltoCents)}`}
+              </dd>
+            )}
           </div>
         </dl>
 
