@@ -62,21 +62,6 @@ const publicos = [
     foot: "Propuesta B2B · factura mensual",
   },
 ];
-
-const ventajas = [
-  {
-    title: "El mismo catálogo",
-    body: "Nada distinto para empresa: el mismo producto que sale cada mañana del obrador, con las mismas recetas.",
-  },
-  {
-    title: "Packs XL con descuento",
-    body: "Los formatos grandes llevan descuento por volumen aplicado automáticamente a tu cuenta.",
-  },
-  {
-    title: "Packs empresa: básica y premium",
-    body: "Dos niveles de selección para desayunos y reuniones, según lo que quieras poner en la mesa.",
-  },
-];
 ---
 <MarketingLayout
   title="A quién servimos"
@@ -162,18 +147,6 @@ const ventajas = [
     </section>
   ))}
 
-  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20">
-    <SectionLabel number="04" label="Cómo funciona" />
-    <h2 class="text-3xl sm:text-4xl mt-2">Te damos de alta y ya pides con tu precio.</h2>
-    <div class="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-3">
-      {ventajas.map((v) => (
-        <div class="border-t border-[color:var(--color-avellana)] pt-5">
-          <h3 class="font-[family-name:var(--font-display)] text-xl">{v.title}</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{v.body}</p>
-        </div>
-      ))}
-    </div>
-  </section>
 
 </MarketingLayout>
 
