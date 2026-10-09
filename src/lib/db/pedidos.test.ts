@@ -207,6 +207,25 @@ describeSiHayBD("repositorio de pedidos", () => {
     });
   });
 
+  describe("número de pedido", () => {
+    it("se asigna al entrar en la lista; un carrito abandonado no gasta número", async () => {
+      const numero = async (id: string) =>
+        (await pool.query<{ numero: number | null }>("select numero from pedidos where id = $1", [id])).rows[0].numero;
+
+      const porCobrar = await repo.crearPedidoIniciado(pedidoDePrueba() as never, { estado: "sin_pago" });
+      const n1 = await numero(porCobrar);
+      expect(n1).toBeGreaterThan(0);
+
+      const abandonado = await repo.crearPedidoIniciado(pedidoDePrueba() as never);
+      expect(await numero(abandonado)).toBeNull();
+
+      const conTarjeta = await repo.crearPedidoIniciado(pedidoDePrueba() as never);
+      const anotado = await repo.marcarPagado({ pedidoId: conTarjeta, sessionId: `cs_num_${Date.now()}` });
+      expect(anotado?.numero).toBeGreaterThan(n1!);
+      expect(await numero(conTarjeta)).toBe(anotado?.numero);
+    });
+  });
+
   describe("filtros del panel", () => {
     it("filtra por día de entrega y por día de entrada, y se pueden combinar", async () => {
       // Días de entrega que no usa ninguna otra prueba: la tabla se comparte.

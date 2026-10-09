@@ -156,6 +156,16 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
       // pago, y sin los metadatos el webhook no sabe a qué pedido
       // corresponde el pago ni puede avisar al obrador.
       customer_email: payload.email,
+      // La referencia de la web en el pago desde el primer momento; el
+      // número de pedido se añade al confirmarse (`etiquetaPagoEnStripe`).
+      ...(pedidoId
+        ? {
+            payment_intent_data: {
+              description: `Horno San Lorenzo · Ref. ${pedidoId.slice(0, 8)}`,
+              metadata: { pedidoId },
+            },
+          }
+        : {}),
       success_url: `${origin}/pedido/gracias?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/carrito`,
       locale: "es",

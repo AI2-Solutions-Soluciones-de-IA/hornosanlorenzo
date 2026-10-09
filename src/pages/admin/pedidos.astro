@@ -89,6 +89,10 @@ const fechaHora = (d: Date) => {
   return `${v("day")}/${v("month")}/${v("year")} · ${v("hour")}:${v("minute")}`;
 };
 
+/** El pago en el panel de Stripe (modo de prueba o real, según la sesión). */
+const enlaceStripe = (sesion: string) =>
+  `https://dashboard.stripe.com/${sesion.startsWith("cs_test_") ? "test/" : ""}search?query=${encodeURIComponent(sesion)}`;
+
 /** «Envío a domicilio» o «Recogida en Pozuelo». */
 function modalidad(p: PedidoConLineas): string {
   if (p.mode === "domicilio") return "Envío a domicilio";
@@ -129,7 +133,7 @@ function modalidad(p: PedidoConLineas): string {
     </div>
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
-      <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nº de pedido, nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <button type="submit" class="btn btn-primario">Filtrar</button>
     {hayFiltro && (
@@ -161,9 +165,14 @@ function modalidad(p: PedidoConLineas): string {
     </p>
   )}
 
-  <ul class="flex flex-col gap-px bg-[color:var(--color-avellana)]">
+  {/* Cada pedido, su propia tarjeta con aire entre una y otra (9-10-2026):
+      con una raya fina de separación se confundían al leer la lista. */}
+  <ul class="flex flex-col gap-5">
     {pedidos.map((p) => (
-      <li class="bg-[color:var(--color-leche)] p-5" data-pedido={p.id}>
+      <li class="bg-white border border-[color:var(--color-avellana)] border-l-4 border-l-[color:var(--color-caramelo)] p-5" data-pedido={p.id}>
+        <p class="mb-3 font-[family-name:var(--font-display)] text-lg">
+          Pedido nº {p.numero ?? "—"}
+        </p>
         {/* Los seis datos que pide el obrador (9-10-2026), cada uno con su
             etiqueta: fecha y hora del pedido, envío o recogida, fecha de
             entrega, importe y estado arriba; los productos debajo. */}
@@ -251,7 +260,20 @@ function modalidad(p: PedidoConLineas): string {
           <p class="text-[color:var(--color-ink-muted)]">{destino(p)}</p>
           {/* Los primeros caracteres del uuid bastan para que el cliente los
               lea por teléfono y el obrador los teclee en «Buscar». */}
-          <p class="text-xs text-[color:var(--color-ink-muted)]">Ref. {p.id.slice(0, 8)}</p>
+          <p class="text-xs text-[color:var(--color-ink-muted)]">
+            Ref. web {p.id.slice(0, 8)}
+            {p.stripeSessionId && (
+              <>
+                {" · "}
+                {/* Abre la búsqueda del panel de Stripe con la sesión de pago:
+                    de ahí se llega al cobro. En Stripe el pago lleva además
+                    «Pedido nº X · Ref. …» como descripción. */}
+                <a href={enlaceStripe(p.stripeSessionId)} target="_blank" rel="noopener" class="underline font-semibold text-[color:var(--color-ink)]">
+                  Ver en Stripe
+                </a>
+              </>
+            )}
+          </p>
           {p.notas && (
             <p class="mt-3 border-l-2 border-[color:var(--color-caramelo)] pl-3">
               {p.notas}

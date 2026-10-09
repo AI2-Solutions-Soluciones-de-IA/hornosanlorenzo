@@ -43,6 +43,7 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   // las columnas de siempre.
   { header: "Lleva", key: "detalle", width: 50 },
   { header: "Foto", key: "foto", width: 40 },
+  { header: "Nº pedido", key: "numero", width: 10 },
 ];
 
 const EUROS = '#,##0.00 "€"';
@@ -120,6 +121,7 @@ export async function pedidosAExcel(pedidos: PedidoConLineas[]): Promise<Buffer>
         estado: estadoLegible(p),
         notas: p.notas ?? "",
         id: p.id,
+        numero: p.numero ?? "",
       });
       const n = fila.number;
       fila.getCell("importe").value = {

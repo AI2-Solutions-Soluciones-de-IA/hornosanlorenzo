@@ -5,6 +5,7 @@ import type { PedidoConLineas } from "~/lib/db/pedidos";
 
 const pedido = (extra: Partial<PedidoConLineas> = {}): PedidoConLineas => ({
   id: "b560ca67-4e60-460a-93d8-2395ebfe2133",
+  numero: 7,
   userId: null,
   stripeSessionId: null,
   mode: "recogida",
@@ -115,7 +116,7 @@ describe("pedidosAExcel", () => {
     const val = (fila: number, col: string) =>
       ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
     // Al final, para no desplazar las columnas de quien lee por posición.
-    expect(cabecera.slice(-2)).toEqual(["Lleva", "Foto"]);
+    expect(cabecera.slice(-3)).toEqual(["Lleva", "Foto", "Nº pedido"]);
     expect(val(2, "Tamaño") ?? "").toBe("");
     expect(val(2, "Lleva")).toBe("Cebra · 6 unidades · Glaseadas");
     expect(val(2, "Foto")).toBe("https://blob.example/foto.jpg");

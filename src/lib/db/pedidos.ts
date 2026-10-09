@@ -22,6 +22,8 @@ export type LineaPedido = {
 
 export type PedidoConLineas = {
   id: string;
+  /** Número correlativo (migración 023); se asigna al entrar en la lista. */
+  numero: number | null;
   userId: string | null;
   stripeSessionId: string | null;
   /**
@@ -50,7 +52,7 @@ export type PedidoConLineas = {
 };
 
 /** Lo mínimo que necesita saber quien confirma un cobro. */
-export type PedidoAnotado = { id: string; notificadoEn: Date | null };
+export type PedidoAnotado = { id: string; notificadoEn: Date | null; numero?: number | null };
 
 export type PedidoReconstruido = {
   stripeSessionId: string;
@@ -189,7 +191,7 @@ export async function marcarPagado(ref: {
         set estado = 'pagado',
             stripe_session_id = coalesce(stripe_session_id, $2)
       where (id = $1::uuid or stripe_session_id = $2)
-      returning id, notificado_en as "notificadoEn"`,
+      returning id, notificado_en as "notificadoEn", numero`,
     [ref.pedidoId ?? null, ref.sessionId],
   );
   return rows[0] ?? null;
@@ -226,7 +228,7 @@ export async function crearPedidoReconstruido(
          subtotal_cents, envio_cents, total_cents, estado, reconstruido
        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, 0, $12, 'pagado', true)
        on conflict (stripe_session_id) do update set estado = 'pagado'
-       returning id, notificado_en as "notificadoEn"`,
+       returning id, notificado_en as "notificadoEn", numero`,
       [
         datos.stripeSessionId,
         datos.mode,
@@ -314,6 +316,7 @@ export async function cambiarEstadoAMano(
  */
 const PROYECCION_PEDIDO = `
   p.id,
+  p.numero,
   p.user_id           as "userId",
   p.stripe_session_id as "stripeSessionId",
   p.mode,
@@ -385,6 +388,8 @@ const WHERE_FILTROS = `
              or p.email ilike $5
              or p.telefono ilike $5
              or p.id::text ilike $5
+             -- Solo cifras: también el número de pedido, exacto.
+             or ($6::text is not null and p.numero::text = $6)
              -- El teléfono se guarda tal como lo escribió el cliente, con o
              -- sin espacios; si lo buscado son solo dígitos se compara sin
              -- separadores por ambos lados.
@@ -413,7 +418,9 @@ export async function listarPedidos(
     `select ${PROYECCION_PEDIDO}
        from pedidos p
      ${WHERE_FILTROS}
-      order by p.created_at desc, p.id
+      -- Buscando un número, el pedido con ese número va primero (luego los
+      -- que solo lo llevan en el teléfono).
+      order by (p.numero::text = $6) desc nulls last, p.created_at desc, p.id
       limit $7 offset $8`,
     [...argsFiltros(filtros), limite, desplazamiento],
   );

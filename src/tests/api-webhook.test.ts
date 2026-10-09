@@ -239,3 +239,32 @@ describe("POST /api/webhook — reintentos de Stripe", () => {
     expect(enviarCorreoMock).not.toHaveBeenCalled();
   });
 });
+
+describe("etiquetaPagoEnStripe", () => {
+  it("pone el número de pedido y la referencia en la descripción del pago", async () => {
+    const { etiquetaPagoEnStripe } = await import("~/pages/api/webhook");
+    const update = vi.fn().mockResolvedValue({});
+    const stripe = { paymentIntents: { update } } as unknown as Stripe;
+    await etiquetaPagoEnStripe(
+      stripe,
+      { id: "cs_test_1", payment_intent: "pi_123" } as unknown as Stripe.Checkout.Session,
+      { id: "a6bf584a-0000-0000-0000-000000000000", notificadoEn: null, numero: 14 },
+    );
+    expect(update).toHaveBeenCalledWith("pi_123", {
+      description: "Horno San Lorenzo · Pedido nº 14 · Ref. a6bf584a",
+      metadata: { pedidoId: "a6bf584a-0000-0000-0000-000000000000", numero: "14" },
+    });
+  });
+
+  it("sin pago o si Stripe falla, no rompe nada", async () => {
+    const { etiquetaPagoEnStripe } = await import("~/pages/api/webhook");
+    const update = vi.fn().mockRejectedValue(new Error("caído"));
+    const stripe = { paymentIntents: { update } } as unknown as Stripe;
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await etiquetaPagoEnStripe(stripe, { id: "cs_1" } as unknown as Stripe.Checkout.Session, { id: "x", notificadoEn: null });
+    expect(update).not.toHaveBeenCalled();
+    await expect(
+      etiquetaPagoEnStripe(stripe, { id: "cs_1", payment_intent: "pi_1" } as unknown as Stripe.Checkout.Session, { id: "x", notificadoEn: null }),
+    ).resolves.toBeUndefined();
+  });
+});

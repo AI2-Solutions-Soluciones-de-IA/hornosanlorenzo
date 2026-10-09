@@ -57,6 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const anotado = await anotarPago(stripe, session);
+  await etiquetaPagoEnStripe(stripe, session, anotado);
 
   if (yaAvisado(anotado)) {
     // Reintento de un aviso que ya salió. El pedido está pagado y anotado:
@@ -77,6 +78,35 @@ export const POST: APIRoute = async ({ request }) => {
 
   return new Response("ok", { status: 200 });
 };
+
+/**
+ * Pone en el pago de Stripe el número de pedido y la referencia de la web
+ * (9-10-2026): «Horno San Lorenzo · Pedido nº 14 · Ref. a6bf584a». Así el
+ * pago se encuentra en Stripe buscando el número, y desde el panel se llega
+ * al pago con «Ver en Stripe». Es un extra: si falla, no para nada.
+ */
+export async function etiquetaPagoEnStripe(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+  anotado: PedidoAnotado | null,
+): Promise<void> {
+  const pago = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+  if (!pago || !anotado) return;
+  try {
+    await stripe.paymentIntents.update(pago, {
+      description: [
+        "Horno San Lorenzo",
+        anotado.numero ? `Pedido nº ${anotado.numero}` : null,
+        `Ref. ${anotado.id.slice(0, 8)}`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      metadata: { pedidoId: anotado.id, numero: anotado.numero ? String(anotado.numero) : "" },
+    });
+  } catch (err) {
+    console.warn("[webhook] no se pudo poner el número en el pago de Stripe:", err instanceof Error ? err.message : err);
+  }
+}
 
 /**
  * Deja constancia del cobro. Se hace ANTES de avisar a nadie: el aviso puede
