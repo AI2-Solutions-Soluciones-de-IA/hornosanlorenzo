@@ -119,17 +119,6 @@
   color: var(--color-teja);
 }
 
-/* La cinta cromática: la paleta en proporción, una por pieza. */
-.cinta {
-  display: flex;
-  height: 4px;
-  width: 100%;
-  border-block-end: 1px solid var(--color-avellana);
-}
-.cinta > * {
-  height: 100%;
-}
-
 .skip-link {
   position: absolute;
   left: -9999px;
