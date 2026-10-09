@@ -4,7 +4,9 @@ import CuentaDatos from "~/islands/CuentaDatos.tsx";
 import CuentaDirecciones from "~/islands/CuentaDirecciones.tsx";
 import RepetirPedido from "~/islands/RepetirPedido.tsx";
 import { listarDirecciones } from "~/lib/db/direcciones";
-import { listarPedidosDeCliente, type PedidoConLineas } from "~/lib/db/pedidos";
+import { listarPedidosDeCliente, contarPedidosDeCliente, type PedidoConLineas } from "~/lib/db/pedidos";
+import Paginacion from "~/islands/Paginacion.tsx";
+import { paginar, leerPagina, resumenPagina } from "~/lib/paginacion";
 import { productosParaPedido } from "~/lib/db/productos";
 import { resolverRepeticion, type Repeticion } from "~/lib/repetir-pedido";
 import { formatDateISO, formatPriceCents } from "~/lib/format";
@@ -46,8 +48,14 @@ try {
 // Mismo criterio que las direcciones: si Postgres falla, la sección se
 // enseña vacía y el resto de la página sigue.
 let pedidos: { pedido: PedidoConLineas; repeticion: Repeticion }[] = [];
+// De 10 en 10, con `?pagina=N` (9-10-2026): antes salían todos seguidos.
+const POR_PAGINA = 10;
+let totalPedidos = 0;
+let pag = paginar(0, POR_PAGINA, 1);
 try {
-  const lista = await listarPedidosDeCliente(usuario.id);
+  totalPedidos = await contarPedidosDeCliente(usuario.id);
+  pag = paginar(totalPedidos, POR_PAGINA, leerPagina(Astro.url.searchParams));
+  const lista = await listarPedidosDeCliente(usuario.id, POR_PAGINA, (pag.pagina - 1) * POR_PAGINA);
   const slugs = [
     ...new Set(
       lista
@@ -101,13 +109,19 @@ function destino(p: PedidoConLineas): string {
 
     <hr class="mt-12 border-t border-[color:var(--color-avellana)]" />
 
-    <div class="mt-12">
+    <div class="mt-12 scroll-mt-60 md:scroll-mt-52" id="pedidos">
       <p class="numeracion">Historial</p>
       <h2 class="text-2xl sm:text-3xl mt-2">Tus pedidos</h2>
       <p class="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">
         Lo que nos has pedido por la web. Si quieres lo mismo otra vez,
         repítelo y ajusta lo que haga falta en el carrito.
       </p>
+
+      {totalPedidos > POR_PAGINA && (
+        <p class="mt-6 text-sm text-[color:var(--color-ink-muted)]">
+          {resumenPagina(pag, totalPedidos, "pedido", "pedidos")}
+        </p>
+      )}
 
       {pedidos.length === 0 ? (
         <p class="mt-8 text-[color:var(--color-ink-muted)]">
@@ -159,6 +173,9 @@ function destino(p: PedidoConLineas): string {
           ))}
         </ul>
       )}
+
+      {/* `#pedidos`: al cambiar de página se vuelve al historial, no arriba del todo. */}
+      <Paginacion pagina={pag.pagina} paginas={pag.paginas} etiqueta="Páginas de tus pedidos" href={(n) => `/cuenta${n > 1 ? `?pagina=${n}` : ""}#pedidos`} />
     </div>
 
     <hr class="mt-12 border-t border-[color:var(--color-avellana)]" />

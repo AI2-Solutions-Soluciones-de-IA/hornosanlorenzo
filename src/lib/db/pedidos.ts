@@ -469,6 +469,8 @@ export async function contarPedidos(filtros: FiltrosPedidos = {}): Promise<numbe
 export async function listarPedidosDeCliente(
   userId: string,
   limite = 20,
+  /** Cuántos saltarse, para paginar «Tus pedidos». */
+  desplazamiento = 0,
 ): Promise<PedidoConLineas[]> {
   const { rows } = await pool.query<PedidoConLineas>(
     `select ${PROYECCION_PEDIDO}
@@ -476,8 +478,18 @@ export async function listarPedidosDeCliente(
       where p.user_id = $1
         and p.estado in ('pagado', 'sin_pago')
       order by p.created_at desc
-      limit $2`,
-    [userId, limite],
+      limit $2 offset $3`,
+    [userId, limite, desplazamiento],
   );
   return rows;
+}
+
+/** Cuántos pedidos tiene el cliente en su historial, para paginarlo. */
+export async function contarPedidosDeCliente(userId: string): Promise<number> {
+  const { rows } = await pool.query<{ total: string }>(
+    `select count(*) as total from pedidos
+      where user_id = $1 and estado in ('pagado', 'sin_pago')`,
+    [userId],
+  );
+  return Number(rows[0]?.total ?? 0);
 }
