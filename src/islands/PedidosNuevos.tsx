@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-const CADA_MS = 60_000;
+const CADA_MS = 20_000;
 const CLAVE_SONIDO = "hsl-pedidos-sonido";
+/** Cuántos pedidos había la última vez que se abrió Pedidos en este navegador. */
+const CLAVE_VISTOS = "hsl-pedidos-vistos";
 
 /** Un «ding» corto con el propio navegador, sin fichero de audio. */
 function ding() {
@@ -23,14 +25,18 @@ function ding() {
 }
 
 /**
- * Aviso de pedidos nuevos en el panel (9-10-2026). Cada minuto, con la
- * pestaña visible, pregunta cuántos pedidos hay; si son más que al abrir la
- * página, enseña «Hay N pedidos nuevos · Ver» arriba, pone el número en el
- * título de la pestaña y, si se ha activado, suena. No toca la lista: se ve
- * al pulsar «Ver», para no mover nada mientras alguien la está leyendo.
+ * Aviso de pedidos nuevos en el panel (9-10-2026). Dos avisos:
+ * - Al abrir Pedidos: los que han entrado desde la última visita en este
+ *   navegador, con la marca «Nuevo» en la lista (solo sin filtros y en la
+ *   primera página, donde salen los más recientes arriba).
+ * - Con la página abierta: cada 20 s, con la pestaña visible, pregunta
+ *   cuántos hay; si son más, «Han entrado N pedidos nuevos · Ver», el número
+ *   en el título de la pestaña y, si se ha activado, un sonido. No mueve la
+ *   lista: se ve al pulsar «Ver».
  */
-export default function PedidosNuevos({ inicial }: { inicial: number }) {
+export default function PedidosNuevos({ inicial, marcables }: { inicial: number; marcables: boolean }) {
   const [nuevos, setNuevos] = useState(0);
+  const [desdeVisita, setDesdeVisita] = useState(0);
   const [sonido, setSonido] = useState(false);
   const avisados = useRef(0);
   const tituloBase = useRef("");
@@ -39,8 +45,26 @@ export default function PedidosNuevos({ inicial }: { inicial: number }) {
     tituloBase.current = document.title;
     try {
       setSonido(localStorage.getItem(CLAVE_SONIDO) === "1");
+      const vistos = Number(localStorage.getItem(CLAVE_VISTOS) ?? NaN);
+      // La primera vez en este navegador no hay con qué comparar.
+      if (Number.isFinite(vistos) && inicial > vistos) {
+        const n = inicial - vistos;
+        setDesdeVisita(n);
+        if (marcables) {
+          document.querySelectorAll<HTMLElement>("[data-pedido]").forEach((li, i) => {
+            if (i >= n || li.querySelector("[data-marca-nuevo]")) return;
+            const marca = document.createElement("span");
+            marca.dataset.marcaNuevo = "";
+            marca.textContent = "Nuevo";
+            marca.className =
+              "inline-block mb-2 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] bg-[color:var(--color-teja)] text-[color:var(--color-leche)]";
+            li.prepend(marca);
+          });
+        }
+      }
+      localStorage.setItem(CLAVE_VISTOS, String(Math.max(inicial, Number.isFinite(vistos) ? vistos : 0)));
     } catch {}
-  }, []);
+  }, [inicial, marcables]);
 
   useEffect(() => {
     let parado = false;
@@ -52,6 +76,7 @@ export default function PedidosNuevos({ inicial }: { inicial: number }) {
         const { total } = (await r.json()) as { total: number };
         if (parado) return;
         setNuevos(Math.max(0, total - inicial));
+        // No se apunta como visto: lo será al pulsar «Ver», que recarga.
       } catch {
         // Sin conexión un rato: se vuelve a mirar en el siguiente minuto.
       }
@@ -94,9 +119,19 @@ export default function PedidosNuevos({ inicial }: { inicial: number }) {
             Ver
           </a>
         </p>
+      ) : desdeVisita > 0 ? (
+        <p
+          role="status"
+          className="flex-1 border border-[color:var(--color-teja)] bg-[color:var(--color-latte)] px-4 py-3 text-sm font-semibold"
+        >
+          {desdeVisita === 1
+            ? "Ha entrado 1 pedido desde tu última visita"
+            : `Han entrado ${desdeVisita} pedidos desde tu última visita`}
+          {marcables ? ": van marcados como «Nuevo»." : "."}
+        </p>
       ) : (
         <p className="text-xs text-[color:var(--color-ink-muted)]">
-          La lista mira cada minuto si han entrado pedidos nuevos.
+          La lista mira cada 20 segundos si han entrado pedidos nuevos.
         </p>
       )}
       <label className="flex items-center gap-2 text-xs text-[color:var(--color-ink-muted)]">
