@@ -17,6 +17,8 @@ describe("clientesAExcel", () => {
           nombre: "Ana López",
           email: "ana@example.com",
           telefono: "600000000",
+          empresa: "Bar Pepe, S.L.",
+          cif: "B12345678",
           rol: null,
           creadoEn: new Date("2026-10-01T22:30:00Z"),
           pedidos: 3,
@@ -26,6 +28,8 @@ describe("clientesAExcel", () => {
           nombre: "Admin",
           email: "admin@example.com",
           telefono: null,
+          empresa: null,
+          cif: null,
           rol: "admin",
           creadoEn: new Date("2026-09-01T10:00:00Z"),
           pedidos: 0,
@@ -33,10 +37,10 @@ describe("clientesAExcel", () => {
       ]),
     );
     expect(ws.name).toBe("Clientes");
-    expect(ws.getRow(1).values).toEqual([undefined, "Nombre", "Correo", "Teléfono", "Pedidos pagados", "Alta", "Admin"]);
-    expect(ws.getRow(2).values).toEqual([undefined, "Ana López", "ana@example.com", "600000000", 3, "2026-10-02 00:30", ""]);
+    expect(ws.getRow(1).values).toEqual([undefined, "Nombre", "Correo", "Teléfono", "Empresa", "CIF", "Pedidos pagados", "Alta", "Admin"]);
+    expect(ws.getRow(2).values).toEqual([undefined, "Ana López", "ana@example.com", "600000000", "Bar Pepe, S.L.", "B12345678", 3, "2026-10-02 00:30", ""]);
     expect(ws.getRow(3).getCell(3).value).toBe("");
-    expect(ws.getRow(3).getCell(6).value).toBe("Sí");
+    expect(ws.getRow(3).getCell(8).value).toBe("Sí");
     expect(ws.rowCount).toBe(3);
   });
 });

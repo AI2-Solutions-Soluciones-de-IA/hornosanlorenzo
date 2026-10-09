@@ -33,14 +33,14 @@ export default function Acceso() {
 
   if (modo === "entrar") {
     return (
-      <div>
+      <div className="text-center">
         <h1 className="text-4xl sm:text-5xl">Entra.</h1>
-        <p className="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">
+        <p className="text-[color:var(--color-ink-muted)] mt-3 max-w-xl mx-auto">
           Entra con tu correo y tu contraseña. No hace falta cuenta para
           comprar: en la tienda online puedes pagar directamente, sin
           registrarte.
         </p>
-        <div className="mt-8">
+        <div className="mt-8 text-left">
           <AccesoForm modo="entrar" onCambiarModo={cambiarModo} />
         </div>
       </div>

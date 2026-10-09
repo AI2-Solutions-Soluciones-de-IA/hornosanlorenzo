@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { authClient } from "~/lib/auth/cliente";
 import { rutaDeVuelta } from "~/lib/reanudar-checkout";
 import {
+  MAX_EMPRESA,
   MAX_NOMBRE,
   MIN_PASSWORD,
   validaEntrada,
@@ -69,6 +70,8 @@ const MENSAJES_ERROR: Record<string, string> = {
   // si alguien llama al endpoint sin pasar por aquí.
   INVALID_NAME: "Dinos cómo te llamas.",
   INVALID_PHONE: "Escribe un móvil o fijo español de nueve dígitos.",
+  INVALID_COMPANY: "Escribe el nombre de la empresa.",
+  INVALID_CIF: "Ese CIF no parece válido (por ejemplo, B12345678).",
 };
 
 function mensajeDeError(error: { code?: string } | null): string {
@@ -87,13 +90,21 @@ export type { Modo as ModoAcceso };
 export default function AccesoForm({
   modo: modoFuera,
   onCambiarModo,
+  perfil = "particular",
 }: {
   modo?: Modo;
   onCambiarModo?: (m: Modo) => void;
+  /**
+   * El alta de empresa es la misma que la de particular, con la razón
+   * social y el CIF delante (9-10-2026). Solo cuenta en el registro.
+   */
+  perfil?: "particular" | "empresa";
 } = {}) {
   const [modoPropio, setModoPropio] = useState<Modo>("entrar");
   const modo = modoFuera ?? modoPropio;
   const [nombre, setNombre] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [cif, setCif] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
@@ -103,6 +114,7 @@ export default function AccesoForm({
   const [contrasenaRecuperada, setContrasenaRecuperada] = useState(false);
 
   const esRegistro = modo === "registro";
+  const esEmpresa = esRegistro && perfil === "empresa";
 
   // El sitio es estático: el parámetro solo se puede leer en cliente. Llega
   // aquí tras cambiar la contraseña en `/acceso/nueva-contrasena`.
@@ -128,7 +140,15 @@ export default function AccesoForm({
     setErrorServidor(null);
 
     const resultado = esRegistro
-      ? validaRegistro({ nombre, email, telefono, password })
+      ? validaRegistro({
+          nombre,
+          email,
+          telefono,
+          password,
+          // Vacíos en el alta de empresa no valen: se mandan con un espacio
+          // para que la validación pida los dos.
+          ...(esEmpresa ? { empresa: empresa || " ", cif: cif || " " } : {}),
+        })
       : validaEntrada({ email, password });
 
     if (!resultado.ok) {
@@ -145,6 +165,7 @@ export default function AccesoForm({
           password,
           name: nombre.trim(),
           telefono: telefono.trim(),
+          ...(esEmpresa ? { empresa: empresa.trim(), cif: cif.trim() } : {}),
         });
         if (error) {
           setErrorServidor(mensajeDeError(error));
@@ -174,7 +195,7 @@ export default function AccesoForm({
 
   return (
     <>
-      <form onSubmit={onSubmit} noValidate style={{ maxWidth: "28rem" }}>
+      <form onSubmit={onSubmit} noValidate style={{ maxWidth: "28rem", marginInline: "auto" }}>
         {!esRegistro && contrasenaRecuperada && (
           <p
             role="status"
@@ -190,10 +211,63 @@ export default function AccesoForm({
           </p>
         )}
 
+        {esEmpresa && (
+          <>
+            <div>
+              <label style={label} htmlFor="af-empresa">
+                Empresa (razón social)
+              </label>
+              <input
+                id="af-empresa"
+                value={empresa}
+                maxLength={MAX_EMPRESA}
+                autoComplete="organization"
+                onChange={(e) => setEmpresa(e.target.value)}
+                aria-invalid={!!errores.empresa}
+                aria-describedby={errores.empresa ? "af-empresa-error" : undefined}
+                placeholder="Tu empresa, S.L."
+                style={{
+                  ...field,
+                  borderColor: errores.empresa ? "var(--color-teja)" : "var(--color-avellana)",
+                }}
+              />
+              {errores.empresa && (
+                <p id="af-empresa-error" role="alert" style={errorTexto}>
+                  {errores.empresa}
+                </p>
+              )}
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={label} htmlFor="af-cif">
+                CIF
+              </label>
+              <input
+                id="af-cif"
+                value={cif}
+                maxLength={20}
+                onChange={(e) => setCif(e.target.value)}
+                aria-invalid={!!errores.cif}
+                aria-describedby={errores.cif ? "af-cif-error" : undefined}
+                placeholder="B12345678"
+                style={{
+                  ...field,
+                  textTransform: "uppercase",
+                  borderColor: errores.cif ? "var(--color-teja)" : "var(--color-avellana)",
+                }}
+              />
+              {errores.cif && (
+                <p id="af-cif-error" role="alert" style={errorTexto}>
+                  {errores.cif}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
         {esRegistro && (
-          <div>
+          <div style={{ marginTop: esEmpresa ? 16 : 0 }}>
             <label style={label} htmlFor="af-nombre">
-              Nombre
+              {esEmpresa ? "Persona de contacto" : "Nombre"}
             </label>
             <input
               id="af-nombre"

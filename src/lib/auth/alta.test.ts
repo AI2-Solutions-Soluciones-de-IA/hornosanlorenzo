@@ -7,6 +7,27 @@ import {
 describe("preparaAltaUsuario", () => {
   const bueno = { name: "Ana", telefono: "666123456" };
 
+  it("alta de empresa: guarda la razón social y el CIF normalizado", async () => {
+    const { data } = await preparaAltaUsuario({ ...bueno, empresa: "  Bar Pepe, S.L. ", cif: "b-12345678" });
+    expect(data.empresa).toBe("Bar Pepe, S.L.");
+    expect(data.cif).toBe("B12345678");
+  });
+
+  it("alta de empresa: un CIF mal escrito o sin razón social se rechaza", async () => {
+    await expect(preparaAltaUsuario({ ...bueno, empresa: "Bar Pepe", cif: "123" })).rejects.toMatchObject({
+      body: { code: "INVALID_CIF" },
+    });
+    await expect(preparaAltaUsuario({ ...bueno, cif: "B12345678" })).rejects.toMatchObject({
+      body: { code: "INVALID_COMPANY" },
+    });
+  });
+
+  it("alta de particular: sin empresa ni CIF quedan vacíos", async () => {
+    const { data } = await preparaAltaUsuario(bueno);
+    expect(data.empresa).toBeNull();
+    expect(data.cif).toBeNull();
+  });
+
   it("acepta un alta con nombre y teléfono válidos", async () => {
     const { data } = await preparaAltaUsuario(bueno);
     expect(data.name).toBe("Ana");

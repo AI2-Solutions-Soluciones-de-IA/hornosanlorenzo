@@ -19,6 +19,8 @@ declare namespace App {
       email: string;
       name: string;
       telefono?: string | null;
+      empresa?: string | null;
+      cif?: string | null;
       rol?: string | null;
     } | null;
   }

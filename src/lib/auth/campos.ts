@@ -14,6 +14,10 @@
  */
 export const camposAdicionales = {
   telefono: { type: "string", required: false },
+  // Alta de empresa (migración 021): los dos o ninguno, lo comprueba
+  // `preparaAltaUsuario`.
+  empresa: { type: "string", required: false },
+  cif: { type: "string", required: false },
   rol: {
     type: "string",
     required: false,

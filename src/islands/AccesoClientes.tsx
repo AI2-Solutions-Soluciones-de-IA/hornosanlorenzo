@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import AccesoForm, { type ModoAcceso } from "~/islands/AccesoForm";
-import ContactForm from "~/islands/ContactForm";
 
 type Perfil = "particular" | "empresa";
 
@@ -19,8 +18,10 @@ const PERFILES: { id: Perfil; label: string; claim: string }[] = [
 ];
 
 /**
- * El alta, como estaba: Particulares / Empresas. «¿Ya tienes cuenta? Entra»
- * dentro del formulario de particulares avisa a la página con `onCambiarModo`.
+ * El alta: Particulares / Empresas. Las dos crean la cuenta en el momento
+ * con el mismo formulario; la de empresa añade razón social y CIF (antes
+ * abría un correo, 9-10-2026). «¿Ya tienes cuenta? Entra» avisa a la página
+ * con `onCambiarModo`.
  */
 export default function AccesoClientes({
   onCambiarModo,
@@ -101,8 +102,9 @@ export default function AccesoClientes({
         })}
       </div>
 
+      {/* Cada alta, centrada: título, texto y formulario (9-10-2026). */}
       {perfil === "particular" && (
-        <div style={{ marginTop: 32 }}>
+        <div style={{ marginTop: 32, textAlign: "center" }}>
           <h2
             style={{
               fontFamily: "var(--font-display)",
@@ -116,6 +118,7 @@ export default function AccesoClientes({
             style={{
               marginTop: 12,
               maxWidth: "34rem",
+              marginInline: "auto",
               color: "var(--color-ink-muted)",
             }}
           >
@@ -123,14 +126,14 @@ export default function AccesoClientes({
             comprar: en la tienda online puedes pagar directamente, sin
             registrarte.
           </p>
-          <div style={{ marginTop: 24 }}>
+          <div style={{ marginTop: 24, textAlign: "left" }}>
             <AccesoForm modo="registro" onCambiarModo={onCambiarModo} />
           </div>
         </div>
       )}
 
       {perfil === "empresa" && (
-        <div style={{ marginTop: 32 }}>
+        <div style={{ marginTop: 32, textAlign: "center" }}>
           <h2
             style={{
               fontFamily: "var(--font-display)",
@@ -138,25 +141,26 @@ export default function AccesoClientes({
               margin: 0,
             }}
           >
-            Alta con CIF.
+            Alta de empresa.
           </h2>
           <p
             style={{
               marginTop: 12,
               maxWidth: "34rem",
+              marginInline: "auto",
               color: "var(--color-ink-muted)",
             }}
           >
-            Te asignamos tu código de descuento y tus condiciones. A partir de
-            ahí pides del mismo catálogo con tu precio, y facturamos a mes
-            vencido.{" "}
+            Crea la cuenta con los datos de tu empresa, como un particular pero
+            con la razón social y el CIF. Después te asignamos tus condiciones
+            y facturamos a mes vencido.{" "}
             <a href="/a-quien-servimos" style={{ textDecoration: "underline" }}>
               Ver condiciones para empresas
             </a>
             .
           </p>
-          <div style={{ marginTop: 24 }}>
-            <ContactForm variant="empresa" />
+          <div style={{ marginTop: 24, textAlign: "left" }}>
+            <AccesoForm modo="registro" perfil="empresa" onCambiarModo={onCambiarModo} />
           </div>
         </div>
       )}

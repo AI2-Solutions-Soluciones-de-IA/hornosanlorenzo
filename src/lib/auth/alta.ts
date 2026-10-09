@@ -1,6 +1,20 @@
 import { APIError } from "better-auth/api";
 import { esTelefonoValido, normalizaTelefono } from "~/lib/entrega";
-import { MAX_NOMBRE, NOMBRE_LARGO } from "~/lib/auth/validacion";
+import { MAX_NOMBRE, NOMBRE_LARGO, erroresEmpresa, normalizaCif } from "~/lib/auth/validacion";
+
+/**
+ * Razón social y CIF del alta de empresa (los dos o ninguno), con las mismas
+ * reglas que el formulario. Devuelve los valores limpios para guardar, `null`
+ * en una cuenta de particular.
+ */
+function datosEmpresa(user: Record<string, any>): { empresa: string | null; cif: string | null } {
+  const empresa = typeof user.empresa === "string" ? user.empresa : "";
+  const cif = typeof user.cif === "string" ? user.cif : "";
+  const errores = erroresEmpresa({ empresa, cif });
+  if (errores.empresa) throw new APIError("BAD_REQUEST", { code: "INVALID_COMPANY", message: errores.empresa });
+  if (errores.cif) throw new APIError("BAD_REQUEST", { code: "INVALID_CIF", message: errores.cif });
+  return empresa.trim() ? { empresa: empresa.trim(), cif: normalizaCif(cif) } : { empresa: null, cif: null };
+}
 
 export type DatosPersonales = { name: string; telefono: string };
 
@@ -86,6 +100,7 @@ export async function preparaAltaUsuario(
       ...user,
       name: resultado.data.name,
       telefono: resultado.data.telefono,
+      ...datosEmpresa(user),
     },
   };
 }
@@ -115,9 +130,11 @@ export async function preparaActualizacionUsuario(
 ): Promise<{ data: Record<string, any> }> {
   const tocaNombre = "name" in user;
   const tocaTelefono = "telefono" in user;
+  // La razón social y el CIF, si llegan, con las reglas del alta (juntos).
+  const empresa = "empresa" in user || "cif" in user ? datosEmpresa(user) : null;
 
   if (!tocaNombre && !tocaTelefono) {
-    return { data: user };
+    return { data: empresa ? { ...user, ...empresa } : user };
   }
 
   const resultado = validaDatosPersonales({
@@ -132,7 +149,7 @@ export async function preparaActualizacionUsuario(
     });
   }
 
-  const data: Record<string, any> = { ...user };
+  const data: Record<string, any> = { ...user, ...(empresa ?? {}) };
   if (tocaNombre) data.name = resultado.data.name;
   if (tocaTelefono) data.telefono = resultado.data.telefono;
 

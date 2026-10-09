@@ -164,6 +164,9 @@ const enlacePagina = (n: number) => {
                 {c.rol === ROL_ADMIN && (
                   <span class="numeracion ml-2">Admin</span>
                 )}
+                {c.empresa && (
+                  <span class="block text-xs text-[color:var(--color-ink-muted)]">{c.empresa} · {c.cif}</span>
+                )}
               </td>
               <td class="p-3"><a href={`mailto:${c.email}`} class="underline">{c.email}</a></td>
               <td class="p-3">

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  erroresEmpresa,
+  esCifValido,
   validaEntrada,
   validaNuevaContrasena,
   validaRecuperar,
@@ -92,5 +94,20 @@ describe("validaNuevaContrasena", () => {
       confirmar: "otraclavelarga",
     });
     expect(r.ok === false && r.errores.confirmar).toBeTruthy();
+  });
+});
+
+describe("alta de empresa", () => {
+  it("acepta CIF de sociedad, NIF de autónomo y NIE, con espacios o guiones", () => {
+    for (const v of ["B12345678", "b-12.345.678", "A1234567J", "12345678Z", "X1234567L"]) expect(esCifValido(v)).toBe(true);
+    for (const v of ["", "B1234567", "123", "I12345678", "ZZZ"]) expect(esCifValido(v)).toBe(false);
+  });
+
+  it("razón social y CIF van juntos; sin ninguno es una cuenta de particular", () => {
+    expect(erroresEmpresa({})).toEqual({});
+    expect(erroresEmpresa({ empresa: "Bar Pepe", cif: "B12345678" })).toEqual({});
+    expect(erroresEmpresa({ empresa: "Bar Pepe" }).cif).toBeTruthy();
+    expect(erroresEmpresa({ cif: "B12345678" }).empresa).toBeTruthy();
+    expect(erroresEmpresa({ empresa: "Bar Pepe", cif: "nope" }).cif).toMatch(/no parece válido/);
   });
 });

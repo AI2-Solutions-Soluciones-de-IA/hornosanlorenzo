@@ -10,6 +10,9 @@ export type Cliente = {
   nombre: string;
   email: string;
   telefono: string | null;
+  /** Solo las cuentas de empresa (migración 021). */
+  empresa: string | null;
+  cif: string | null;
   rol: string | null;
   creadoEn: Date;
   /** Cuántos pedidos pagados lleva. Es la única cifra que pide el panel. */
@@ -25,6 +28,8 @@ const WHERE_BUSQUEDA = `
              or u.name ilike $1
              or u.email ilike $1
              or u.telefono ilike $1
+             or u.empresa ilike $1
+             or u.cif ilike $1
              -- El teléfono lo escribe el cliente al registrarse, con o sin
              -- espacios; si lo buscado son solo dígitos se compara sin
              -- separadores por ambos lados.
@@ -51,6 +56,8 @@ export async function listarClientes(
             u.name          as nombre,
             u.email,
             u.telefono,
+            u.empresa,
+            u.cif,
             u.rol,
             u."createdAt"   as "creadoEn",
             (select count(*)::int
