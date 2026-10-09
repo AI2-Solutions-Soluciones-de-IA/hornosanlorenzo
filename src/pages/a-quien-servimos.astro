@@ -47,18 +47,19 @@ const publicos = [
     id: "empresas",
     number: "03",
     icono: "edificio",
-    resumen: "Desayunos de equipo, coffee breaks y catering con factura mensual.",
+    resumen: "Desayunos de equipo, coffee breaks y catering de reuniones.",
     tag: "Canal prioritario",
     title: "Empresas",
     lead: "Desayunos de equipo, coffee breaks, catering de reuniones y regalos corporativos.",
     key: "Comida de verdad servida cada día, con el precio y la fiabilidad que una empresa necesita.",
     points: [
-      "Alta con CIF y factura mensual a mes vencido.",
+      // Sin «factura mensual»: la web aún no lo hace (9-10-2026).
+      "Alta con CIF.",
       "Entrega en oficina con reparto propio.",
     ],
     // Al alta de empresa, que crea la cuenta en el momento (9-10-2026).
     cta: { href: "/acceso?modo=registro&perfil=empresa", label: "Dar de alta mi empresa", style: "btn-primario" },
-    foot: "Propuesta B2B · factura mensual",
+    foot: "Propuesta B2B · reparto propio",
   },
 ];
 ---

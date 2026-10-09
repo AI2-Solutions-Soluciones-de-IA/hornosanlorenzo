@@ -79,7 +79,7 @@ export const mainNav: readonly NavItem[] = [
       {
         href: "/a-quien-servimos#empresas",
         label: "Empresas",
-        short: "Desayunos de equipo, coffee breaks y regalo corporativo con factura.",
+        short: "Desayunos de equipo, coffee breaks y regalo corporativo.",
       },
     ],
   },
@@ -106,5 +106,4 @@ export const footerNav: readonly { href: string; label: string }[] = [
 export const paymentLabels: readonly { id: string; label: string }[] = [
   { id: "bizum", label: "Bizum" },
   { id: "efectivo", label: "Efectivo en tienda" },
-  { id: "transferencia", label: "Transferencia (empresas)" },
 ] as const;

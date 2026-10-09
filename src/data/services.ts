@@ -18,7 +18,7 @@ export const services: readonly Service[] = [
     id: "empresas",
     title: "Empresas y oficinas",
     short: "Desayunos de equipo, coffee breaks y catering de reuniones.",
-    body: "Comida de verdad servida cada día, con el precio y la fiabilidad que una empresa necesita. Alta con CIF, packs XL con descuento y factura mensual. La misma calidad para un cumpleaños que para cien desayunos.",
+    body: "Comida de verdad servida cada día, con el precio y la fiabilidad que una empresa necesita. Alta con CIF y entrega en oficina con reparto propio. La misma calidad para un cumpleaños que para cien desayunos.",
     number: "02",
   },
   {
