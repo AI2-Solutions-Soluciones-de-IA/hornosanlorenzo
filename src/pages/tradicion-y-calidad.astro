@@ -13,14 +13,18 @@ import { site } from "~/data/site";
     <div class="mx-auto max-w-3xl px-4 sm:px-6 py-12 sm:py-20">
       <p class="numeracion">Manifiesto</p>
       <h1 class="text-4xl sm:text-5xl mt-3">{tradicion.manifiesto.titulo}</h1>
-      <p class="text-xl text-[color:var(--color-ink-muted)] mt-6 leading-relaxed">{tradicion.manifiesto.entradilla}</p>
+      <p class="text-xl text-[color:var(--color-ink-muted)] mt-6 leading-relaxed font-[family-name:var(--font-display)] italic">{tradicion.manifiesto.entradilla}</p>
       <div class="mt-8 space-y-5 leading-relaxed text-[color:var(--color-ink)]">
-        {tradicion.manifiesto.parrafos.map((p) => <p>{p}</p>)}
+        {/* `**…**` en el texto es negrita: se parte por ahí y los trozos
+            impares van en <strong>. */}
+        {tradicion.manifiesto.parrafos.map((p) => (
+          <p>{p.split("**").map((trozo, i) => (i % 2 === 1 ? <strong>{trozo}</strong> : trozo))}</p>
+        ))}
       </div>
       <p class="mt-10 border-l-2 border-[color:var(--color-teja)] pl-5 font-[family-name:var(--font-display)] italic text-2xl sm:text-3xl leading-snug">
         {tradicion.manifiesto.cierre}
       </p>
-      <p class="numeracion mt-6">{tradicion.manifiesto.firma}</p>
+      <p class="mt-6 font-[family-name:var(--font-display)] italic text-lg text-[color:var(--color-ink-muted)]">{tradicion.manifiesto.firma}</p>
     </div>
   </section>
 

@@ -1,15 +1,16 @@
 export const tradicion = {
   /**
    * Manifiesto de la marca, tal cual en las Brand Guidelines (versión
-   * Avellana, diapositiva 8, «05 · Manifiesto»). Solo se han corregido
-   * espacios sueltos del original.
+   * Avellana, diapositiva 8, «05 · Manifiesto»), revisado con la imagen
+   * «texto tradicion HSL» del cliente (9-10-2026). Solo se han corregido
+   * espacios sueltos del original. `**…**` marca la negrita.
    */
   manifiesto: {
     titulo: "Más de 40 años haciéndolo bien.",
     entradilla:
       "Personas que vuelven. Familias que nos recomiendan. Empresas que confían. Producto fresco, artesanal y generoso, con una calidad y un precio difíciles de igualar.",
     parrafos: [
-      "San Lorenzo es el nombre de la playa de Gijón, el lugar de origen de nuestra familia y el origen de nuestro nombre. Una historia que comenzó en Asturias y que, desde 1986, seguimos construyendo en Madrid alrededor de algo muy sencillo: hacer las cosas bien, con producto fresco, artesanal y generoso.",
+      "San Lorenzo es el nombre de la playa de Gijón, el lugar de origen de nuestra familia y el origen de nuestro nombre. Una historia que comenzó en Asturias y que, desde 1986, seguimos construyendo en Madrid alrededor de algo muy sencillo: **hacer las cosas bien, con producto fresco, artesanal y generoso.**",
       "Durante más de cuatro décadas hemos crecido gracias a la confianza de nuestros clientes. Creemos que comer bien no debería ser complicado, ni caro, ni una excepción. Debería ser lo normal, como en Asturias: en casa, en la oficina y en cualquier mesa donde compartir sea parte del día.",
       "Queremos llegar a más personas, sin perder nuestra esencia. Modernizarnos sin perder nuestras raíces. Crecer sin perder la cercanía y la confianza que nos han traído hasta aquí.",
     ],
@@ -30,32 +31,35 @@ export const tradicion = {
     { figure: "L–S", label: "reparto propio", body: "Entrega diaria con furgoneta y repartidor de la casa." },
   ],
 
-  /** Los cinco valores del sistema de marca. Cada uno se cumple en algo concreto. */
+  /**
+   * Los cinco valores del sistema de marca. Cada uno se cumple en algo
+   * concreto. Textos de la imagen «valores HSL» del cliente (9-10-2026).
+   */
   valores: [
     {
       number: "01",
       title: "Oficio",
-      body: "El producto se hace en obrador propio. Nada se externaliza y nada se descongela para vender como recién hecho.",
+      body: "Lo artesanal empieza en nuestro propio obrador, desde 1986. Cada día, recién salido del horno, para hogares y empresas.",
     },
     {
       number: "02",
       title: "Constancia",
-      body: "La tarta de hoy sabe igual que la de hace veinte años. La receta no cambia por moda ni por coste.",
+      body: "Más de 40 años después la receta es la misma. Los ingredientes no se cambian por coste.",
     },
     {
       number: "03",
       title: "Honestidad",
-      body: "Se dice lo que lleva, lo que cuesta y cuándo estará. Sin letra pequeña y sin promesas de salud.",
+      body: "Artesanal, con una relación calidad-precio difícil de igualar. Decimos lo que lleva, lo que cuesta y cuándo estará.",
     },
     {
       number: "04",
       title: "Cercanía",
-      body: "Reparto propio de lunes a sábado. Al cliente se le conoce por su nombre, no por su número de pedido.",
+      body: "Conocemos a nuestros clientes por su nombre, no por su número de pedido. Reparto propio de lunes a sábado.",
     },
     {
       number: "05",
       title: "Generosidad",
-      body: "Raciones honestas y precio justo. La accesibilidad forma parte de la calidad, no la contradice.",
+      body: "La receta de siempre con raciones generosas. Porque creemos que comer bien no debería ser un lujo.",
     },
   ],
 
