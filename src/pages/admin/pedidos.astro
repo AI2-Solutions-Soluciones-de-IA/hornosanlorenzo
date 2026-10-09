@@ -75,12 +75,30 @@ function destino(p: PedidoConLineas): string {
   return tienda ? `${tienda.shortName} — ${tienda.address}` : `Recogida (tienda ${SIN_DATOS})`;
 }
 
-/** La franja solo se enseña cuando se sabe la modalidad. */
-function franja(p: PedidoConLineas): string {
-  if (p.mode === "recogida") return p.slot ? ` (${SLOT_LABEL[p.slot]})` : "";
-  if (p.mode === "domicilio") return ` (${ENTREGA_DOMICILIO_COPY})`;
-  return "";
+/** Fecha y hora en que entró el pedido, en hora de Madrid: «09/10/2026 · 13:27». */
+const fechaHora = (d: Date) => {
+  const f = new Intl.DateTimeFormat("es-ES", {
+    timeZone: "Europe/Madrid",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(new Date(d));
+  const v = (t: string) => f.find((x) => x.type === t)?.value ?? "";
+  return `${v("day")}/${v("month")}/${v("year")} · ${v("hour")}:${v("minute")}`;
+};
+
+/** «Envío a domicilio» o «Recogida en Pozuelo». */
+function modalidad(p: PedidoConLineas): string {
+  if (p.mode === "domicilio") return "Envío a domicilio";
+  if (p.mode === "recogida") {
+    const tienda = stores.find((s) => s.id === p.storeId);
+    return tienda ? `Recogida en ${tienda.shortName}` : "Recogida en tienda";
+  }
+  return `Modalidad ${SIN_DATOS}`;
 }
+
 ---
 <AdminLayout titulo="Pedidos">
   {!fallo && (
@@ -146,75 +164,106 @@ function franja(p: PedidoConLineas): string {
   <ul class="flex flex-col gap-px bg-[color:var(--color-avellana)]">
     {pedidos.map((p) => (
       <li class="bg-[color:var(--color-leche)] p-5" data-pedido={p.id}>
-        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <p class="numeracion">
-            {p.fechaEntrega ? formatDateISO(p.fechaEntrega) : `Día ${SIN_DATOS}`} ·
-            {" "}{p.mode ? MODE_COPY[p.mode].label : `Modalidad ${SIN_DATOS}`}
-            {franja(p)}
-          </p>
-          <p class="font-[family-name:var(--font-display)] text-xl font-semibold">
-            {formatPriceCents(p.totalCents)}
-          </p>
+        {/* Los seis datos que pide el obrador (9-10-2026), cada uno con su
+            etiqueta: fecha y hora del pedido, envío o recogida, fecha de
+            entrega, importe y estado arriba; los productos debajo. */}
+        <dl class="grid gap-x-6 gap-y-4 grid-cols-2 lg:grid-cols-[1.1fr_1.3fr_1.3fr_0.8fr_1.4fr]">
+          <div>
+            <dt class="numeracion">Fecha del pedido</dt>
+            <dd class="mt-1 text-sm font-semibold">{fechaHora(p.createdAt)}</dd>
+          </div>
+          <div>
+            <dt class="numeracion">Envío / Recogida</dt>
+            <dd class="mt-1 text-sm font-semibold">{modalidad(p)}</dd>
+          </div>
+          <div>
+            <dt class="numeracion">{p.mode === "domicilio" ? "Fecha de envío" : p.mode === "recogida" ? "Fecha de recogida" : "Fecha de entrega"}</dt>
+            <dd class="mt-1 text-sm font-semibold first-letter:uppercase">
+              {p.fechaEntrega ? formatDateISO(p.fechaEntrega) : `Día ${SIN_DATOS}`}
+              {p.mode === "recogida" && p.slot && (
+                <span class="block font-normal text-[color:var(--color-ink-muted)]">Franja de {SLOT_LABEL[p.slot]}</span>
+              )}
+              {p.mode === "domicilio" && (
+                <span class="block font-normal text-[color:var(--color-ink-muted)]">{ENTREGA_DOMICILIO_COPY}</span>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt class="numeracion">Importe</dt>
+            <dd class="mt-1 font-[family-name:var(--font-display)] text-xl font-semibold leading-tight">
+              {formatPriceCents(p.totalCents)}
+            </dd>
+            {p.envioCents > 0 && (
+              <dd class="text-xs text-[color:var(--color-ink-muted)]">con {formatPriceCents(p.envioCents)} de reparto</dd>
+            )}
+          </div>
+          <div class="col-span-2 lg:col-span-1">
+            <dt class="numeracion">Estado</dt>
+            <dd>
+              {/* «Pagado por Stripe» es el que tiene referencia de Stripe; el
+                  resto lo pone (y lo deshace) el obrador. Un «Sin pagar»
+                  tiene que cantar: va mezclado con los pagados. */}
+              <PedidoEstado
+                client:load
+                pedidoId={p.id}
+                estadoInicial={p.estado}
+                deStripe={p.stripeSessionId !== null}
+              />
+            </dd>
+          </div>
+        </dl>
+
+        <div class="mt-4 pt-4 border-t border-[color:var(--color-line)]">
+          <p class="numeracion">Productos</p>
+          <ul class="mt-2 text-sm divide-y divide-[color:var(--color-line)]">
+            {p.lineas.map((l) => (
+              <li class="py-1.5 flex flex-wrap justify-between gap-x-4">
+                <span>
+                  <strong class="tabular-nums">{l.qty}×</strong> {l.nombre}{l.varianteLabel ? ` — ${l.varianteLabel}` : ""}
+                  {l.detalle && (
+                    <ul class="text-xs text-[color:var(--color-ink-muted)]">
+                      {l.detalle.map((pieza) => <li>{etiquetaPieza(pieza)}</li>)}
+                    </ul>
+                  )}
+                  {l.fotoUrl && (
+                    <a href={l.fotoUrl} target="_blank" rel="noopener" class="block text-xs underline">
+                      Ver la foto del cliente
+                    </a>
+                  )}
+                </span>
+                <span class="text-[color:var(--color-ink-muted)] tabular-nums whitespace-nowrap">
+                  {formatPriceCents(l.unitPriceCents * l.qty)}
+                </span>
+              </li>
+            ))}
+            {p.lineas.length === 0 && (
+              <li class="py-1.5 text-[color:var(--color-ink-muted)]">Sin productos apuntados.</li>
+            )}
+          </ul>
         </div>
 
-        {/* Estado y botón de cobrar a mano. «Pagado por Stripe» es el que
-            tiene referencia de Stripe; el resto lo pone (y lo deshace) el
-            obrador. Un «Sin pagar» tiene que cantar: va mezclado con los
-            pagados. */}
-        <PedidoEstado
-          client:load
-          pedidoId={p.id}
-          estadoInicial={p.estado}
-          deStripe={p.stripeSessionId !== null}
-        />
-
-        <p class="mt-2 text-sm">
-          {p.nombre ?? "Sin nombre"} ·
-          {" "}<a href={`tel:${p.telefono}`} class="underline font-semibold whitespace-nowrap">{p.telefono}</a> ·
-          {" "}<a href={`mailto:${p.email}`} class="underline">{p.email}</a>
-        </p>
-        <p class="text-sm text-[color:var(--color-ink-muted)]">{destino(p)}</p>
-        {/* Los primeros caracteres del uuid bastan para que el cliente los
-            lea por teléfono y el obrador los teclee en «Buscar». */}
-        <p class="text-xs text-[color:var(--color-ink-muted)]">Ref. {p.id.slice(0, 8)}</p>
-
-        <ul class="mt-3 text-sm">
-          {p.lineas.map((l) => (
-            <li>
-              {l.qty}× {l.nombre}{l.varianteLabel ? ` — ${l.varianteLabel}` : ""}
-              <span class="text-[color:var(--color-ink-muted)]"> · {formatPriceCents(l.unitPriceCents)}/ud</span>
-              {l.detalle && (
-                <ul class="text-xs text-[color:var(--color-ink-muted)]">
-                  {l.detalle.map((pieza) => <li>{etiquetaPieza(pieza)}</li>)}
-                </ul>
-              )}
-              {l.fotoUrl && (
-                <a href={l.fotoUrl} target="_blank" rel="noopener" class="text-xs underline">
-                  Ver la foto del cliente
-                </a>
-              )}
-            </li>
-          ))}
-        </ul>
-
-        {p.notas && (
-          <p class="mt-3 text-sm border-l-2 border-[color:var(--color-caramelo)] pl-3">
-            {p.notas}
+        <div class="mt-4 pt-4 border-t border-[color:var(--color-line)] text-sm">
+          <p>
+            {p.nombre ?? "Sin nombre"} ·
+            {" "}<a href={`tel:${p.telefono}`} class="underline font-semibold whitespace-nowrap">{p.telefono}</a> ·
+            {" "}<a href={`mailto:${p.email}`} class="underline">{p.email}</a>
           </p>
-        )}
-
-        {p.envioCents > 0 && (
-          <p class="mt-2 text-sm text-[color:var(--color-ink-muted)]">
-            Reparto: {formatPriceCents(p.envioCents)}
-          </p>
-        )}
-
-        {p.reconstruido && (
-          <p class="mt-3 text-xs text-[color:var(--color-ink-muted)]">
-            Reconstruido desde Stripe: puede faltarle detalle. Referencia
-            {" "}{p.stripeSessionId}
-          </p>
-        )}
+          <p class="text-[color:var(--color-ink-muted)]">{destino(p)}</p>
+          {/* Los primeros caracteres del uuid bastan para que el cliente los
+              lea por teléfono y el obrador los teclee en «Buscar». */}
+          <p class="text-xs text-[color:var(--color-ink-muted)]">Ref. {p.id.slice(0, 8)}</p>
+          {p.notas && (
+            <p class="mt-3 border-l-2 border-[color:var(--color-caramelo)] pl-3">
+              {p.notas}
+            </p>
+          )}
+          {p.reconstruido && (
+            <p class="mt-3 text-xs text-[color:var(--color-ink-muted)]">
+              Reconstruido desde Stripe: puede faltarle detalle. Referencia
+              {" "}{p.stripeSessionId}
+            </p>
+          )}
+        </div>
       </li>
     ))}
   </ul>
