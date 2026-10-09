@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import vercel from "@astrojs/vercel";
 
 const SITE =
-  process.env.PUBLIC_SITE_URL ?? "https://hornosanlorenzo-demo.vercel.app";
+  process.env.PUBLIC_SITE_URL ?? "https://hornosanlorenzo.vercel.app";
 
 export default defineConfig({
   site: SITE,

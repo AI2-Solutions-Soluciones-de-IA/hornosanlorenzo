@@ -45,7 +45,7 @@ pnpm dlx vercel --prod
 Variables de entorno necesarias en Vercel:
 
 - `PUBLIC_WHATSAPP_NUMBER` — número en formato `wa.me` (sin `+`), ej. `34666123456`
-- `PUBLIC_SITE_URL` — URL canónica (`https://hornosanlorenzo-demo.vercel.app`)
+- `PUBLIC_SITE_URL` — URL canónica (`https://hornosanlorenzo.vercel.app`; también la usan `robots.txt` y los sitemaps)
 
 > Para el pitch, `PUBLIC_WHATSAPP_NUMBER` apunta al móvil de Óscar. Cuando el cliente
 > firme, se sustituye por el suyo. Ver el spec para el porqué.
