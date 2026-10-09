@@ -51,7 +51,13 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
            sección en la que se está y, al tocarlo, la lista entera. -->
       <details class="md:hidden group border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)]">
         <summary class="flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-          <span><span class="text-[color:var(--color-ink-muted)] font-normal">Sección:</span> {seccionActual}</span>
+          <span>
+            <span class="text-[color:var(--color-ink-muted)] font-normal">Sección:</span> {seccionActual}
+            {/* En el móvil el menú va plegado: el número de pedidos nuevos se ve también aquí. */}
+            {secciones.some((x) => x.href === "/admin/pedidos") && (
+              <span data-contador-pedidos hidden class="ml-2 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full bg-[color:var(--color-teja)] text-[color:var(--color-leche)] text-[11px] font-bold leading-none align-middle"></span>
+            )}
+          </span>
           <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" class="transition-transform group-open:rotate-180">
             <path d="m2 4.5 4 3.5 4-3.5" />
           </svg>
@@ -67,6 +73,9 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
               aria-current={actual === s.href ? "page" : undefined}
             >
               {s.label}
+              {s.href === "/admin/pedidos" && (
+                <span data-contador-pedidos hidden class="ml-2 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full bg-[color:var(--color-teja)] text-[color:var(--color-leche)] text-[11px] font-bold leading-none align-middle"></span>
+              )}
             </a>
           ))}
         </nav>
@@ -89,6 +98,9 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
             aria-current={actual === s.href ? "page" : undefined}
           >
             {s.label}
+            {s.href === "/admin/pedidos" && (
+                <span data-contador-pedidos hidden class="ml-2 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full bg-[color:var(--color-teja)] text-[color:var(--color-leche)] text-[11px] font-bold leading-none align-middle"></span>
+              )}
           </a>
         ))}
       </nav>
@@ -102,3 +114,53 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
     </div>
   </div>
 </BaseLayout>
+
+<script>
+  /**
+   * Número en rojo junto a «Pedidos» en el menú del panel (9-10-2026): los
+   * pedidos entrados desde la última vez que se abrió Pedidos en este
+   * navegador. Esa marca la deja `PedidosNuevos.tsx` en localStorage al
+   * abrir la página de Pedidos. Mira cada 20 s con la pestaña visible.
+   * La cabecera de la web usa navegación sin recarga, así que todo se
+   * engancha a `astro:page-load` y se limpia en cada cambio de página.
+   */
+  const CLAVE_VISTOS = "hsl-pedidos-vistos";
+  let reloj: number | undefined;
+
+  function pinta(n: number) {
+    for (const el of document.querySelectorAll<HTMLElement>("[data-contador-pedidos]")) {
+      el.textContent = n > 99 ? "99+" : String(n);
+      el.hidden = n === 0;
+      el.setAttribute("aria-label", `${n} pedidos nuevos`);
+    }
+  }
+
+  async function mira() {
+    if (document.hidden || !document.querySelector("[data-contador-pedidos]")) return;
+    let vistos = NaN;
+    try {
+      vistos = Number(localStorage.getItem(CLAVE_VISTOS) ?? NaN);
+    } catch {}
+    // Sin marca (nunca se ha abierto Pedidos aquí): no hay con qué comparar.
+    if (!Number.isFinite(vistos)) return pinta(0);
+    try {
+      const r = await fetch("/api/admin/pedidos/nuevos", { cache: "no-store" });
+      if (!r.ok) return;
+      const { total } = (await r.json()) as { total: number };
+      pinta(Math.max(0, total - vistos));
+    } catch {
+      // Sin conexión un rato: se vuelve a mirar en la siguiente vuelta.
+    }
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    window.clearInterval(reloj);
+    if (!document.querySelector("[data-contador-pedidos]")) return;
+    // Un respiro al cargar: en Pedidos, la isla apunta antes lo ya visto.
+    window.setTimeout(mira, 1500);
+    reloj = window.setInterval(mira, 20_000);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) mira();
+  });
+</script>
