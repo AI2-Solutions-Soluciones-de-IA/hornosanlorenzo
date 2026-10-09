@@ -108,6 +108,8 @@ export default function AccesoForm({
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
+  /** Casilla de las ofertas por correo, como la de Este mes. Desmarcada: es un consentimiento. */
+  const [ofertas, setOfertas] = useState(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [errorServidor, setErrorServidor] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -171,6 +173,16 @@ export default function AccesoForm({
           setErrorServidor(mensajeDeError(error));
           setEnviando(false);
           return;
+        }
+        // Con la casilla, se apunta a las ofertas por el mismo endpoint que
+        // la franja de Este mes. Si falla, la cuenta ya está creada: no se
+        // para por eso (se puede apuntar luego desde Este mes).
+        if (ofertas) {
+          await fetch("/api/suscripcion", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ email: email.trim(), acepto: true }),
+          }).catch(() => null);
         }
       } else {
         const { error } = await authClient.signIn.email({
@@ -379,6 +391,35 @@ export default function AccesoForm({
             </p>
           )}
         </div>
+
+        {esRegistro && (
+          <label
+            style={{
+              marginTop: 16,
+              display: "flex",
+              gap: 8,
+              alignItems: "flex-start",
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: "var(--color-ink-muted)",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={ofertas}
+              onChange={(e) => setOfertas(e.target.checked)}
+              style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0 }}
+            />
+            <span>
+              Quiero recibir por correo las ofertas de Horno San Lorenzo. Puedo darme de baja cuando
+              quiera desde cualquier correo. Más información en la{" "}
+              <a href="/legal/privacidad" style={{ textDecoration: "underline" }}>
+                política de privacidad
+              </a>
+              .
+            </span>
+          </label>
+        )}
 
         {errorServidor && (
           <p
