@@ -89,10 +89,6 @@ const fechaHora = (d: Date) => {
   return `${v("day")}/${v("month")}/${v("year")} · ${v("hour")}:${v("minute")}`;
 };
 
-/** El pago en el panel de Stripe (modo de prueba o real, según la sesión). */
-const enlaceStripe = (sesion: string) =>
-  `https://dashboard.stripe.com/${sesion.startsWith("cs_test_") ? "test/" : ""}search?query=${encodeURIComponent(sesion)}`;
-
 /** «Envío a domicilio» o «Recogida en Pozuelo». */
 function modalidad(p: PedidoConLineas): string {
   if (p.mode === "domicilio") return "Envío a domicilio";
@@ -265,10 +261,10 @@ function modalidad(p: PedidoConLineas): string {
             {p.stripeSessionId && (
               <>
                 {" · "}
-                {/* Abre la búsqueda del panel de Stripe con la sesión de pago:
-                    de ahí se llega al cobro. En Stripe el pago lleva además
-                    «Pedido nº X · Ref. …» como descripción. */}
-                <a href={enlaceStripe(p.stripeSessionId)} target="_blank" rel="noopener" class="underline font-semibold text-[color:var(--color-ink)]">
+                {/* Abre el pago en el panel de Stripe (pasa por
+                    `/api/admin/pedidos/stripe`, que averigua cuál es). En
+                    Stripe el pago lleva además «Pedido nº X · Ref. …». */}
+                <a href={`/api/admin/pedidos/stripe?pedido=${p.id}`} target="_blank" rel="noopener" class="underline font-semibold text-[color:var(--color-ink)]">
                   Ver en Stripe
                 </a>
               </>
