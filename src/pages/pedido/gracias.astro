@@ -1,9 +1,36 @@
 ---
+import Stripe from "stripe";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import { site } from "~/data/site";
 import { stores } from "~/data/stores";
+import { marcarPagado, numeroPorSesion } from "~/lib/db/pedidos";
+
+// Se sirve en servidor (y fuera del ISR, `astro.config.mjs`) para enseñar el
+// número de pedido (9-10-2026). El cliente suele volver de Stripe antes de
+// que llegue el webhook: si aún no tiene número, se le pregunta a Stripe por
+// la sesión y, si está pagada, se anota el pago aquí mismo (es lo mismo que
+// hará el webhook, que no lo repite). El correo lo sigue mandando el webhook.
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
 
 const central = stores[0];
+const sesion = Astro.url.searchParams.get("session_id") ?? "";
+let numero: number | null = null;
+if (/^cs_(test|live)_[A-Za-z0-9]+$/.test(sesion)) {
+  try {
+    numero = await numeroPorSesion(sesion);
+    const secret = import.meta.env.STRIPE_SECRET_KEY;
+    if (!numero && secret) {
+      const s = await new Stripe(secret).checkout.sessions.retrieve(sesion);
+      if (s.payment_status === "paid") {
+        numero = (await marcarPagado({ pedidoId: s.metadata?.pedidoId || null, sessionId: s.id }))?.numero ?? null;
+      }
+    }
+  } catch (error) {
+    // Sin número no pasa nada: la página sigue diciendo que está confirmado.
+    console.error("[gracias] no se pudo leer el número de pedido:", error instanceof Error ? error.message : error);
+  }
+}
 ---
 <MarketingLayout
   title="Pedido confirmado"
@@ -12,6 +39,11 @@ const central = stores[0];
   <section class="mx-auto max-w-2xl px-4 sm:px-6 py-16 sm:py-24">
     <p class="numeracion">Pedido confirmado</p>
     <h1 class="text-4xl sm:text-5xl mt-3">Gracias. Ya está anotado.</h1>
+    {numero && (
+      <p class="mt-6 text-lg">
+        Tu número de pedido es el <strong class="font-[family-name:var(--font-display)] text-2xl">{numero}</strong>. Tenlo a mano si nos llamas.
+      </p>
+    )}
     <p class="mt-5 text-lg text-[color:var(--color-ink-muted)]">
       Te hemos enviado un correo con el detalle de tu pedido. El obrador lo prepara
       para el día y la franja que elegiste.

@@ -347,6 +347,23 @@ Sin agujeros graves explotables hoy. Por prioridad:
 - [ ] Ofertas de Este mes: la tarjeta de un pack en oferta no tacha el precio; el carrito guarda el precio al añadir (si la oferta caduca, se cobra el normal); hasta 10 min de caché tras la medianoche del último día
 - [ ] Política de privacidad: revisión legal de la sección nueva de suscripción a las ofertas
 
+## Proceso de compra: lo que falta (revisión del 9-10-2026)
+Hechos ese día: festivos de la Comunidad de 2027, número de pedido para el
+cliente (confirmación, correos, «Mi cuenta») y devoluciones en «Mi cuenta».
+
+Imprescindible antes de cobrar de verdad:
+- [ ] **Correos de pedido (Resend)**: es lo más urgente. Sin `RESEND_API_KEY`, `ORDER_NOTIFICATION_EMAIL` y `ORDER_FROM_EMAIL` en Vercel no sale ni la confirmación al cliente ni el aviso al obrador (solo se ve en el panel). El mailing de ofertas va por Wix, no por aquí
+- [ ] **Stripe en modo real**: `sk_live_…`, webhook real con `checkout.session.completed` **y** `charge.refunded`, Bizum y la página de pago configurados también en modo real (Stripe guarda los ajustes por modo). Opcional: entorno de pruebas aparte (rama fija en Vercel con claves de prueba y la base `ep-lucky-surf`; dejar pasar el webhook por la protección de Vercel)
+- [ ] **Festivos locales de 2027 de Madrid capital** en `FESTIVOS` (`src/lib/entrega.ts`): el Ayuntamiento los publica hacia diciembre. Sigue pendiente confirmar con el obrador si cuentan los de Alcobendas, Pozuelo, Sanse y Tres Cantos
+- [ ] **Revisión legal** de privacidad y condiciones de compra: sobre todo, que los productos frescos no tienen derecho de desistimiento
+- [ ] **Una compra real pequeña de punta a punta en el móvil** (pago, correo, panel, número) y devolverla desde Stripe
+
+Para más adelante, según cómo vaya:
+- [ ] **Límite de pedidos por día**: hoy cualquier día admite pedidos sin tope
+- [ ] **Cerrar días concretos desde el panel** (vacaciones, imprevistos) sin tocar el código
+- [ ] **Empresas**: hoy pagan como un particular. Códigos de descuento o factura mensual de verdad, si se quieren (ver «Bloque E» en «Más adelante»)
+- [ ] **Estado del pedido para el cliente** («Preparado», «En reparto»), si lo piden
+
 ## Más adelante
 - [ ] **Llevar el cómputo a Cloud Run** cuando el proyecto esté asentado. Del
       análisis de costes del 9 de septiembre de 2026: Vercel Pro son ~20 €/mes

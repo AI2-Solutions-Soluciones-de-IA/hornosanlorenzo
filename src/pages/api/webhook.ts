@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const avisado = await notify(stripe, session);
+    const avisado = await notify(stripe, session, anotado?.numero ?? null);
     if (avisado && anotado) await marcarAvisado(anotado.id);
   } catch (err) {
     // Devolver 500 hace que Stripe reintente, que es lo que queremos si el
@@ -228,7 +228,10 @@ export function yaAvisado(anotado: PedidoAnotado | null): boolean {
 export async function notify(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
+  /** Número de pedido (migración 023), para el asunto y el texto de los correos. */
+  numero: number | null = null,
 ): Promise<boolean> {
+  const nPedido = numero ? `nº ${numero}` : "";
   const apiKey = import.meta.env.RESEND_API_KEY;
   const to = import.meta.env.ORDER_NOTIFICATION_EMAIL;
   const from = import.meta.env.ORDER_FROM_EMAIL;
@@ -247,7 +250,7 @@ export async function notify(
     .join("\n");
 
   const resumen = [
-    `Pedido pagado — ${total} €`,
+    `Pedido ${nPedido ? `${nPedido} ` : ""}pagado — ${total} €`,
     "",
     detalle,
     "",
@@ -281,7 +284,7 @@ export async function notify(
 
   const obrador = await enviarCorreo({
     para: to,
-    asunto: `Pedido web — ${m.dia ?? ""} · ${total} €`,
+    asunto: `Pedido web ${nPedido ? `${nPedido} ` : ""}— ${m.dia ?? ""} · ${total} €`,
     texto: resumen,
   });
 
@@ -295,9 +298,10 @@ export async function notify(
   if (cliente) {
     const clienteEnviado = await enviarCorreo({
       para: cliente,
-      asunto: `Tu pedido en ${site.name}`,
+      asunto: `Tu pedido ${nPedido ? `${nPedido} ` : ""}en ${site.name}`,
       texto: [
         `Gracias por tu pedido. Ya está pagado y anotado en el obrador.`,
+        nPedido ? `Tu número de pedido es el ${numero}. Tenlo a mano si nos llamas.` : "",
         "",
         detalle,
         "",

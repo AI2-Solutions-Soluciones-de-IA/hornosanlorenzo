@@ -77,6 +77,13 @@ try {
 
 const ESTADO = { pagado: "Pagado", sin_pago: "Pendiente de pago" } as const;
 
+/** El estado que ve el cliente, con las devoluciones hechas desde Stripe (9-10-2026). */
+function estadoCliente(p: PedidoConLineas): string {
+  if (p.devueltoCents > 0 && p.devueltoCents >= p.totalCents) return "Devuelto";
+  if (p.devueltoCents > 0) return `Devuelto en parte (${formatPriceCents(p.devueltoCents)})`;
+  return ESTADO[p.estado];
+}
+
 /** Dónde se entregó: la tienda por su id, o la dirección. */
 function destino(p: PedidoConLineas): string {
   if (p.mode === "domicilio") {
@@ -132,6 +139,9 @@ function destino(p: PedidoConLineas): string {
         <ul class="mt-8 flex flex-col gap-px bg-[color:var(--color-avellana)]">
           {pedidos.map(({ pedido: p, repeticion }) => (
             <li class="bg-[color:var(--color-leche)] p-5">
+              {p.numero && (
+                <p class="mb-2 font-[family-name:var(--font-display)] text-lg">Pedido nº {p.numero}</p>
+              )}
               <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
                 <p class="numeracion">
                   {p.fechaEntrega ? formatDateISO(p.fechaEntrega) : "Fecha sin datos"}
@@ -143,8 +153,8 @@ function destino(p: PedidoConLineas): string {
               </div>
 
               <p class="mt-2 text-sm">
-                <span class:list={["font-semibold", p.estado === "sin_pago" && "text-[color:var(--color-teja)]"]}>
-                  {ESTADO[p.estado]}
+                <span class:list={["font-semibold", (p.estado === "sin_pago" || p.devueltoCents > 0) && "text-[color:var(--color-teja)]"]}>
+                  {estadoCliente(p)}
                 </span>
                 {destino(p) && (
                   <span class="text-[color:var(--color-ink-muted)]"> · {destino(p)}</span>

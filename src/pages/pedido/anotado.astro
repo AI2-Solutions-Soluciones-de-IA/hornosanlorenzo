@@ -21,6 +21,10 @@ const central = stores[0];
       nada. El obrador tiene tu pedido con el día y la franja que elegiste y te
       llamará al teléfono que nos has dado para cerrarlo.
     </p>
+    {/* El número llega en `?n=` desde `/api/checkout`; la página es estática. */}
+    <p class="mt-6 text-lg" data-numero-pedido hidden>
+      Tu número de pedido es el <strong class="font-[family-name:var(--font-display)] text-2xl"></strong>. Tenlo a mano si nos llamas.
+    </p>
 
     <div class="mt-10 border border-[color:var(--color-avellana)] p-6 sm:p-8 bg-[color:var(--color-leche)]">
       <p class="numeracion">¿Necesitas cambiar algo?</p>
@@ -38,6 +42,15 @@ const central = stores[0];
     </div>
   </section>
 </MarketingLayout>
+
+<script>
+  const n = new URLSearchParams(location.search).get("n") ?? "";
+  const p = document.querySelector<HTMLElement>("[data-numero-pedido]");
+  if (p && /^\d{1,9}$/.test(n)) {
+    p.querySelector("strong")!.textContent = n;
+    p.hidden = false;
+  }
+</script>
 
 <script>
   // El pedido ya está anotado en el obrador: el carrito local deja de tener sentido.

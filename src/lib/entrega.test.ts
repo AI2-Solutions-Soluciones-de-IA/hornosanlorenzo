@@ -175,3 +175,15 @@ describe("recogida al día siguiente: hasta las 17:00", () => {
     ).toBe("2026-10-05");
   });
 });
+
+describe("festivos de 2027 (Decreto 82/2026)", () => {
+  it("las vísperas de San José, Semana Santa y el traslado de agosto suben el mínimo a domicilio", async () => {
+    const { esVisperaDeFestivo, minimoPedidoCents } = await import("~/lib/entrega");
+    expect(esVisperaDeFestivo("2027-03-18")).toBe(true); // jueves, víspera de San José
+    expect(esVisperaDeFestivo("2027-03-24")).toBe(true); // miércoles, víspera de Jueves Santo
+    expect(esVisperaDeFestivo("2027-08-15")).toBe(true); // víspera del traslado de la Asunción
+    expect(esVisperaDeFestivo("2027-05-01")).toBe(false); // el 2 de mayo no es festivo en 2027
+    expect(minimoPedidoCents("domicilio", "2027-03-24")).toBe(3500);
+    expect(minimoPedidoCents("domicilio", "2027-03-23")).toBe(2500);
+  });
+});

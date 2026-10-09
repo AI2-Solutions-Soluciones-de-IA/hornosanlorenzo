@@ -484,6 +484,21 @@ export async function listarPedidosDeCliente(
   return rows;
 }
 
+/** El número de un pedido (null si aún no lo tiene: carrito sin pagar). */
+export async function numeroDePedido(id: string): Promise<number | null> {
+  const { rows } = await pool.query<{ numero: number | null }>("select numero from pedidos where id = $1", [id]);
+  return rows[0]?.numero ?? null;
+}
+
+/** El número del pedido de una sesión de pago de Stripe, si ya lo tiene. */
+export async function numeroPorSesion(sessionId: string): Promise<number | null> {
+  const { rows } = await pool.query<{ numero: number | null }>(
+    "select numero from pedidos where stripe_session_id = $1",
+    [sessionId],
+  );
+  return rows[0]?.numero ?? null;
+}
+
 /** Cuántos pedidos tiene el cliente en su historial, para paginarlo. */
 export async function contarPedidosDeCliente(userId: string): Promise<number> {
   const { rows } = await pool.query<{ total: string }>(

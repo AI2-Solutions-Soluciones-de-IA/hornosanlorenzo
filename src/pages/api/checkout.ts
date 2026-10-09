@@ -13,7 +13,7 @@ import {
   destinationLabel,
   OrderError,
 } from "~/lib/pedido";
-import { crearPedidoIniciado, anotarSesionStripe } from "~/lib/db/pedidos";
+import { crearPedidoIniciado, anotarSesionStripe, numeroDePedido } from "~/lib/db/pedidos";
 import { dispositivoDe } from "~/lib/dispositivo";
 
 // El cobro se calcula en servidor: esta ruta no puede prerenderizarse.
@@ -65,8 +65,9 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
   // de entrar sola. Aquí un fallo de Postgres SÍ es un error: no hay cobro
   // que salvar, y un pedido que no se apunta no le llega a nadie.
   if (!secret) {
+    let id: string;
     try {
-      await crearPedidoIniciado(order, { estado: "sin_pago", dispositivo });
+      id = await crearPedidoIniciado(order, { estado: "sin_pago", dispositivo });
     } catch (err) {
       console.error(
         "[checkout] sin Stripe y sin poder anotar el pedido:",
@@ -77,7 +78,16 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
         500,
       );
     }
-    return json({ url: "/pedido/anotado" });
+    // El número para enseñárselo al cliente. Fuera del `try` de arriba a
+    // propósito: el pedido ya está anotado, y no poder leer el número no
+    // puede convertirse en «no hemos podido anotar el pedido».
+    let numero: number | null = null;
+    try {
+      numero = await numeroDePedido(id);
+    } catch {
+      // Sin número: la página de «anotado» sale igual, sin él.
+    }
+    return json({ url: numero ? `/pedido/anotado?n=${numero}` : "/pedido/anotado" });
   }
 
   // El pedido se anota AQUÍ, con el desglose que acaba de calcular

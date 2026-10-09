@@ -107,6 +107,8 @@ export default defineConfig({
         /^\/api\//,
         // La baja de las ofertas: depende del token y recibe un POST.
         "/baja",
+        // «Pedido confirmado» enseña el número del pedido de cada cliente.
+        "/pedido/gracias",
       ],
     },
   }),

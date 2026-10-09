@@ -2,9 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const crearPedidoIniciado = vi.fn();
 const anotarSesionStripe = vi.fn();
+const numeroDePedido = vi.fn().mockResolvedValue(12);
 vi.mock("~/lib/db/pedidos", () => ({
   crearPedidoIniciado,
   anotarSesionStripe,
+  numeroDePedido,
 }));
 
 const priceOrder = vi.fn();
@@ -139,7 +141,8 @@ describe("POST /api/checkout", () => {
       const respuesta = await POST(contexto() as never);
 
       expect(respuesta.status).toBe(200);
-      expect(await respuesta.json()).toEqual({ url: "/pedido/anotado" });
+      // Con el número de pedido, para enseñárselo al cliente.
+      expect(await respuesta.json()).toEqual({ url: "/pedido/anotado?n=12" });
       expect(priceOrder).toHaveBeenCalledOnce();
       expect(crearPedidoIniciado).toHaveBeenCalledWith(PEDIDO_VALORADO, {
         estado: "sin_pago",

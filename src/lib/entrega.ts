@@ -268,9 +268,10 @@ export const MIN_ORDER_COPY =
  * locales de Madrid capital (BOCM 12-12-2025), que es donde cae casi todo el
  * reparto. Los locales de Alcobendas, Pozuelo, Sanse y Tres Cantos no están:
  * **falta confirmar con el obrador si también cuentan**.
- * 2027: solo los dos nacionales fijos de enero. **El resto hay que añadirlo
- * cuando salga el calendario oficial** (la Comunidad lo aprueba a finales de
- * septiembre y los locales llegan en diciembre).
+ * 2027: los doce de la Comunidad (Decreto 82/2026, BOCM 1-10-2026, núm. 234;
+ * el 2 de mayo cae en domingo y no se traslada). **Faltan los dos locales de
+ * Madrid capital**, que el Ayuntamiento publica hacia diciembre (en 2026
+ * fueron San Isidro y La Almudena).
  */
 export const FESTIVOS: ReadonlySet<string> = new Set([
   "2026-01-01",
@@ -289,6 +290,16 @@ export const FESTIVOS: ReadonlySet<string> = new Set([
   "2026-12-25",
   "2027-01-01",
   "2027-01-06",
+  "2027-03-19", // San José
+  "2027-03-25", // Jueves Santo
+  "2027-03-26", // Viernes Santo
+  "2027-05-01",
+  "2027-08-16", // traslado de la Asunción (el 15 es domingo)
+  "2027-10-12",
+  "2027-11-01",
+  "2027-12-06",
+  "2027-12-08",
+  "2027-12-25",
 ]);
 
 /** El día siguiente es festivo. */
