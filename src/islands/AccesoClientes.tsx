@@ -152,8 +152,7 @@ export default function AccesoClientes({
             }}
           >
             Crea la cuenta con los datos de tu empresa, como un particular pero
-            con la razón social y el CIF. Después te asignamos tus condiciones
-            y facturamos a mes vencido.{" "}
+            con la razón social y el CIF.{" "}
             <a href="/a-quien-servimos" style={{ textDecoration: "underline" }}>
               Ver condiciones para empresas
             </a>
