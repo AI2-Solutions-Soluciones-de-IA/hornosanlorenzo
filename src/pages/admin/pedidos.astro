@@ -2,6 +2,7 @@
 // src/pages/admin/pedidos.astro
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import PedidoEstado from "~/islands/PedidoEstado.tsx";
+import PedidosNuevos from "~/islands/PedidosNuevos.tsx";
 import Paginacion from "~/islands/Paginacion.tsx";
 import { paginar, resumenPagina } from "~/lib/paginacion";
 import { listarPedidos, contarPedidos, type PedidoConLineas } from "~/lib/db/pedidos";
@@ -30,12 +31,15 @@ let pedidos: PedidoConLineas[] = [];
 let total = 0;
 let pag = paginar(0, POR_PAGINA, 1);
 let fallo = false;
+/** Cuántos hay en total, sin filtros: el punto de partida del aviso de nuevos. */
+let totalSinFiltros = 0;
 try {
   // Primero la cuenta: una `?pagina=` más allá de la última se queda en la
   // última en vez de enseñar una página vacía.
   total = await contarPedidos(leidos.filtros);
   pag = paginar(total, POR_PAGINA, leidos.pagina);
   pedidos = await listarPedidos(POR_PAGINA, leidos.filtros, (pag.pagina - 1) * POR_PAGINA);
+  totalSinFiltros = hayFiltro ? await contarPedidos() : total;
 } catch (error) {
   fallo = true;
   console.error(
@@ -79,6 +83,7 @@ function franja(p: PedidoConLineas): string {
 }
 ---
 <AdminLayout titulo="Pedidos">
+  {!fallo && <PedidosNuevos client:load inicial={totalSinFiltros} />}
   {fallo && (
     <p class="border-l-2 border-[color:var(--color-caramelo)] pl-3 py-2 text-sm">
       Ahora mismo no se pueden leer los pedidos. Vuelve a intentarlo en un
