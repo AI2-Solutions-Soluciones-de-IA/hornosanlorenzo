@@ -143,6 +143,8 @@ describe("POST /api/checkout", () => {
       expect(priceOrder).toHaveBeenCalledOnce();
       expect(crearPedidoIniciado).toHaveBeenCalledWith(PEDIDO_VALORADO, {
         estado: "sin_pago",
+        // Sin User-Agent en la petición de prueba: cuenta como ordenador.
+        dispositivo: "ordenador",
       });
       expect(sessionsCreate).not.toHaveBeenCalled();
     });

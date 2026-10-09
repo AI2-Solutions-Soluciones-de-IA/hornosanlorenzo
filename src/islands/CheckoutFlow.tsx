@@ -325,7 +325,14 @@ export default function CheckoutFlow({
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          // Un iPad moderno se presenta como un Mac: solo aquí se sabe que
+          // es táctil (`~/lib/dispositivo.ts`, para el Resumen del panel).
+          ...(/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1
+            ? { "x-dispositivo": "tablet" }
+            : {}),
+        },
         body: JSON.stringify({
           items: cart.items.map((i) => ({
             slug: i.slug,

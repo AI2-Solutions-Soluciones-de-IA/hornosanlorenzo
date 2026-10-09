@@ -14,6 +14,7 @@ import {
   OrderError,
 } from "~/lib/pedido";
 import { crearPedidoIniciado, anotarSesionStripe } from "~/lib/db/pedidos";
+import { dispositivoDe } from "~/lib/dispositivo";
 
 // El cobro se calcula en servidor: esta ruta no puede prerenderizarse.
 export const prerender = false;
@@ -54,6 +55,9 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
     return json({ error: "No hemos podido preparar el pedido." }, 500);
   }
 
+  // Móvil, tablet u ordenador, para el Resumen del panel.
+  const dispositivo = dispositivoDe(request.headers.get("user-agent"), request.headers.get("x-dispositivo"));
+
   // Sin claves de Stripe todavía: el pedido se anota igual, con los precios
   // que acaba de calcular el servidor, pero como `sin_pago` para que el panel
   // lo enseñe como lo que es. Es lo que permite probar el flujo entero
@@ -62,7 +66,7 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
   // que salvar, y un pedido que no se apunta no le llega a nadie.
   if (!secret) {
     try {
-      await crearPedidoIniciado(order, { estado: "sin_pago" });
+      await crearPedidoIniciado(order, { estado: "sin_pago", dispositivo });
     } catch (err) {
       console.error(
         "[checkout] sin Stripe y sin poder anotar el pedido:",
@@ -85,7 +89,7 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
   // pero mejor eso que un cobro que no aparece en ningún sitio.
   let pedidoId: string | null = null;
   try {
-    pedidoId = await crearPedidoIniciado(order);
+    pedidoId = await crearPedidoIniciado(order, { dispositivo });
   } catch (err) {
     console.error(
       "[checkout] no se pudo anotar el pedido, se cobra igual:",

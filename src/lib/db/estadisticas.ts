@@ -19,6 +19,8 @@ export type Resumen = {
   ticketMedioCents: number;
   porModalidad: { recogida: number; domicilio: number };
   porTienda: { storeId: string; pedidos: number }[];
+  /** Desde qué aparato (migración 022); `sinDato` = pedidos de antes de apuntarlo. */
+  porDispositivo: { movil: number; tablet: number; ordenador: number; sinDato: number };
   topProductos: { nombre: string; unidades: number; importeCents: number }[];
   clientes: { total: number; nuevos: number };
   porDia: { dia: string; pedidos: number; importeCents: number }[];
@@ -36,7 +38,7 @@ const n = (v: unknown): number => Number(v ?? 0);
 export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
   const args = [desde, hasta];
 
-  const [totales, modalidad, tiendas, top, clientes, dias] = await Promise.all([
+  const [totales, modalidad, tiendas, top, clientes, dias, aparatos] = await Promise.all([
     pool.query(
       `select count(*) filter (where ${CON_IMPORTE})              as total,
               count(*) filter (where p.estado = 'pagado')         as cobrados,
@@ -95,7 +97,15 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
         order by ${DIA}`,
       args,
     ),
+    pool.query(
+      `select coalesce(p.dispositivo, 'sin_dato') as dispositivo, count(*) as pedidos
+         from pedidos p
+        where ${EN_RANGO} and ${CON_IMPORTE}
+        group by 1`,
+      args,
+    ),
   ]);
+  const aparato = Object.fromEntries(aparatos.rows.map((r) => [r.dispositivo, n(r.pedidos)]));
 
   const t = totales.rows[0];
   const modo = Object.fromEntries(modalidad.rows.map((r) => [r.mode, n(r.pedidos)]));
@@ -112,6 +122,12 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
     ticketMedioCents: Math.round(n(t.ticket_medio)),
     porModalidad: { recogida: n(modo.recogida), domicilio: n(modo.domicilio) },
     porTienda: tiendas.rows.map((r) => ({ storeId: r.storeId, pedidos: n(r.pedidos) })),
+    porDispositivo: {
+      movil: n(aparato.movil),
+      tablet: n(aparato.tablet),
+      ordenador: n(aparato.ordenador),
+      sinDato: n(aparato.sin_dato),
+    },
     topProductos: top.rows.map((r) => ({
       nombre: r.nombre,
       unidades: n(r.unidades),

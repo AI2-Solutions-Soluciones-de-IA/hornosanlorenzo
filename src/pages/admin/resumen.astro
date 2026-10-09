@@ -178,6 +178,33 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
       </div>
 
       <section class="mt-8">
+        <h2 class="numeracion">Desde qué aparato piden</h2>
+        {(() => {
+          const d = datos.porDispositivo;
+          const conDato = d.movil + d.tablet + d.ordenador;
+          const pct = (v: number) => (conDato ? `${Math.round((v / conDato) * 100)} %` : "—");
+          return (
+            <>
+              <dl class="mt-3 grid grid-cols-3 gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] text-sm max-w-xl">
+                {[["Móvil", d.movil], ["Tablet", d.tablet], ["Ordenador", d.ordenador]].map(([etiqueta, v]) => (
+                  <div class={kpi}>
+                    <dt class="numeracion">{etiqueta}</dt>
+                    <dd class="text-2xl mt-1 font-[family-name:var(--font-display)]">{v}</dd>
+                    <dd class="mt-1 text-xs text-[color:var(--color-ink-muted)]">{pct(v as number)}</dd>
+                  </div>
+                ))}
+              </dl>
+              {d.sinDato > 0 && (
+                <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">
+                  {d.sinDato} {d.sinDato === 1 ? "pedido" : "pedidos"} sin dato: se hicieron antes de empezar a apuntarlo (9 de octubre de 2026).
+                </p>
+              )}
+            </>
+          );
+        })()}
+      </section>
+
+      <section class="mt-8">
         <h2 class="numeracion">Pedidos por día</h2>
         {datos.porDia.length === 0 ? (
           <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Ningún pedido en el rango.</p>

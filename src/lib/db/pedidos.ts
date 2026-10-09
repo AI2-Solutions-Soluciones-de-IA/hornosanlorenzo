@@ -86,7 +86,14 @@ export async function crearPedidoIniciado(
   order: PricedOrder,
   // `sin_pago`: Stripe sin configurar, el pedido se anota sin cobro para que
   // llegue al panel (migración 010). Por defecto, `iniciado`, camino de Stripe.
-  { estado = "iniciado" }: { estado?: "iniciado" | "sin_pago" } = {},
+  {
+    estado = "iniciado",
+    dispositivo = null,
+  }: {
+    estado?: "iniciado" | "sin_pago";
+    /** Móvil, tablet u ordenador, para el Resumen (migración 022). */
+    dispositivo?: "movil" | "tablet" | "ordenador" | null;
+  } = {},
 ): Promise<string> {
   const p = order.payload;
   const cliente = await pool.connect();
@@ -96,8 +103,8 @@ export async function crearPedidoIniciado(
       `insert into pedidos (
          user_id, mode, fecha_entrega, slot, store_id, address, postal_code,
          email, telefono, nombre, notas,
-         subtotal_cents, envio_cents, total_cents, estado
-       ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+         subtotal_cents, envio_cents, total_cents, estado, dispositivo
+       ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        returning id`,
       [
         order.userId ?? null,
@@ -115,6 +122,7 @@ export async function crearPedidoIniciado(
         order.shippingCents,
         order.totalCents,
         estado,
+        dispositivo,
       ],
     );
     const id = rows[0].id;

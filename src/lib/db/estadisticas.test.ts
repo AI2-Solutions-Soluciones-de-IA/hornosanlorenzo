@@ -49,12 +49,12 @@ describeSiHayBD("resumen del panel", () => {
     await pool.query(`delete from "user" where email like '%@stats.test'`);
 
     // Cobrado por Stripe: 6 €
-    const stripe = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never);
+    const stripe = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, { dispositivo: "movil" });
     await pedidos.marcarPagado({ pedidoId: stripe, sessionId: "cs_stats_1" });
     // Cobrado en tienda: 37 €, a domicilio con 5 € de reparto → 42 €
     const tienda = await pedidos.crearPedidoIniciado(
       pedido([TARTA], { mode: "domicilio" }, 500) as never,
-      { estado: "sin_pago" },
+      { estado: "sin_pago", dispositivo: "ordenador" },
     );
     await pedidos.cambiarEstadoAMano(tienda, "pagado");
     // Sin pagar: 6 €, recogida en Pozuelo
@@ -62,8 +62,8 @@ describeSiHayBD("resumen del panel", () => {
       pedido([CEBRA], { storeId: "pozuelo" }) as never,
       { estado: "sin_pago" },
     );
-    // Carrito abandonado: no cuenta en recaudación
-    await pedidos.crearPedidoIniciado(pedido([TARTA]) as never);
+    // Carrito abandonado: no cuenta en recaudación (ni en aparatos)
+    await pedidos.crearPedidoIniciado(pedido([TARTA]) as never, { dispositivo: "tablet" });
     // Todo lo anterior, fechado en el día propio (mediodía de Madrid).
     await pool.query(
       `update pedidos set created_at = ($2::date + interval '12 hours') at time zone 'Europe/Madrid'
@@ -127,6 +127,11 @@ describeSiHayBD("resumen del panel", () => {
   it("pedidos por día del rango, en hora de Madrid", async () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
     expect(r.porDia).toEqual([{ dia: DIA, pedidos: 3, importeCents: 5400 }]);
+  });
+
+  it("desde qué aparato, solo los pedidos con importe; los de antes, sin dato", async () => {
+    const r = await stats.resumen({ desde: DIA, hasta: DIA });
+    expect(r.porDispositivo).toEqual({ movil: 1, tablet: 0, ordenador: 1, sinDato: 1 });
   });
 
   it("un rango vacío devuelve ceros, no nulos", async () => {
