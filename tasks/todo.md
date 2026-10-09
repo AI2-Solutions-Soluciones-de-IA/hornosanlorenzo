@@ -347,6 +347,11 @@ Sin agujeros graves explotables hoy. Por prioridad:
 - [ ] Ofertas de Este mes: la tarjeta de un pack en oferta no tacha el precio; el carrito guarda el precio al añadir (si la oferta caduca, se cobra el normal); hasta 10 min de caché tras la medianoche del último día
 - [ ] Política de privacidad: revisión legal de la sección nueva de suscripción a las ofertas
 
+## Pendientes de la sesión del 9-10-2026
+- [ ] **Pedido nº 4 de Marta Gasson Pérez** (2-10-2026, 81,60 €, «sin pagar», a domicilio el 3-10, nota «Los bocaditos pueden ser todos de nata???»): parece un pedido **real** que llegó cuando la web aún no cobraba ni mandaba correos. Confirmar con el obrador si se la llamó y se le sirvió; y cómo encontró la web (no sale en Google: mirar «Referrers» del 2-10 en Vercel Analytics)
+- [ ] «Ver en Stripe» y la descripción «Pedido nº X · Ref. …» en el pago: comprobar con el próximo pago con tarjeta (los anteriores al 9-10 no llevan descripción)
+- [ ] Indexación: la web está abierta a Google (`robots.txt` ya con la dirección buena). Decidir si se pone «no indexar» hasta el lanzamiento (el usuario dijo que de momento no)
+
 ## Proceso de compra: lo que falta (revisión del 9-10-2026)
 Hechos ese día: festivos de la Comunidad de 2027, número de pedido para el
 cliente (confirmación, correos, «Mi cuenta») y devoluciones en «Mi cuenta».
