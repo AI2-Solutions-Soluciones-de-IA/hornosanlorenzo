@@ -263,6 +263,11 @@ const localBizJsonLd = stores.map((s) => ({
   }
 
   .carrusel {
+    /* Referencia de posición: lo que va `absolute` dentro de las tarjetas
+       (textos para lectores de pantalla, casillas ocultas) se posicionaba
+       contra el marco de fuera, escapaba del recorte del scroll y daba
+       desplazamiento lateral a toda la portada en el móvil (9-10-2026). */
+    position: relative;
     scroll-behavior: smooth;
     scrollbar-width: none;
     padding: 0 1px 2px 0;

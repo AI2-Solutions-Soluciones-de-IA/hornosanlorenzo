@@ -185,6 +185,11 @@ export default function AddToCart({
               <label
                 key={v.id}
                 style={{
+                  // `relative`: la casilla invisible de dentro va `absolute`, y
+                  // sin esto se posicionaba contra un antepasado de fuera del
+                  // carrusel de la portada, escapaba de su recorte y daba
+                  // scroll horizontal a toda la página en el móvil (9-10-2026).
+                  position: "relative",
                   cursor: "pointer",
                   padding: "0.5rem 0.875rem",
                   border:
