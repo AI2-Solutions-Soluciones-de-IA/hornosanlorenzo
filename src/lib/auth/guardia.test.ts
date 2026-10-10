@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { esAdmin, guardiaAdmin, vePedidos, ROL_ADMIN, ROL_OFICINA } from "~/lib/auth/guardia";
+import {
+  esAdmin,
+  guardiaAdmin,
+  vePedidos,
+  ROL_ADMIN,
+  ROL_OFICINA,
+} from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
 const admin = { id: "u2", email: "c@d.e", name: "Carmen", rol: ROL_ADMIN };
@@ -58,6 +64,29 @@ describe("guardiaAdmin", () => {
       guardiaAdmin({ usuario: admin, pathname: "/admin/pedidos" }),
     ).toBeNull();
   });
+
+  // Astro sirve `//admin/clientes` como `/admin/clientes`: la guardia tiene
+  // que ver lo mismo (auditoría del 10-10-2026).
+  it("las barras repetidas no abren el panel", () => {
+    for (const pathname of [
+      "//admin/clientes",
+      "//admin",
+      "/admin//clientes",
+      "///admin/pedidos",
+      "//api/admin/productos",
+    ]) {
+      const anonimo = guardiaAdmin({ usuario: null, pathname })!;
+      expect(anonimo.status).toBe(302);
+      expect(anonimo.headers.get("location")).toBe("/acceso");
+      expect(guardiaAdmin({ usuario: cliente, pathname })!.status).toBe(404);
+    }
+    expect(
+      guardiaAdmin({ usuario: oficina, pathname: "//admin/resumen" })!.status,
+    ).toBe(404);
+    expect(
+      guardiaAdmin({ usuario: oficina, pathname: "//admin/pedidos" }),
+    ).toBeNull();
+  });
 });
 
 describe("rol oficina", () => {
@@ -69,9 +98,18 @@ describe("rol oficina", () => {
   });
 
   it("entra a Pedidos, a su API y a su Excel", () => {
-    expect(guardiaAdmin({ usuario: oficina, pathname: "/admin/pedidos" })).toBeNull();
-    expect(guardiaAdmin({ usuario: oficina, pathname: "/api/admin/pedidos" })).toBeNull();
-    expect(guardiaAdmin({ usuario: oficina, pathname: "/api/admin/pedidos/exportar" })).toBeNull();
+    expect(
+      guardiaAdmin({ usuario: oficina, pathname: "/admin/pedidos" }),
+    ).toBeNull();
+    expect(
+      guardiaAdmin({ usuario: oficina, pathname: "/api/admin/pedidos" }),
+    ).toBeNull();
+    expect(
+      guardiaAdmin({
+        usuario: oficina,
+        pathname: "/api/admin/pedidos/exportar",
+      }),
+    ).toBeNull();
   });
 
   it("al entrar al panel va a Pedidos", () => {

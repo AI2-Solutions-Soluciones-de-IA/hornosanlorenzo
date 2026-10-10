@@ -23,6 +23,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
+    // Recuperar la cuenta cierra TODAS las sesiones abiertas. Sin esto,
+    // quien se hubiera registrado antes con un correo ajeno seguía dentro
+    // con su cookie después de que el dueño de verdad cambiara la contraseña
+    // (auditoría del 10-10-2026). Better Auth no lo hace por defecto.
+    revokeSessionsOnPasswordReset: true,
     // Ese enlace ES la contraseña mientras dura: quien lo tenga entra sin
     // más. Por eso solo se enseña por consola en desarrollo (para poder
     // probar sin tener Resend configurado en local) y, si el envío falla

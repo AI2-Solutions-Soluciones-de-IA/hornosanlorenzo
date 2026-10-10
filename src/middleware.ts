@@ -38,10 +38,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // repetida en cada fichero es una comprobación que algún día falta en el
   // fichero nuevo. Si `getSession` falló arriba, `usuario` es null y esto
   // manda a /acceso, que es el fallo seguro.
-  const corte = guardiaAdmin({
-    usuario: context.locals.usuario,
-    pathname: context.url.pathname,
-  });
+  //
+  // Se mira también la ruta que Astro ha casado (`routePattern`), no solo la
+  // URL: si alguna variante de la URL se le escapa a la comparación de
+  // texto pero acaba sirviendo una página del panel, la página casada sigue
+  // siendo `/admin/...` y se corta igual.
+  const usuario = context.locals.usuario;
+  const corte =
+    guardiaAdmin({ usuario, pathname: context.url.pathname }) ??
+    guardiaAdmin({ usuario, pathname: context.routePattern });
   if (corte) return corte;
 
   return next();

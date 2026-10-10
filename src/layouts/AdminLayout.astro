@@ -2,16 +2,19 @@
 // src/layouts/AdminLayout.astro
 import BaseLayout from "~/layouts/BaseLayout.astro";
 import AdminSalir from "~/islands/AdminSalir";
-import { puedeEntrar } from "~/lib/auth/guardia";
+import { normalizaRuta, puedeEntrar } from "~/lib/auth/guardia";
 
 interface Props {
   titulo: string;
 }
 const { titulo } = Astro.props;
 
-// Aquí NO se comprueba la sesión: eso lo hace el middleware, que es quien
-// puede cortar la petición de verdad. Este layout solo pinta.
-//
+// Quien corta de verdad es el middleware (un layout no puede devolver una
+// Response). Esto es la segunda llave: si algún día una petición se cuela
+// sin pasar por él, el panel no pinta nada (auditoría del 10-10-2026).
+const autorizado = puedeEntrar(Astro.locals.usuario, normalizaRuta(Astro.url.pathname));
+if (!autorizado) Astro.response.status = 404;
+
 // Datos de clientes y pedidos: ni caché compartida ni disco del navegador.
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
@@ -110,7 +113,7 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
     </aside>
 
     <div class="mt-8 min-w-0 md:col-start-2 md:row-start-2">
-      <slot />
+      {autorizado ? <slot /> : <p>No encontrado.</p>}
     </div>
   </div>
 </BaseLayout>

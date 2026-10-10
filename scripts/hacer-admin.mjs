@@ -33,9 +33,20 @@ const cliente = new pg.Client({ connectionString: url });
 await cliente.connect();
 
 const { rows } = await cliente.query(
-  `update "user" set rol = $2 where lower(email) = $1 returning id, name, email, rol`,
+  `update "user" set rol = $2 where lower(email) = $1 returning id, name, email, rol, "emailVerified"`,
   [email, rol],
 );
+
+// El papel se lee de la base de datos en cada petición, así que cualquier
+// sesión ya abierta lo heredaría al instante. Se cierran todas: quien tenga
+// la cuenta de verdad vuelve a entrar con su contraseña. Si alguien se
+// hubiera dado de alta antes con este correo (no se verifica el correo),
+// su sesión no se queda con el panel (auditoría del 10-10-2026).
+if (rows.length > 0) {
+  await cliente.query(`delete from "session" where "userId" = $1`, [
+    rows[0].id,
+  ]);
+}
 
 if (rows.length === 0) {
   console.error(
@@ -48,4 +59,15 @@ if (rows.length === 0) {
 
 // En voz alta y con nombre: dar esta llave permite cambiar precios.
 console.log(`✓ ${rows[0].name} (${rows[0].email}) es ahora ${rol}.`);
+console.log(
+  "  Se han cerrado sus sesiones abiertas: tendrá que volver a entrar.",
+);
+if (rol !== "cliente" && !rows[0].emailVerified) {
+  // Sin verificación de correo, una cuenta con este email puede haberla
+  // creado cualquiera. Antes de dar el panel, confirmar con la persona que
+  // la cuenta es suya (que entre con su contraseña delante de ti).
+  console.warn(
+    "  ⚠ Este correo no está verificado: confirma con la persona que la cuenta la creó ella.",
+  );
+}
 await cliente.end();

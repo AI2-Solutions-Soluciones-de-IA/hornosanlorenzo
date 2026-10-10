@@ -30,7 +30,9 @@ const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
 export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
   if (esAdmin(usuario)) return true;
   if (usuario?.rol !== ROL_OFICINA) return false;
-  return RUTAS_OFICINA.some((base) => pathname === base || pathname.startsWith(`${base}/`));
+  return RUTAS_OFICINA.some(
+    (base) => pathname === base || pathname.startsWith(`${base}/`),
+  );
 }
 
 /** Todo lo que hay debajo de estas rutas está cerrado. */
@@ -41,6 +43,16 @@ const esRutaDelPanel = (pathname: string): boolean =>
   RUTAS_PANEL.some(
     (base) => pathname === base || pathname.startsWith(`${base}/`),
   );
+
+/**
+ * Astro enruta `//admin/clientes` a la página `/admin/clientes` (quita una
+ * barra inicial antes de buscar la ruta), pero al middleware le llega la URL
+ * tal cual. Sin juntar las barras, la guardia veía una ruta que "no es del
+ * panel" y dejaba pintar la lista de clientes a cualquiera (auditoría del
+ * 10-10-2026). Aquí se compara la ruta que de verdad se va a servir.
+ */
+export const normalizaRuta = (pathname: string): string =>
+  pathname.replace(/\/{2,}/g, "/");
 
 /**
  * Devuelve la respuesta con la que hay que cortar, o null si se puede pasar.
@@ -54,7 +66,8 @@ export function guardiaAdmin(contexto: {
   usuario: Usuario;
   pathname: string;
 }): Response | null {
-  if (!esRutaDelPanel(contexto.pathname)) return null;
+  const pathname = normalizaRuta(contexto.pathname);
+  if (!esRutaDelPanel(pathname)) return null;
 
   if (!contexto.usuario) {
     return new Response(null, {
@@ -63,13 +76,16 @@ export function guardiaAdmin(contexto: {
     });
   }
   // La oficina, al entrar al panel, va directa a lo único que tiene.
-  if (contexto.usuario.rol === ROL_OFICINA && contexto.pathname.replace(/\/$/, "") === "/admin") {
+  if (
+    contexto.usuario.rol === ROL_OFICINA &&
+    pathname.replace(/\/$/, "") === "/admin"
+  ) {
     return new Response(null, {
       status: 302,
       headers: { location: "/admin/pedidos" },
     });
   }
-  if (!puedeEntrar(contexto.usuario, contexto.pathname)) {
+  if (!puedeEntrar(contexto.usuario, pathname)) {
     return new Response("No encontrado", { status: 404 });
   }
   return null;
