@@ -31,6 +31,26 @@ function envDelProyecto(): NodeJS.Dict<string> {
 }
 
 /**
+ * En las pruebas, `DATABASE_URL` es SIEMPRE la base de pruebas, nunca la del
+ * `.env` (que es la de producción). Si no hay base de pruebas, una dirección
+ * que no existe: lo que se conecte sin querer falla, no escribe en
+ * producción.
+ *
+ * Hay que ponerlo en el `process.env` de ESTE proceso, no solo en `test.env`:
+ * Astro rellena `import.meta.env` leyendo el `.env` por su cuenta, e incrusta
+ * el valor del fichero tal cual salvo que la variable ya exista en
+ * `process.env`. Con solo `test.env`, `~/lib/db/pool` seguía conectándose a
+ * producción aunque la prueba pusiera la URL de pruebas (auditoría del
+ * 10-10-2026, comprobado el 12-10-2026).
+ */
+const SIN_BASE_DE_PRUEBAS = "postgresql://sin-base-de-pruebas.invalid/pruebas";
+const env = envDelProyecto();
+const urlDePruebas =
+  process.env.DATABASE_URL_TEST || env.DATABASE_URL_TEST || SIN_BASE_DE_PRUEBAS;
+process.env.DATABASE_URL = urlDePruebas;
+env.DATABASE_URL = urlDePruebas;
+
+/**
  * `defineConfig` a secas no arranca la integración de contenido de Astro:
  * cualquier fichero que importe `astro:content` (la config de colecciones,
  * los componentes de catálogo) revienta antes de empezar con «Cannot find
@@ -49,6 +69,6 @@ export default getViteConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
-    env: envDelProyecto(),
+    env,
   },
 });
