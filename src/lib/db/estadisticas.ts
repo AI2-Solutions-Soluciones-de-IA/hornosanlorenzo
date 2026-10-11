@@ -12,6 +12,16 @@ import { pool } from "~/lib/db/pool";
 
 export type Rango = { desde: string; hasta: string };
 
+export type ProductoEnRanking = {
+  slug: string | null;
+  nombre: string;
+  categoria: string | null;
+  unidades: number;
+  importeCents: number;
+  /** En cuántos pedidos distintos aparece. */
+  pedidos: number;
+};
+
 export type Resumen = {
   pedidos: { total: number; cobrados: number; sinPagar: number; abandonados: number };
   /** Lo cobrado menos lo devuelto desde Stripe. */
@@ -23,7 +33,16 @@ export type Resumen = {
   porTienda: { storeId: string; pedidos: number }[];
   /** Desde qué aparato (migración 022); `sinDato` = pedidos de antes de apuntarlo. */
   porDispositivo: { movil: number; tablet: number; ordenador: number; sinDato: number };
-  topProductos: { nombre: string; unidades: number; importeCents: number }[];
+  /**
+   * Toda la carta activa, de más a menos vendido; los que no venden, a cero.
+   * Va por la ficha (slug), no por el nombre de la línea: el nombre se
+   * guarda tal cual estaba al pedir y cambia cuando se renombra la carta.
+   * Los tamaños de un producto suman en su fila; un pack es un producto
+   * más. Lo que no casa con la carta activa (fichas desactivadas, pedidos
+   * reconstruidos sin slug) va al final en «Fuera de carta», con `slug`
+   * nulo, para que la suma cuadre con lo vendido.
+   */
+  ranking: ProductoEnRanking[];
   clientes: { total: number; nuevos: number };
   porDia: { dia: string; pedidos: number; importeCents: number }[];
 };
@@ -40,7 +59,7 @@ const n = (v: unknown): number => Number(v ?? 0);
 export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
   const args = [desde, hasta];
 
-  const [totales, modalidad, tiendas, top, clientes, dias, aparatos] = await Promise.all([
+  const [totales, modalidad, tiendas, ranking, clientes, dias, aparatos] = await Promise.all([
     pool.query(
       `select count(*) filter (where ${CON_IMPORTE})              as total,
               count(*) filter (where p.estado = 'pagado')         as cobrados,
@@ -72,15 +91,30 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
       args,
     ),
     pool.query(
-      `select l.nombre,
-              sum(l.qty)                      as unidades,
-              sum(l.qty * l.unit_price_cents) as importe
-         from lineas_pedido l
-         join pedidos p on p.id = l.pedido_id
-        where ${EN_RANGO} and ${CON_IMPORTE}
-        group by l.nombre
-        order by unidades desc, importe desc, l.nombre
-        limit 5`,
+      `with lineas as (
+         select l.slug, l.qty, l.unit_price_cents, l.pedido_id
+           from lineas_pedido l
+           join pedidos p on p.id = l.pedido_id
+          where ${EN_RANGO} and ${CON_IMPORTE}
+       ),
+       filas as (
+         select pr.slug, pr.name as nombre, pr.category as categoria,
+                coalesce(sum(l.qty), 0)                      as unidades,
+                coalesce(sum(l.qty * l.unit_price_cents), 0) as importe,
+                count(distinct l.pedido_id)                  as pedidos
+           from productos pr
+           left join lineas l on l.slug = pr.slug
+          where pr.activo
+          group by pr.id
+         union all
+         select null, 'Fuera de carta', null,
+                sum(l.qty), sum(l.qty * l.unit_price_cents), count(distinct l.pedido_id)
+           from lineas l
+          where not exists (select 1 from productos pr where pr.activo and pr.slug = l.slug)
+         having count(*) > 0
+       )
+       select * from filas
+        order by (slug is null), unidades desc, importe desc, nombre`,
       args,
     ),
     pool.query(
@@ -133,10 +167,13 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
       ordenador: n(aparato.ordenador),
       sinDato: n(aparato.sin_dato),
     },
-    topProductos: top.rows.map((r) => ({
+    ranking: ranking.rows.map((r) => ({
+      slug: r.slug,
       nombre: r.nombre,
+      categoria: r.categoria,
       unidades: n(r.unidades),
       importeCents: n(r.importe),
+      pedidos: n(r.pedidos),
     })),
     clientes: { total: n(clientes.rows[0].total), nuevos: n(clientes.rows[0].nuevos) },
     porDia: dias.rows.map((r) => ({ dia: r.dia, pedidos: n(r.pedidos), importeCents: n(r.importe) })),

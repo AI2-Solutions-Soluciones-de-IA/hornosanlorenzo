@@ -36,8 +36,23 @@ describeSiHayBD("resumen del panel", () => {
   // y corre a la vez. Todo lo de aquí se fecha ese día y se limpia por correo.
   const DIA = "2021-03-10";
   const CORREO = "stats@prueba.test";
-  const CEBRA = { slug: "cebra", name: "Cebra", qty: 1, unitPriceCents: 600 };
-  const TARTA = { slug: "tarta", name: "Tarta de queso", qty: 2, unitPriceCents: 1850 };
+  // Los nombres de las líneas son los de ENTONCES; la ficha actual se llama
+  // distinto a propósito, para probar que el ranking enseña el de ahora.
+  const CEBRA = { slug: "stats-cebra", name: "Cebra", qty: 1, unitPriceCents: 600 };
+  const TARTA = { slug: "stats-tarta", name: "Tarta de queso", qty: 2, unitPriceCents: 1850 };
+  // Slugs propios, para limpiar solo lo de aquí.
+  const soloMios = (r: { slug: string | null }) => r.slug === null || r.slug.startsWith("stats-");
+
+  // `productos.test.ts` vacía la tabla en su arranque y corre a la vez que
+  // este fichero: cada prueba del ranking vuelve a poner sus fichas.
+  const aseguraFichas = () =>
+    pool.query(
+      `insert into productos (slug, name, category, price_cents, short_description, orden) values
+         ('stats-tarta', 'Tarta de queso al horno', 'tartas', 1850, 'prueba', 1),
+         ('stats-cebra', 'Mini croissant cebra', 'bolleria', 600, 'prueba', 2),
+         ('stats-cero', 'Bizcocho que nadie pide', 'bolleria', 1350, 'prueba', 3)
+       on conflict (slug) do nothing`,
+    );
 
   beforeAll(async () => {
     process.env.DATABASE_URL = URL_PRUEBAS;
@@ -47,6 +62,8 @@ describeSiHayBD("resumen del panel", () => {
     stats = await import("~/lib/db/estadisticas");
     await pool.query("delete from pedidos where email = $1", [CORREO]);
     await pool.query(`delete from "user" where email like '%@stats.test'`);
+    await pool.query("delete from productos where slug like 'stats-%'");
+    await aseguraFichas();
 
     // Cobrado por Stripe: 6 €
     const stripe = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, { dispositivo: "movil" });
@@ -57,6 +74,13 @@ describeSiHayBD("resumen del panel", () => {
       { estado: "sin_pago", dispositivo: "ordenador" },
     );
     await pedidos.cambiarEstadoAMano(tienda, "pagado");
+    // Una línea de un pedido reconstruido desde Stripe: sin slug, no casa con
+    // ninguna ficha. No toca `total_cents`, así que el resto de cifras no cambia.
+    await pool.query(
+      `insert into lineas_pedido (pedido_id, slug, nombre, qty, unit_price_cents)
+       values ($1, null, 'Pedido antiguo', 1, 100)`,
+      [tienda],
+    );
     // Sin pagar: 6 €, recogida en Pozuelo
     await pedidos.crearPedidoIniciado(
       pedido([CEBRA], { storeId: "pozuelo" }) as never,
@@ -89,6 +113,7 @@ describeSiHayBD("resumen del panel", () => {
   afterAll(async () => {
     await pool.query("delete from pedidos where email = $1", [CORREO]);
     await pool.query(`delete from "user" where email like '%@stats.test'`);
+    await pool.query("delete from productos where slug like 'stats-%'");
     await pool.end();
   });
 
@@ -110,11 +135,44 @@ describeSiHayBD("resumen del panel", () => {
     ]);
   });
 
-  it("top de productos por unidades e importe, solo de pedidos con importe", async () => {
+  it("ranking por ficha actual: suma los tamaños, enseña el nombre de ahora y cuenta pedidos distintos", async () => {
+    await aseguraFichas();
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
-    expect(r.topProductos[0]).toEqual({ nombre: "Tarta de queso", unidades: 2, importeCents: 3700 });
-    expect(r.topProductos[1]).toEqual({ nombre: "Cebra", unidades: 2, importeCents: 1200 });
-    expect(r.topProductos).toHaveLength(2);
+    const mios = r.ranking.filter(soloMios);
+    expect(mios).toContainEqual({
+      slug: "stats-tarta", nombre: "Tarta de queso al horno", categoria: "tartas",
+      unidades: 2, importeCents: 3700, pedidos: 1,
+    });
+    // Dos pedidos con una cebra cada uno (el cobrado y el sin pagar); el
+    // carrito abandonado no cuenta.
+    expect(mios).toContainEqual({
+      slug: "stats-cebra", nombre: "Mini croissant cebra", categoria: "bolleria",
+      unidades: 2, importeCents: 1200, pedidos: 2,
+    });
+  });
+
+  it("los productos de la carta sin ventas salen con ceros", async () => {
+    await aseguraFichas();
+    const r = await stats.resumen({ desde: DIA, hasta: DIA });
+    expect(r.ranking).toContainEqual({
+      slug: "stats-cero", nombre: "Bizcocho que nadie pide", categoria: "bolleria",
+      unidades: 0, importeCents: 0, pedidos: 0,
+    });
+  });
+
+  it("las líneas que no casan con la carta caen en «Fuera de carta»", async () => {
+    await aseguraFichas();
+    const r = await stats.resumen({ desde: DIA, hasta: DIA });
+    expect(r.ranking.filter((x) => x.slug === null)).toEqual([
+      { slug: null, nombre: "Fuera de carta", categoria: null, unidades: 1, importeCents: 100, pedidos: 1 },
+    ]);
+  });
+
+  it("orden: más unidades primero, luego importe, luego nombre; «Fuera de carta» al final", async () => {
+    await aseguraFichas();
+    const r = await stats.resumen({ desde: DIA, hasta: DIA });
+    const slugs = r.ranking.filter(soloMios).map((x) => x.slug);
+    expect(slugs).toEqual(["stats-tarta", "stats-cebra", "stats-cero", null]);
   });
 
   it("clientes: total y nuevos en el rango", async () => {
@@ -143,11 +201,16 @@ describeSiHayBD("resumen del panel", () => {
   });
 
   it("un rango vacío devuelve ceros, no nulos", async () => {
+    await aseguraFichas();
     const r = await stats.resumen({ desde: "2020-01-01", hasta: "2020-01-02" });
     expect(r.pedidos.total).toBe(0);
     expect(r.recaudacionCents).toBe(0);
     expect(r.ticketMedioCents).toBe(0);
-    expect(r.topProductos).toEqual([]);
+    // La carta entera sigue saliendo, a cero, y sin fila de «Fuera de carta».
+    const mios = r.ranking.filter(soloMios);
+    // A cero todos, el orden es por nombre.
+    expect(mios.map((x) => x.slug)).toEqual(["stats-cero", "stats-cebra", "stats-tarta"]);
+    expect(mios.every((x) => x.unidades === 0 && x.importeCents === 0 && x.pedidos === 0)).toBe(true);
     expect(r.porDia).toEqual([]);
   });
 });
