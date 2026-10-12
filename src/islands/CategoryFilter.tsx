@@ -18,6 +18,25 @@ type Props = {
   grupos?: Chip[];
 };
 
+// Mismo desplegable que el de sabores (`ElegirSabor.tsx`), algo más alto
+// para el dedo y con las esquinas de los botones, porque sustituye a uno.
+const selectStyle: React.CSSProperties = {
+  appearance: "none",
+  WebkitAppearance: "none",
+  width: "100%",
+  minHeight: 44,
+  padding: "0 2.25rem 0 1rem",
+  border: "1px solid var(--color-line)",
+  borderRadius: "var(--radius-boton)",
+  background:
+    "var(--color-leche) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='8' viewBox='0 0 12 12' fill='none' stroke='%23322820' stroke-width='1.6'%3E%3Cpath d='m2 4.5 4 3.5 4-3.5'/%3E%3C/svg%3E\") no-repeat right 1rem center",
+  color: "var(--color-ink)",
+  font: "inherit",
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
 const normalize = (value: string) =>
   value
     .toLowerCase()
@@ -113,6 +132,12 @@ export default function CategoryFilter({
           .map((c) => ({ id: c.id, label: c.label }))),
   ];
 
+  const etiquetaFiltro = porSeccion
+    ? "Filtrar por sección de la carta"
+    : porGrupo
+      ? "Filtrar por gama"
+      : "Filtrar por categoría";
+
   return (
     <div>
       {search.trim() !== "" && (
@@ -139,10 +164,27 @@ export default function CategoryFilter({
       )}
 
       {chips.length > 2 && (
+      <>
+      {/* Móvil: un desplegable. Las etiquetas, en varias filas, llenaban la
+          pantalla y no se veía ningún producto sin bajar (12-10-2026). */}
+      <label className="md:hidden block">
+        <span className="sr-only">{etiquetaFiltro}</span>
+        <select
+          value={active}
+          onChange={(e) => setActive(e.target.value)}
+          style={selectStyle}
+        >
+          {chips.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </label>
       <div
         role="tablist"
-        aria-label={porSeccion ? "Filtrar por sección de la carta" : porGrupo ? "Filtrar por gama" : "Filtrar por categoría"}
-        style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+        aria-label={etiquetaFiltro}
+        className="hidden md:flex flex-wrap gap-2"
       >
         {chips.map((c) => {
           const isActive = c.id === active;
@@ -169,6 +211,7 @@ export default function CategoryFilter({
           );
         })}
       </div>
+      </>
       )}
     </div>
   );
