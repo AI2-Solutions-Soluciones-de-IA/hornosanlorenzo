@@ -62,16 +62,17 @@ const isActive = (href: string) => {
 const MITAD_MENU = 3;
 ---
 <header
-  class="sticky top-0 z-50 bg-[color:var(--color-teja)]/95 backdrop-blur border-b border-[color:var(--color-avellana)]"
+  class="sticky top-0 z-50 bg-[color:var(--color-teja)]/95 backdrop-blur md:border-b border-[color:var(--color-avellana)]"
   transition:persist
 >
   <!-- Banda superior: La Firma · buscador y acceso -->
-  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-4 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_10rem_1fr] xl:grid-cols-[1fr_11rem_1fr] items-center gap-4">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-3 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_10rem_1fr] xl:grid-cols-[1fr_11rem_1fr] items-center gap-4 max-md:border-b max-md:border-[color:var(--color-avellana)]">
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
-    <!-- Izquierda: la lupa y, desde tableta, Instagram y Facebook. -->
-    <div class="justify-self-start flex items-center gap-3">
+    <!-- Izquierda: la lupa y, desde tableta, Instagram y Facebook. En el
+         móvil, un filete con un rombo que lleva hasta el sello. -->
+    <div class="justify-self-stretch md:justify-self-start flex items-center gap-3">
     <div class="relative" data-buscador>
       <button
         type="button"
@@ -111,6 +112,8 @@ const MITAD_MENU = 3;
       </form>
     </div>
     <SocialLinks tono="leche" class="hidden md:flex" />
+    <span class="md:hidden flex-1 h-px bg-gradient-to-r from-transparent to-[color:var(--color-avellana)]" aria-hidden="true"></span>
+    <span class="md:hidden -ml-2 w-1.5 h-1.5 rotate-45 bg-[color:var(--color-avellana)]" aria-hidden="true"></span>
     </div>
 
     <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). Desde
@@ -126,14 +129,17 @@ const MITAD_MENU = 3;
         src={sello}
         alt=""
         widths={[128, 192, 256, 384]}
-        sizes="(min-width:1280px) 160px, (min-width:1024px) 144px, (min-width:640px) 84px, 64px"
-        class="w-16 h-16 sm:w-[84px] sm:h-[84px] lg:w-36 lg:h-36 xl:w-40 xl:h-40"
+        sizes="(min-width:1280px) 160px, (min-width:1024px) 144px, (min-width:640px) 84px, 76px"
+        class="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] lg:w-36 lg:h-36 xl:w-40 xl:h-40"
       />
     </a>
 
     <!-- `col-start-3`: desde 1024 px el sello flota y deja la columna del
          centro vacía; sin esto, estos botones se metían debajo de él. -->
     <div class="flex items-center justify-end gap-2 lg:col-start-3">
+      <!-- Móvil: el filete con su rombo, como a la izquierda. -->
+      <span class="md:hidden w-1.5 h-1.5 rotate-45 bg-[color:var(--color-avellana)]" aria-hidden="true"></span>
+      <span class="md:hidden -ml-2 flex-1 h-px bg-gradient-to-l from-transparent to-[color:var(--color-avellana)]" aria-hidden="true"></span>
       <!-- La puerta del pedido en escritorio, al lado de «Regístrate»: mismo
            tamaño y letra, pero rellena, porque es la acción principal. En el
            móvil va en su propia barra, debajo. Entre 1024 y 1280 px no cabe
@@ -149,28 +155,35 @@ const MITAD_MENU = 3;
 
       <CartBadge client:only="react" />
 
+      <span class="md:hidden w-px h-8 bg-[color:var(--color-leche)]/40" aria-hidden="true"></span>
+
       <button
-        class="md:hidden inline-flex items-center justify-center w-12 h-12 border border-[color:var(--color-leche)]/45 text-[color:var(--color-leche)]"
+        class="md:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
         aria-label="Abrir menú"
         aria-expanded="false"
         aria-controls="mobile-nav"
         data-mobile-nav-toggle
         type="button"
       >
-        ☰
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M4 6.5h16M4 12h16M4 17.5h16" />
+        </svg>
       </button>
     </div>
   </div>
 
-  <!-- Móvil: la barra de secciones se pliega tras el ☰, así que el pedido
-       necesita una puerta propia. Ocupa el hueco que deja esa barra.
-       Va en claro, no en teja: la cabecera ya es roja. -->
-  <div class="md:hidden border-t border-[color:var(--color-leche)]/25 px-4 py-2">
+  <!-- Móvil: la barra de secciones se pliega tras el menú, así que el pedido
+       necesita una puerta propia. Bajo la franja roja, sobre fondo claro: un
+       botón rojo con filete avellana y la letra del sello (12-10-2026). -->
+  <div class="md:hidden bg-[color:var(--color-leche)] px-4 py-3 flex justify-center">
     <a
       href="/catalogo"
-      class="btn btn-claro w-full min-h-10 text-[13px] uppercase tracking-[0.12em]"
+      class="inline-flex items-center gap-3 min-h-11 px-7 rounded-lg border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-base uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
     >
       Haz tu pedido
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
     </a>
   </div>
 
