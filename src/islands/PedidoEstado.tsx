@@ -26,6 +26,7 @@ const botonCobrar: React.CSSProperties = {
   ...etiqueta,
   margin: 0,
   border: "1px solid var(--color-moka)",
+  borderRadius: "var(--radius-boton)",
   background: "var(--color-moka)",
   color: "var(--color-leche)",
   fontFamily: "inherit",

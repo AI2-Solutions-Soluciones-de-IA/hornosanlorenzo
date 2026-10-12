@@ -28,7 +28,7 @@ const ESTILOS: Record<
     contenedor: "hidden lg:inline-flex items-center gap-3",
     // La visibilidad y el `inline-flex` los pone el `contenedor`.
     enlaceEnGrupo:
-      "inline-flex items-center h-10 px-4 whitespace-nowrap border border-[color:var(--color-leche)]/45 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--color-leche)] hover:bg-[color:var(--color-leche)] hover:text-[color:var(--color-teja)] transition-colors",
+      "inline-flex items-center h-10 px-4 rounded-[var(--radius-boton)] whitespace-nowrap border border-[color:var(--color-leche)]/45 text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--color-leche)] hover:bg-[color:var(--color-leche)] hover:text-[color:var(--color-teja)] transition-colors",
     salir:
       "text-[11px] font-medium uppercase tracking-[0.14em] text-[color:var(--color-leche)] underline underline-offset-4 hover:text-[color:var(--color-latte)] transition-colors",
   },

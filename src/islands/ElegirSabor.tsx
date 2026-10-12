@@ -183,7 +183,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
               color: "var(--color-leche)",
               border: "none",
               padding: "0.5rem 1rem",
-              borderRadius: 0,
+              borderRadius: "var(--radius-boton)",
               fontWeight: 600,
               fontSize: 13,
               cursor: "pointer",

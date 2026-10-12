@@ -41,7 +41,7 @@ export const insignia: React.CSSProperties = {
 export const botonLinea: React.CSSProperties = {
   background: "none",
   border: "1px solid var(--color-avellana)",
-  borderRadius: 0,
+  borderRadius: "var(--radius-boton)",
   padding: "0.5rem 0.75rem",
   fontSize: 13,
   cursor: "pointer",

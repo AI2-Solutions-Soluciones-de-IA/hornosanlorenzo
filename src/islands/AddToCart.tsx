@@ -71,7 +71,7 @@ export default function AddToCart({
         color: "var(--color-leche)",
         border: "none",
         padding: "0.5rem 1rem",
-        borderRadius: 0,
+        borderRadius: "var(--radius-boton)",
         fontWeight: 600,
         fontSize: 13,
         cursor: "pointer",
@@ -196,7 +196,7 @@ export default function AddToCart({
                     variantId === v.id
                       ? "2px solid var(--color-ink)"
                       : "1px solid var(--color-line)",
-                  borderRadius: 0,
+                  borderRadius: "var(--radius-boton)",
                   background:
                     variantId === v.id ? "var(--color-cream)" : "white",
                   fontSize: 14,
@@ -288,7 +288,7 @@ export default function AddToCart({
           color: "var(--color-leche)",
           border: "none",
           padding: "0.875rem 1.5rem",
-          borderRadius: 0,
+          borderRadius: "var(--radius-boton)",
           fontSize: 15,
           fontWeight: 700,
           cursor: "pointer",

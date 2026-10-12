@@ -416,7 +416,7 @@ function botonStyle(activo: boolean): React.CSSProperties {
     color: activo ? "var(--color-leche)" : "var(--color-ink-muted)",
     border: activo ? "none" : "1px solid var(--color-avellana)",
     padding: "0.875rem 1.5rem",
-    borderRadius: 0,
+    borderRadius: "var(--radius-boton)",
     fontSize: 15,
     fontWeight: 700,
     cursor: activo ? "pointer" : "not-allowed",

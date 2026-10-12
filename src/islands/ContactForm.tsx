@@ -176,7 +176,7 @@ export default function ContactForm({ variant = "general" }: Props) {
           color: "var(--color-leche)",
           border: "none",
           padding: "0.875rem 1.5rem",
-          borderRadius: 0,
+          borderRadius: "var(--radius-boton)",
           fontSize: 15,
           fontWeight: 700,
           cursor: canSend ? "pointer" : "not-allowed",

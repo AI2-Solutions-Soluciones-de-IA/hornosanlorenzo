@@ -8,6 +8,8 @@ import { mainNav } from "~/data/navigation";
 
 // Sin el aro blanco de fuera (8-10-2026): sobre el rojo se veía como un borde.
 import sello from "../../public/images/sello-hsl-sin-borde.png";
+// En el móvil, con el aro blanco y algo más grande (12-10-2026).
+import selloConBorde from "../../public/images/sello-hsl.png";
 import imgDulce from "../../public/images/productos/menu-dulce.jpg";
 import imgSalado from "../../public/images/productos/menu-salado.jpg";
 import imgSinAlergenos from "../../public/images/productos/menu-sin-alergenos.jpg";
@@ -126,11 +128,20 @@ const MITAD_MENU = 3;
       class="justify-self-center lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:top-2 lg:z-10"
     >
       <Image quality={85}
+        src={selloConBorde}
+        alt=""
+        loading="eager"
+        widths={[96, 192, 288]}
+        sizes="92px"
+        class="md:hidden w-[92px] h-[92px]"
+      />
+      <Image quality={85}
         src={sello}
         alt=""
+        loading="eager"
         widths={[128, 192, 256, 384]}
-        sizes="(min-width:1280px) 160px, (min-width:1024px) 144px, (min-width:640px) 84px, 76px"
-        class="w-[76px] h-[76px] sm:w-[84px] sm:h-[84px] lg:w-36 lg:h-36 xl:w-40 xl:h-40"
+        sizes="(min-width:1280px) 160px, (min-width:1024px) 144px, 84px"
+        class="hidden md:block w-[84px] h-[84px] lg:w-36 lg:h-36 xl:w-40 xl:h-40"
       />
     </a>
 
@@ -147,7 +158,7 @@ const MITAD_MENU = 3;
            oculta (siguen el menú y el «Ver el catálogo» de la portada). -->
       <a
         href="/catalogo"
-        class="hidden md:inline-flex lg:hidden xl:inline-flex items-center h-10 px-4 whitespace-nowrap bg-[color:var(--color-leche)] text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-teja)] hover:bg-[color:var(--color-latte)] transition-colors"
+        class="hidden md:inline-flex lg:hidden xl:inline-flex items-center h-10 px-4 rounded-[var(--radius-boton)] whitespace-nowrap bg-[color:var(--color-leche)] text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--color-teja)] hover:bg-[color:var(--color-latte)] transition-colors"
       >
         Haz tu pedido
       </a>
@@ -175,13 +186,13 @@ const MITAD_MENU = 3;
   <!-- Móvil: la barra de secciones se pliega tras el menú, así que el pedido
        necesita una puerta propia. Bajo la franja roja, sobre fondo claro: un
        botón rojo con filete avellana y la letra del sello (12-10-2026). -->
-  <div class="md:hidden bg-[color:var(--color-leche)] px-4 py-3 flex justify-center">
+  <div class="md:hidden bg-[color:var(--color-leche)] px-4 py-2.5 flex justify-center">
     <a
       href="/catalogo"
-      class="inline-flex items-center gap-3 min-h-11 px-7 rounded-lg border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-base uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
+      class="inline-flex items-center gap-2 min-h-9 px-5 rounded-[var(--radius-boton)] border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-sm uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
     >
       Haz tu pedido
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M5 12h14M13 6l6 6-6 6" />
       </svg>
     </a>

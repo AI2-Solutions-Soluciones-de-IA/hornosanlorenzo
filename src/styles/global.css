@@ -33,9 +33,12 @@
   --font-display: "Lora Variable", Lora, Georgia, "Times New Roman", serif;
   --font-body: Poppins, Arial, system-ui, -apple-system, sans-serif;
 
-  /* Sin esquinas redondeadas: el sistema es de ángulo recto y filete fino. */
+  /* Sin esquinas redondeadas: el sistema es de ángulo recto y filete fino.
+     Salvo los botones, que van redondeados (12-10-2026, a partir del
+     «Haz tu pedido» de la cabecera del móvil). */
   --radius-card: 0px;
   --radius-pill: 0px;
+  --radius-boton: 0.5rem;
 
   /* Sin sombras: separa el filete, no la sombra. */
   --shadow-card: none;
@@ -149,7 +152,7 @@
   animation-duration: 0.25s;
 }
 
-/* Botones — base 8, altura 48 px, sin radios (guidelines Nº 15). */
+/* Botones — base 8, altura 48 px, esquinas redondeadas (`--radius-boton`). */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -162,6 +165,7 @@
   font-size: 0.875rem;
   letter-spacing: 0.01em;
   border: 1px solid transparent;
+  border-radius: var(--radius-boton);
   transition:
     background-color 0.15s ease,
     color 0.15s ease,

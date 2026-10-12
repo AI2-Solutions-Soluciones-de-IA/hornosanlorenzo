@@ -15,13 +15,13 @@ type Props = {
 };
 
 // Mismo botón que `AddToCart.tsx` y el `.btn-primario` del sitio: caramelo,
-// sin radios (el manual de marca los prohíbe).
+// con las esquinas redondeadas de todos los botones (`--radius-boton`).
 const boton: React.CSSProperties = {
   background: "var(--color-caramelo)",
   color: "var(--color-leche)",
   border: "none",
   padding: "0.75rem 1.5rem",
-  borderRadius: 0,
+  borderRadius: "var(--radius-boton)",
   fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",

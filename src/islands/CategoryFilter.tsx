@@ -155,7 +155,7 @@ export default function CategoryFilter({
               style={{
                 minHeight: 40,
                 padding: "0.5rem 1rem",
-                borderRadius: 0,
+                borderRadius: "var(--radius-boton)",
                 border: isActive ? "none" : "1px solid var(--color-line)",
                 background: isActive ? "var(--color-caramelo)" : "transparent",
                 color: isActive ? "var(--color-leche)" : "var(--color-ink)",
