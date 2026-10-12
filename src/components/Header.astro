@@ -177,10 +177,10 @@ const MITAD_MENU = 3;
   <!-- Banda de navegación: las cuatro secciones -->
   <nav
     aria-label="Principal"
-    class="hidden md:block"
+    class="hidden md:block bg-white border-t border-[color:var(--color-avellana)]"
   >
-    <!-- Sin fondo ni filete propios: es la misma franja roja de la cabecera,
-         con las letras en blanco (8-10-2026). Contraste de sobra (más de 9:1). -->
+    <!-- Blanca con las letras en teja, el rojo de la cabecera (vuelve el
+         12-10-2026, tras unos días roja): contraste de sobra (más de 9:1). -->
     <!-- `relative` aquí y no en cada <li>: los desplegables se centran en la
          barra entera, no bajo su enlace. Centrados bajo el enlace, los anchos
          (hasta 54rem) se salían por la derecha y, aunque estén ocultos
@@ -197,8 +197,8 @@ const MITAD_MENU = 3;
         const linkClass = [
           "flex items-center h-full py-4 border-b-2 transition-colors whitespace-nowrap",
           active
-            ? "text-[color:var(--color-leche)] border-[color:var(--color-leche)]"
-            : "text-[color:var(--color-leche)]/85 border-transparent hover:text-[color:var(--color-leche)] hover:border-[color:var(--color-leche)]/50",
+            ? "text-[color:var(--color-teja)] border-[color:var(--color-teja)]"
+            : "text-[color:var(--color-teja)]/85 border-transparent hover:text-[color:var(--color-teja)] hover:border-[color:var(--color-teja)]/50",
         ];
 
         if (!item.children) {
