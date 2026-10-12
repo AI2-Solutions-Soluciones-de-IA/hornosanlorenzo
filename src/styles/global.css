@@ -265,3 +265,15 @@
     background: var(--color-moka);
   }
 }
+
+/* Móvil: menos aire entre «Haz tu pedido» de la cabecera y el contenido
+   (12-10-2026). Cada página abre con su propio relleno arriba (48–64 px),
+   pensado para cuando la cabecera acababa en la franja roja; con el botón
+   debajo, sobraba. Toca solo el primer bloque de la página (o el primero
+   dentro de él, como en Hero) y solo si trae relleno propio. */
+@media (width < 48rem) {
+  #main > :first-child:is([class^="py-"], [class*=" py-"], [class^="pt-"], [class*=" pt-"]),
+  #main > :first-child > :first-child:is([class^="py-"], [class*=" py-"], [class^="pt-"], [class*=" pt-"]) {
+    padding-top: 1.25rem;
+  }
+}
