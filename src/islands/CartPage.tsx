@@ -3,6 +3,15 @@ import { useCart } from "~/hooks/useCart";
 import { claveLinea } from "~/lib/cart";
 import { formatPriceCents } from "~/lib/format";
 import { MODE_COPY } from "~/lib/entrega";
+import {
+  unidadesPorProducto,
+  productoSobreLimite,
+  superaImporte,
+  MAX_UNIDADES_POR_PRODUCTO,
+  LIMITE_UNIDADES_COPY,
+  LIMITE_IMPORTE_COPY,
+  OFICINA_CONTACTO,
+} from "~/lib/limites-pedido";
 import CheckoutFlow, { type Prefill } from "~/islands/CheckoutFlow";
 import {
   recogerCheckout,
@@ -58,6 +67,13 @@ export default function CartPage({ prefill }: Props) {
       </section>
     );
   }
+
+  const unidades = unidadesPorProducto(cart.items);
+  // Un carrito de antes de los límites puede traer más: se avisa y no se
+  // deja seguir, que el servidor lo rechazaría igual.
+  const sobreUnidades = productoSobreLimite(cart.items) !== null;
+  const sobreImporte = superaImporte(totalCents);
+  const bloqueado = sobreUnidades || sobreImporte;
 
   return (
     <section style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1rem" }}>
@@ -164,6 +180,7 @@ export default function CartPage({ prefill }: Props) {
                   onClick={() =>
                     updateQty(claveLinea(item), item.qty + 1)
                   }
+                  disabled={(unidades.get(item.slug) ?? 0) >= MAX_UNIDADES_POR_PRODUCTO}
                   aria-label={`Añadir una unidad de ${item.name}`}
                   style={{
                     width: 36,
@@ -176,6 +193,18 @@ export default function CartPage({ prefill }: Props) {
                   +
                 </button>
               </div>
+              {(unidades.get(item.slug) ?? 0) >= MAX_UNIDADES_POR_PRODUCTO && (
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: "var(--color-ink-muted)",
+                    maxWidth: 200,
+                    textAlign: "right",
+                  }}
+                >
+                  Máximo {MAX_UNIDADES_POR_PRODUCTO} unidades por pedido
+                </p>
+              )}
               <p
                 style={{
                   fontFamily: "var(--font-display)",
@@ -256,6 +285,32 @@ export default function CartPage({ prefill }: Props) {
         ))}
       </div>
 
+      {bloqueado && (
+        <div
+          role="alert"
+          style={{
+            marginTop: 24,
+            padding: "1rem 1.25rem",
+            border: "1px solid var(--color-caramelo)",
+            background: "var(--color-latte)",
+            fontSize: 14,
+            lineHeight: 1.5,
+          }}
+        >
+          {sobreImporte && <p>{LIMITE_IMPORTE_COPY}</p>}
+          {sobreUnidades && <p>{LIMITE_UNIDADES_COPY}</p>}
+          <p style={{ marginTop: 8, fontWeight: 600 }}>
+            <a href={`tel:${OFICINA_CONTACTO.phone}`} style={{ textDecoration: "underline" }}>
+              Llamar a la oficina
+            </a>
+            {" · "}
+            <a href={`mailto:${OFICINA_CONTACTO.email}`} style={{ textDecoration: "underline" }}>
+              Escribir un correo
+            </a>
+          </p>
+        </div>
+      )}
+
       <div
         style={{
           position: "sticky",
@@ -268,8 +323,14 @@ export default function CartPage({ prefill }: Props) {
       >
         <button
           onClick={() => setCheckoutOpen(true)}
+          disabled={bloqueado}
           className="btn btn-primario"
-          style={{ width: "100%", border: "none", fontSize: 16 }}
+          style={{
+            width: "100%",
+            border: "none",
+            fontSize: 16,
+            ...(bloqueado && { opacity: 0.5, cursor: "not-allowed" }),
+          }}
         >
           Continuar con el pedido · {formatPriceCents(totalCents)}
         </button>
@@ -293,7 +354,7 @@ export default function CartPage({ prefill }: Props) {
         </button>
       </p>
 
-      {checkoutOpen && (
+      {checkoutOpen && !bloqueado && (
         <CheckoutFlow
           cart={cart}
           totalCents={totalCents}

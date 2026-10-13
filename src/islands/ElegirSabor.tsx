@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { addItem } from "~/lib/cart";
+import { anadirConAviso } from "~/lib/cart";
 import { emitToast } from "~/islands/ToastHost";
 import { formatPriceCents } from "~/lib/format";
 
@@ -80,15 +80,18 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
 
   function onAdd() {
     if (!comprable(sabor) || precio === null) return;
-    addItem({
-      slug: sabor.slug,
-      name: nombre,
-      variantId: variant?.id,
-      variantLabel: variant?.label,
-      unitPriceCents: precio,
-      qty: 1,
-    });
-    emitToast(`Añadido — ${nombre}${variant ? ` (${variant.label})` : ""}`);
+    const { mensaje, aviso } = anadirConAviso(
+      {
+        slug: sabor.slug,
+        name: nombre,
+        variantId: variant?.id,
+        variantLabel: variant?.label,
+        unitPriceCents: precio,
+        qty: 1,
+      },
+      `${nombre}${variant ? ` (${variant.label})` : ""}`,
+    );
+    emitToast(mensaje, { aviso });
   }
 
   return (

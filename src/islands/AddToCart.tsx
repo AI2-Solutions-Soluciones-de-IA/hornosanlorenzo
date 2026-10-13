@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { addItem, type CartItem } from "~/lib/cart";
+import { anadirConAviso, type CartItem } from "~/lib/cart";
+import { MAX_UNIDADES_POR_PRODUCTO, LIMITE_UNIDADES_COPY } from "~/lib/limites-pedido";
 import { emitToast } from "~/islands/ToastHost";
 import { formatPriceCents } from "~/lib/format";
 
@@ -59,8 +60,11 @@ export default function AddToCart({
       unitPriceCents: finalPrice,
       qty,
     };
-    addItem(item);
-    emitToast(`Añadido — ${name}${variant ? ` (${variant.label})` : ""}`);
+    const { mensaje, aviso } = anadirConAviso(
+      item,
+      `${name}${variant ? ` (${variant.label})` : ""}`,
+    );
+    emitToast(mensaje, { aviso });
   }
 
   const compactButton = (
@@ -265,7 +269,8 @@ export default function AddToCart({
           </span>
           <button
             type="button"
-            onClick={() => setQty((q) => Math.min(99, q + 1))}
+            onClick={() => setQty((q) => Math.min(MAX_UNIDADES_POR_PRODUCTO, q + 1))}
+            disabled={qty >= MAX_UNIDADES_POR_PRODUCTO}
             aria-label="Aumentar cantidad"
             style={{
               background: "transparent",
@@ -280,6 +285,11 @@ export default function AddToCart({
           </button>
         </div>
       </div>
+      {qty >= MAX_UNIDADES_POR_PRODUCTO && (
+        <p style={{ fontSize: 13, color: "var(--color-ink-muted)", margin: 0 }}>
+          {LIMITE_UNIDADES_COPY}
+        </p>
+      )}
 
       <button
         onClick={onAdd}

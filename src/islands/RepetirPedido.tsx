@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { addItem, type CartItem } from "~/lib/cart";
+import { addItem, loadCart, type CartItem } from "~/lib/cart";
+import { unidadesLibres, LIMITE_UNIDADES_COPY } from "~/lib/limites-pedido";
 import { emitToast } from "~/islands/ToastHost";
 
 type Props = {
@@ -32,10 +33,16 @@ export default function RepetirPedido({ items, noDisponibles }: Props) {
   const nada = items.length === 0;
 
   function onRepetir() {
-    for (const item of items) addItem(item);
-    emitToast(
-      `Añadido al carrito: ${items.length} ${items.length === 1 ? "producto" : "productos"}`,
-    );
+    // `addItem` recorta lo que pase del límite por producto: se avisa si pasa.
+    let recortado = false;
+    for (const item of items) {
+      if (item.qty > unidadesLibres(loadCart().items, item.slug)) recortado = true;
+      addItem(item);
+    }
+    const anadido = `Añadido al carrito: ${items.length} ${items.length === 1 ? "producto" : "productos"}`;
+    emitToast(recortado ? `${anadido}. ${LIMITE_UNIDADES_COPY}` : anadido, {
+      aviso: recortado,
+    });
     // El botón pasa a ser el enlace al carrito en vez de redirigir a secas:
     // así el aviso de arriba se llega a ver, y pulsar dos veces no duplica.
     setAnadido(true);

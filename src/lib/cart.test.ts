@@ -137,3 +137,36 @@ describe("loadCart con un localStorage manipulado", () => {
     expect(cart.loadCart().items.map((i) => i.slug)).toEqual(["tarta"]);
   });
 });
+
+describe("límite de unidades por producto", () => {
+  const tarta = (extra = {}) => ({
+    slug: "tarta-de-queso",
+    name: "Tarta de queso",
+    unitPriceCents: 1850,
+    ...extra,
+  });
+
+  it("añadir no pasa de 10 unidades del mismo producto", () => {
+    cart.addItem(tarta({ qty: 8 }));
+    const c = cart.addItem(tarta({ qty: 5 }));
+    expect(c.items[0].qty).toBe(10);
+  });
+
+  it("el límite cuenta todas las líneas del producto (otro tamaño)", () => {
+    cart.addItem(tarta({ variantId: "pequena", qty: 7 }));
+    const c = cart.addItem(tarta({ variantId: "mediana", qty: 5 }));
+    expect(c.items.map((i) => i.qty)).toEqual([7, 3]);
+  });
+
+  it("con el producto lleno no se añade una línea nueva", () => {
+    cart.addItem(tarta({ variantId: "pequena", qty: 10 }));
+    const c = cart.addItem(tarta({ variantId: "mediana" }));
+    expect(c.items).toHaveLength(1);
+  });
+
+  it("cambiar la cantidad en el carrito tampoco pasa del límite", () => {
+    const c0 = cart.addItem(tarta({ qty: 2 }));
+    const c = cart.updateQty(cart.claveLinea(c0.items[0]), 15);
+    expect(c.items[0].qty).toBe(10);
+  });
+});

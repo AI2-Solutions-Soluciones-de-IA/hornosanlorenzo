@@ -18,6 +18,8 @@ export type Cart = {
   updatedAt: string;
 };
 
+import { unidadesLibres, LIMITE_UNIDADES_COPY } from "~/lib/limites-pedido";
+
 const STORAGE_KEY = "hsl-cart-v1";
 const CART_EVENT = "hsl-cart-update";
 
@@ -99,7 +101,10 @@ export function claveLinea(
 
 export function addItem(item: Omit<CartItem, "qty"> & { qty?: number }): Cart {
   const cart = loadCart();
-  const qty = item.qty ?? 1;
+  // Lo que no quepa en el límite por producto se queda fuera: quien llama
+  // mira `unidadesLibres` antes para avisar.
+  const qty = Math.min(item.qty ?? 1, unidadesLibres(cart.items, item.slug));
+  if (qty <= 0) return cart;
   const existing = cart.items.find((i) => claveLinea(i) === claveLinea(item));
   if (existing) {
     existing.qty += qty;
@@ -110,6 +115,26 @@ export function addItem(item: Omit<CartItem, "qty"> & { qty?: number }): Cart {
   return cart;
 }
 
+/**
+ * Añade respetando el límite por producto y devuelve qué decirle al cliente:
+ * si cupo todo, el «Añadido» de siempre; si no, cuántas entraron y por qué.
+ */
+export function anadirConAviso(
+  item: Omit<CartItem, "qty"> & { qty?: number },
+  etiqueta: string,
+): { mensaje: string; aviso: boolean } {
+  const pedidas = item.qty ?? 1;
+  const libres = unidadesLibres(loadCart().items, item.slug);
+  if (libres === 0) return { mensaje: LIMITE_UNIDADES_COPY, aviso: true };
+  addItem(item);
+  if (pedidas > libres)
+    return {
+      mensaje: `Añadidas ${libres} — ${etiqueta}. ${LIMITE_UNIDADES_COPY}`,
+      aviso: true,
+    };
+  return { mensaje: `Añadido — ${etiqueta}`, aviso: false };
+}
+
 export function updateQty(clave: string, qty: number): Cart {
   const cart = loadCart();
   const item = cart.items.find((i) => claveLinea(i) === clave);
@@ -117,7 +142,8 @@ export function updateQty(clave: string, qty: number): Cart {
   if (qty <= 0) {
     cart.items = cart.items.filter((i) => claveLinea(i) !== clave);
   } else {
-    item.qty = qty;
+    // Las demás líneas del mismo producto también cuentan para el límite.
+    item.qty = Math.min(qty, item.qty + unidadesLibres(cart.items, item.slug));
   }
   saveCart(cart);
   return cart;

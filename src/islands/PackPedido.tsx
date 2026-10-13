@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { addItem } from "~/lib/cart";
+import { anadirConAviso } from "~/lib/cart";
+import { MAX_UNIDADES_POR_PRODUCTO, LIMITE_UNIDADES_COPY } from "~/lib/limites-pedido";
 import { emitToast } from "~/islands/ToastHost";
 import { formatPriceCents } from "~/lib/format";
 import {
@@ -171,16 +172,19 @@ export default function PackPedido({
   function onAdd() {
     const detalle = detallePack(piezas, elegidos);
     if (!puede || !detalle) return;
-    addItem({
-      slug,
+    const { mensaje, aviso } = anadirConAviso(
+      {
+        slug,
+        name,
+        opciones: elegidos,
+        fotoUrl: fotoUrl ?? undefined,
+        detalle,
+        unitPriceCents: priceCents,
+        qty,
+      },
       name,
-      opciones: elegidos,
-      fotoUrl: fotoUrl ?? undefined,
-      detalle,
-      unitPriceCents: priceCents,
-      qty,
-    });
-    emitToast(`Añadido — ${name}`);
+    );
+    emitToast(mensaje, { aviso });
     // Otro pack llevará otra foto: se limpia. Las elecciones se quedan.
     if (conFoto) {
       turno.current++;
@@ -353,7 +357,8 @@ export default function PackPedido({
           </span>
           <button
             type="button"
-            onClick={() => setQty((q) => Math.min(10, q + 1))}
+            onClick={() => setQty((q) => Math.min(MAX_UNIDADES_POR_PRODUCTO, q + 1))}
+            disabled={qty >= MAX_UNIDADES_POR_PRODUCTO}
             aria-label="Aumentar cantidad"
             style={pasoStyle}
           >
@@ -361,6 +366,9 @@ export default function PackPedido({
           </button>
         </div>
       </div>
+      {qty >= MAX_UNIDADES_POR_PRODUCTO && (
+        <p style={{ ...avisoStyle, marginTop: 0 }}>{LIMITE_UNIDADES_COPY}</p>
+      )}
 
       <div>
         <button

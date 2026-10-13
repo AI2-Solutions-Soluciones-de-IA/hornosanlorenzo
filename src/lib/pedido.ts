@@ -22,6 +22,13 @@ import {
   type PiezaResuelta,
 } from "~/data/packs";
 import { esFotoDePedido } from "~/lib/storage/fotos-pedido";
+import {
+  productoSobreLimite,
+  superaImporte,
+  LIMITE_IMPORTE_COPY,
+  MAX_UNIDADES_POR_PRODUCTO,
+  OFICINA_CONTACTO,
+} from "~/lib/limites-pedido";
 
 /** ¿Las claves de `opciones` son exactamente los huecos de la definición actual? */
 function mismosHuecos(
@@ -286,7 +293,22 @@ export async function priceOrder(
     });
   }
 
+  // El carrito ya no deja pasar de aquí, pero quien edite la petición sí
+  // podría: el límite se aplica en el servidor. Va con el nombre ya leído
+  // del catálogo, que es lo que el cliente reconoce.
+  const sobreLimite = productoSobreLimite(payload.items);
+  if (sobreLimite) {
+    const nombre = lines.find((l) => l.slug === sobreLimite)?.name ?? sobreLimite;
+    throw new OrderError(
+      `De «${nombre}» se pueden pedir online hasta ${MAX_UNIDADES_POR_PRODUCTO} unidades. Para más, consulta directamente con nuestra oficina: ${OFICINA_CONTACTO.phoneDisplay} · ${OFICINA_CONTACTO.email}.`,
+    );
+  }
+
   const subtotalCents = lines.reduce((sum, l) => sum + l.totalCents, 0);
+
+  // Antes que la fecha: un pedido de este tamaño no se cierra por la web, y
+  // decirle que cambie de día no le ayudaría.
+  if (superaImporte(subtotalCents)) throw new OrderError(LIMITE_IMPORTE_COPY);
 
   // El plazo depende del importe y de la tienda, así que la fecha no se puede
   // validar hasta tener el pedido valorado.

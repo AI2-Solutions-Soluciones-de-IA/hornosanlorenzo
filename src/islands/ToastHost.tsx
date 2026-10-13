@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 
 const TOAST_EVENT = "hsl-toast";
 
-type Toast = { id: number; message: string };
+/** `aviso`: algo no se ha hecho del todo (un límite); dura más para leerlo. */
+type Toast = { id: number; message: string; aviso?: boolean };
 
-export function emitToast(message: string): void {
+export function emitToast(message: string, { aviso = false } = {}): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
-    new CustomEvent<{ message: string }>(TOAST_EVENT, { detail: { message } }),
+    new CustomEvent<{ message: string; aviso: boolean }>(TOAST_EVENT, {
+      detail: { message, aviso },
+    }),
   );
 }
 
@@ -16,12 +19,13 @@ export default function ToastHost() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const ce = e as CustomEvent<{ message: string }>;
+      const ce = e as CustomEvent<{ message: string; aviso?: boolean }>;
       const id = Date.now() + Math.random();
-      setToasts((prev) => [...prev, { id, message: ce.detail.message }]);
+      const { message, aviso } = ce.detail;
+      setToasts((prev) => [...prev, { id, message, aviso }]);
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, 2800);
+      }, aviso ? 7000 : 2800);
     };
     window.addEventListener(TOAST_EVENT, handler);
     return () => window.removeEventListener(TOAST_EVENT, handler);
@@ -57,12 +61,14 @@ export default function ToastHost() {
             alignItems: "center",
             gap: "0.625rem",
             fontSize: 14,
+            maxWidth: "min(36rem, calc(100vw - 2rem))",
             animation: "hsl-toast-in .25s ease-out both",
           }}
         >
           <span
             style={{
-              background: "var(--color-wa)",
+              flexShrink: 0,
+              background: t.aviso ? "var(--color-caramelo)" : "var(--color-wa)",
               color: "white",
               width: 22,
               height: 22,
@@ -74,7 +80,7 @@ export default function ToastHost() {
               fontWeight: 900,
             }}
           >
-            ✓
+            {t.aviso ? "!" : "✓"}
           </span>
           {t.message}
         </div>

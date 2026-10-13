@@ -327,6 +327,36 @@ describe("priceOrder", () => {
   });
 });
 
+describe("priceOrder — límites del pedido online", () => {
+  it("rechaza más de 10 unidades de un mismo producto, aunque vayan en dos líneas", async () => {
+    const payload = {
+      ...pedidoBase(),
+      items: [
+        { slug: SENCILLO.slug, qty: 6 },
+        { slug: SENCILLO.slug, qty: 5 },
+      ],
+    };
+    await expect(priceOrder(payload, { now: AHORA })).rejects.toThrow(
+      /«Tarta de queso».*oficina/,
+    );
+  });
+
+  it("admite justo 10 unidades", async () => {
+    const payload = { ...pedidoBase(), items: [{ slug: SENCILLO.slug, qty: 10 }] };
+    const pedido = await priceOrder(payload, { now: AHORA });
+    expect(pedido.lines[0].qty).toBe(10);
+  });
+
+  it("rechaza un pedido de más de 400 € y manda a la oficina", async () => {
+    const CARA: ProductoVendible = { ...SENCILLO, slug: "tarta-grande", name: "Tarta grande", priceCents: 4_100 };
+    productosParaPedido.mockResolvedValue(catalogo(CARA));
+    const payload = { ...pedidoBase(), items: [{ slug: CARA.slug, qty: 10 }] };
+    await expect(priceOrder(payload, { now: AHORA })).rejects.toThrow(
+      /hasta 400 €.*oficina/,
+    );
+  });
+});
+
 describe("priceOrder — estados de venta", () => {
   it("un producto desactivado no se puede comprar, y se dice sin tecnicismos", async () => {
     productosParaPedido.mockResolvedValue(
