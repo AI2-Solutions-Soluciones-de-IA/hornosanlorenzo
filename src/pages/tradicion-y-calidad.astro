@@ -68,8 +68,15 @@ import { site } from "~/data/site";
     </p>
     <!-- Cinta continua: las cinco tarjetas dos veces, desplazándose sin
          parar; al llegar a la mitad vuelve a empezar sin que se note. La
-         copia no la lee el lector de pantalla. -->
-    <div class="valores-marco mt-10" role="region" aria-label="Cinco valores">
+         copia no la lee el lector de pantalla. Las flechas la adelantan o
+         la atrasan una tarjeta y luego sigue sola. -->
+    <div class="valores-marco mt-10" role="region" aria-label="Cinco valores" data-valores>
+      <button type="button" class="valores-flecha valores-flecha--ant" data-valores-ant aria-label="Valor anterior" hidden>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <button type="button" class="valores-flecha valores-flecha--sig" data-valores-sig aria-label="Valor siguiente" hidden>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      </button>
       <div class="valores-pista">
         {[0, 1].map((copia) => (
           <div class="valores-tanda" aria-hidden={copia === 1 ? "true" : undefined}>
@@ -134,7 +141,44 @@ import { site } from "~/data/site";
 <style>
   /* Cinta de los cinco valores: avanza siempre, a velocidad constante. */
   .valores-marco {
+    position: relative;
     overflow: hidden;
+  }
+  /* Con JS la mueve el script (para poder usar las flechas). */
+  .valores-marco.con-js .valores-pista {
+    animation: none;
+  }
+  .valores-flecha {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-top: -1.375rem;
+    border-radius: 9999px;
+    background: var(--color-latte);
+    color: var(--color-moka);
+    box-shadow: 0 2px 10px rgb(50 40 32 / 0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .valores-flecha[hidden] {
+    display: none;
+  }
+  .valores-flecha:hover {
+    transform: scale(1.06);
+  }
+  .valores-flecha:focus-visible {
+    outline: 2px solid var(--color-teja);
+    outline-offset: 2px;
+  }
+  .valores-flecha--ant {
+    left: 0.75rem;
+  }
+  .valores-flecha--sig {
+    right: 0.75rem;
   }
   .valores-pista {
     display: flex;
@@ -187,6 +231,13 @@ import { site } from "~/data/site";
     }
     .valores-tanda[aria-hidden="true"] {
       display: none;
+    }
+    /* Con JS no avanza sola, pero las flechas la siguen moviendo. */
+    .valores-marco.con-js {
+      overflow-x: hidden;
+    }
+    .valores-marco.con-js .valores-tanda[aria-hidden="true"] {
+      display: flex;
     }
   }
 
@@ -286,5 +337,57 @@ import { site } from "~/data/site";
     io.observe(dl);
   }
   document.addEventListener("astro:page-load", animaCifras);
+
+  /** Cinta de valores: avanza sola y las flechas la mueven una tarjeta. */
+  function cintaValores() {
+    const marco = document.querySelector<HTMLElement>("[data-valores]");
+    if (!marco || marco.classList.contains("con-js")) return;
+    const pista = marco.querySelector<HTMLElement>(".valores-pista")!;
+    const tanda = marco.querySelector<HTMLElement>(".valores-tanda")!;
+    const item = marco.querySelector<HTMLElement>(".valores-item")!;
+    const quieta = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    marco.classList.add("con-js");
+
+    const DURACION_VUELTA = 46; // s, como la animación sin JS
+    const DURACION_SALTO = 450; // ms
+    let pos = 0;
+    let salto: { desde: number; hasta: number; inicio: number } | null = null;
+    let antes = 0;
+
+    // Una tarjeta = su ancho más el hueco entre tarjetas.
+    const paso = () => item.offsetWidth + parseFloat(getComputedStyle(tanda).columnGap || "0");
+    const vuelta = () => tanda.offsetWidth;
+    const coloca = () => {
+      const v = vuelta();
+      pista.style.transform = `translateX(${-(((pos % v) + v) % v)}px)`;
+    };
+
+    const mueve = (signo: number) => {
+      // Si ya iba saltando, cuenta desde donde iba a acabar.
+      const base = salto ? salto.hasta : pos;
+      salto = { desde: pos, hasta: base + signo * paso(), inicio: performance.now() };
+    };
+    marco.querySelector("[data-valores-ant]")!.addEventListener("click", () => mueve(-1));
+    marco.querySelector("[data-valores-sig]")!.addEventListener("click", () => mueve(1));
+    marco.querySelectorAll<HTMLElement>(".valores-flecha").forEach((b) => (b.hidden = false));
+
+    const marca = (t: number) => {
+      if (!marco.isConnected) return;
+      const dt = antes ? Math.min(t - antes, 100) : 0;
+      antes = t;
+      if (salto) {
+        const p = Math.min((t - salto.inicio) / DURACION_SALTO, 1);
+        const suave = 1 - Math.pow(1 - p, 3);
+        pos = salto.desde + (salto.hasta - salto.desde) * suave;
+        if (p === 1) salto = null;
+      } else if (!quieta) {
+        pos += (vuelta() / DURACION_VUELTA) * (dt / 1000);
+      }
+      coloca();
+      requestAnimationFrame(marca);
+    };
+    requestAnimationFrame(marca);
+  }
+  document.addEventListener("astro:page-load", cintaValores);
 </script>
 
