@@ -160,4 +160,28 @@ describeSiHayBD("unidades encargadas por día", () => {
       void cuarenta;
     });
   });
+
+  it("un pack ocupa tantos huecos como productos lleva", async () => {
+    const DIA_PACK = "2031-05-21";
+    const conPack = {
+      ...pedido([], 1000, DIA_PACK),
+      lines: [
+        {
+          slug: "pack-cumpleanos",
+          name: "Pack Cumpleaños",
+          qty: 2,
+          unitPriceCents: 3000,
+          totalCents: 6000,
+          detalle: [
+            { slug: "a", nombre: "A", varianteLabel: null, qty: 1 },
+            { slug: "b", nombre: "B", varianteLabel: null, qty: 1 },
+            { slug: "c", nombre: "C", varianteLabel: null, qty: 2 },
+          ],
+        },
+        { slug: "suelto", name: "Suelto", qty: 3, unitPriceCents: 100, totalCents: 300 },
+      ],
+    };
+    await pedidos.crearPedidoIniciado(conPack as never, { estado: "sin_pago" });
+    expect((await capacidad.unidadesEncargadas(DIA_PACK)).get(DIA_PACK)).toBe(2 * 4 + 3);
+  });
 });

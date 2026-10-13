@@ -347,7 +347,7 @@ export async function priceOrder(
   // poco; el obrador lo ve en la hoja de producción.
   const encargadas =
     (await unidadesEncargadas(payload.dateISO)).get(payload.dateISO) ?? 0;
-  if (!cabeEnElDia(payload.dateISO, encargadas, unidadesTotales(payload.items))) {
+  if (!cabeEnElDia(payload.dateISO, encargadas, unidadesTotales(lines))) {
     throw new OrderError(DIA_COMPLETO_COPY);
   }
 

@@ -555,6 +555,18 @@ describe("priceOrder con packs", () => {
     expect(pedido.lines[0].detalle).toHaveLength(4);
   });
 
+  it("para la capacidad del día, dos packs de 4 piezas ocupan 8 huecos", async () => {
+    const dia = cumple({ qty: 2 }).dateISO;
+    // Capacidad de 50 o 100 según el día: se deja justo el hueco de 7.
+    const { maxUnidadesDelDia } = await import("~/lib/limites-pedido");
+    unidadesEncargadas.mockResolvedValue(new Map([[dia, maxUnidadesDelDia(dia) - 7]]));
+    await expect(priceOrder(cumple({ qty: 2 }), { now: AHORA })).rejects.toThrow(
+      /no nos caben tantos encargos/,
+    );
+    unidadesEncargadas.mockResolvedValue(new Map([[dia, maxUnidadesDelDia(dia) - 8]]));
+    await expect(priceOrder(cumple({ qty: 2 }), { now: AHORA })).resolves.toBeDefined();
+  });
+
   it("sin opciones rechaza el pack y nombra «Pack Cumpleaños»", async () => {
     await expect(
       priceOrder(cumple({ opciones: undefined }), { now: AHORA }),

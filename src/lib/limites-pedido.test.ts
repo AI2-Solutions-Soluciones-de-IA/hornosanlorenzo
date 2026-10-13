@@ -10,6 +10,7 @@ import {
   maxUnidadesDelDia,
   cabeEnElDia,
   diasSinHueco,
+  unidadesTotales,
 } from "~/lib/limites-pedido";
 
 describe("límites del pedido", () => {
@@ -74,5 +75,18 @@ describe("días sin hueco", () => {
       "2026-10-15",
       "2026-10-17",
     ]);
+  });
+});
+
+describe("unidades para la capacidad del día", () => {
+  it("un pack suma los productos que lleva, por cada pack", () => {
+    const items = [
+      { qty: 3 },
+      // En el carrito, el desglose es texto: una pieza por entrada.
+      { qty: 2, detalle: ["Empanada: carne", "Tortilla", "Plancha con foto"] },
+      // En el servidor, piezas con su cantidad por pack.
+      { qty: 1, detalle: [{ qty: 2 }, { qty: 1 }] },
+    ];
+    expect(unidadesTotales(items)).toBe(3 + 2 * 3 + 3);
   });
 });

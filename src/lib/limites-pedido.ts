@@ -16,9 +16,9 @@ export const MAX_IMPORTE_PEDIDO_CENTS = 40_000;
 
 /**
  * Capacidad del obrador: unidades encargadas en total para un mismo día de
- * entrega o recogida, sumando todos los pedidos. Un pack cuenta como una
- * unidad, igual que en el límite por producto. Los festivos no cambian nada:
- * solo cuenta el día de la semana.
+ * entrega o recogida, sumando todos los pedidos. Un pack cuenta los
+ * productos que lleva (en el límite por producto, en cambio, es uno más).
+ * Los festivos no cambian nada: solo cuenta el día de la semana.
  */
 export const MAX_UNIDADES_DIA = 50;
 /** Viernes y sábados. */
@@ -57,8 +57,20 @@ export const DIAS_TACHADOS_COPY = `Los días tachados ya no tienen hueco para tu
 
 type Linea = { slug: string; qty: number };
 
-export const unidadesTotales = (items: readonly { qty: number }[]): number =>
-  items.reduce((n, i) => n + i.qty, 0);
+/**
+ * Unidades que ocupan unas líneas en la capacidad del día: una suelta, la
+ * suya; un pack, sus piezas por cada pack. Vale para el carrito (desglose en
+ * texto, una entrada por pieza) y para el servidor (piezas con su `qty`).
+ */
+export const unidadesTotales = (
+  items: readonly { qty: number; detalle?: readonly (string | { qty: number })[] }[],
+): number =>
+  items.reduce((n, i) => {
+    const porPack = i.detalle?.length
+      ? i.detalle.reduce((m, d) => m + (typeof d === "string" ? 1 : d.qty), 0)
+      : 1;
+    return n + i.qty * porPack;
+  }, 0);
 
 /** ¿Cabe un pedido de `unidades` en un día que ya tiene `encargadas`? */
 export const cabeEnElDia = (dateISO: string, encargadas: number, unidades: number): boolean =>

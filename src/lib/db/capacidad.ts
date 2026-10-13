@@ -10,12 +10,17 @@ import { maxUnidadesDelDia } from "~/lib/limites-pedido";
  *  - los que se están pagando ahora mismo, hasta `reserva_hasta`.
  * Un `iniciado` sin reserva vigente es un carrito abandonado y no ocupa nada.
  *
- * Un pack cuenta como una unidad (su línea), no como sus piezas.
+ * Un pack cuenta sus piezas por cada pack (`detalle`, igual que la hoja de
+ * producción), no como una unidad.
  */
 const OCUPA = `(
   (p.estado in ('pagado', 'sin_pago') and p.devuelto_cents < p.total_cents)
   or (p.estado = 'iniciado' and p.reserva_hasta > now())
 )`;
+
+/** Unidades de una línea: las suyas o, en un pack, sus piezas por pack. */
+const UNIDADES_LINEA = `l.qty * coalesce(
+  (select sum((d->>'qty')::int) from jsonb_array_elements(l.detalle) d), 1)`;
 
 /** Unidades ocupadas por día. Solo salen los días que tienen algo. */
 export async function unidadesEncargadas(
@@ -25,7 +30,7 @@ export async function unidadesEncargadas(
 ): Promise<Map<string, number>> {
   const { rows } = await db.query<{ dia: string; unidades: string }>(
     `select to_char(p.fecha_entrega, 'YYYY-MM-DD') as dia,
-            sum(l.qty)                              as unidades
+            sum(${UNIDADES_LINEA})                  as unidades
        from pedidos p
        join lineas_pedido l on l.pedido_id = p.id
       where p.fecha_entrega between $1::date and $2::date
@@ -54,7 +59,7 @@ export async function bloquearDia(db: PoolClient, dateISO: string): Promise<void
  */
 export async function sesionesQueCerrar(dateISO: string): Promise<string[]> {
   const { rows } = await pool.query<{ sesion: string; unidades: string }>(
-    `select p.stripe_session_id as sesion, sum(l.qty) as unidades
+    `select p.stripe_session_id as sesion, sum(${UNIDADES_LINEA}) as unidades
        from pedidos p
        join lineas_pedido l on l.pedido_id = p.id
       where p.fecha_entrega = $1::date
