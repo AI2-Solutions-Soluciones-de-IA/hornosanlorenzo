@@ -26,7 +26,7 @@ export const tradicion = {
 
   cifras: [
     { figure: "40", label: "años de trayectoria", body: "Fundado en 1986: mismo oficio, mismas recetas de base." },
-    { figure: "2", label: "obradores en Madrid", body: "Alcobendas (sede) y Pozuelo de Alarcón, con horno propio." },
+    { figure: "2", label: "obradores en Madrid", body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón." },
     { figure: "3", label: "canales de negocio", body: "Empresas y oficinas, hostelería y particulares." },
     { figure: "L–S", label: "reparto propio", body: "Entrega diaria con furgoneta y repartidor de la casa." },
   ],
