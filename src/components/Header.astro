@@ -119,20 +119,22 @@ const MITAD_MENU = 3;
 
     <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). Desde
          1024 px va grande y flotando en el centro, montado sobre la franja
-         roja y la barra del menú, que se abre a sus dos lados. `alt` vacío:
-         el enlace ya se nombra con aria-label. -->
+         roja y la barra del menú, que se abre a sus dos lados. En el móvil,
+         igual: más grande que la franja roja, asomando sobre la barra blanca
+         del pedido; el enlace solo ocupa la altura de la franja y el sello
+         cuelga de él. `alt` vacío: el enlace ya se nombra con aria-label. -->
     <a
       href="/"
       aria-label={`${site.name} — inicio`}
-      class="justify-self-center lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:top-2 lg:z-10"
+      class="justify-self-center max-md:relative max-md:z-10 max-md:w-[108px] max-md:h-11 lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:top-2 lg:z-10"
     >
       <Image quality={85}
         src={selloConBorde}
         alt=""
         loading="eager"
-        widths={[96, 192, 288]}
-        sizes="92px"
-        class="md:hidden w-[92px] h-[92px]"
+        widths={[108, 216, 324]}
+        sizes="108px"
+        class="md:hidden absolute left-0 -top-1 w-[108px] h-[108px]"
       />
       <Image quality={85}
         src={sello}
@@ -184,7 +186,8 @@ const MITAD_MENU = 3;
   <!-- Móvil: la barra de secciones se pliega tras el menú, así que el pedido
        necesita una puerta propia. Bajo la franja roja, sobre fondo claro: un
        botón rojo con filete avellana y la letra del sello (12-10-2026). -->
-  <div class="md:hidden bg-[color:var(--color-leche)] px-4 py-2.5 flex justify-center">
+  <!-- `pt-14`: deja sitio al sello, que asoma desde la franja roja. -->
+  <div class="md:hidden bg-[color:var(--color-leche)] px-4 pt-14 pb-2.5 flex justify-center">
     <a
       href="/catalogo"
       class="inline-flex items-center gap-2 min-h-9 px-5 rounded-[var(--radius-boton)] border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-sm uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
