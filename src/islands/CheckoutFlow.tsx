@@ -30,6 +30,7 @@ import {
   type CheckoutAparcado,
 } from "~/lib/reanudar-checkout";
 import type { Cart } from "~/lib/cart";
+import { DIAS_TACHADOS_COPY, unidadesTotales } from "~/lib/limites-pedido";
 
 type Step = "dia" | "opcion" | "direccion" | "tienda" | "resumen";
 
@@ -202,6 +203,32 @@ export default function CheckoutFlow({
         : c,
     );
   }, [minISO]);
+
+  /**
+   * Días ya llenos para un pedido de este tamaño (capacidad del obrador).
+   * Mientras llega la respuesta no se tacha nada: al pagar, el servidor lo
+   * vuelve a comprobar con lo encargado en ese momento.
+   */
+  const unidades = unidadesTotales(cart.items);
+  const [completos, setCompletos] = useState<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    const desde = earliestSelectableDate(today);
+    const fin = fromISO(desde);
+    fin.setDate(fin.getDate() + 92);
+    const ctrl = new AbortController();
+    fetch(
+      `/api/dias-completos?desde=${desde}&hasta=${toISO(fin)}&unidades=${unidades}`,
+      { signal: ctrl.signal },
+    )
+      .then((r) => (r.ok ? r.json() : { completos: [] }))
+      .then((d: { completos?: string[] }) => setCompletos(new Set(d.completos ?? [])))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [today, unidades]);
+  /** Un día ya elegido que resulta estar lleno se suelta, si aún se está eligiendo. */
+  useEffect(() => {
+    if (step === "dia" && completos.has(dateISO)) setDateISO("");
+  }, [completos, dateISO, step]);
 
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -546,9 +573,12 @@ export default function CheckoutFlow({
                 {cells.map((date, i) => {
                   if (!date) return <span key={`empty-${i}`} />;
                   const iso = toISO(date);
-                  const disabled = mode
-                    ? !isDateAllowed(mode, iso, today, plazoOpts)
-                    : iso < minISO || isClosed(date);
+                  const lleno = completos.has(iso);
+                  const disabled =
+                    lleno ||
+                    (mode
+                      ? !isDateAllowed(mode, iso, today, plazoOpts)
+                      : iso < minISO || isClosed(date));
                   const selected = iso === dateISO;
                   return (
                     <button
@@ -556,8 +586,10 @@ export default function CheckoutFlow({
                       type="button"
                       disabled={disabled}
                       aria-pressed={selected}
+                      aria-label={lleno ? `${date.getDate()}, completo` : undefined}
                       onClick={() => setDateISO(iso)}
                       style={{
+                        textDecoration: lleno ? "line-through" : undefined,
                         height: 40,
                         border: selected
                           ? "1px solid var(--color-caramelo)"
@@ -592,6 +624,18 @@ export default function CheckoutFlow({
                   ? `En ${tiendaElegida.shortName}, recogida también en domingo. Sábados, domingos y festivos, de 09:30 a ${tiendaElegida.pickupUntilReducido} y sin recogida para el mismo día.`
                   : "Obrador y reparto propio de lunes a sábado. Los domingos no hay servicio."}
               </p>
+
+              {cells.some((d) => d && completos.has(toISO(d))) && (
+                <p
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: "var(--color-ink-muted)",
+                  }}
+                >
+                  {DIAS_TACHADOS_COPY}
+                </p>
+              )}
 
               {mode === "domicilio" && (
                 <p

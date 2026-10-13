@@ -7,6 +7,9 @@ import {
   unidadesLibres,
   productoSobreLimite,
   superaImporte,
+  maxUnidadesDelDia,
+  cabeEnElDia,
+  diasSinHueco,
 } from "~/lib/limites-pedido";
 
 describe("límites del pedido", () => {
@@ -40,5 +43,36 @@ describe("límites del pedido", () => {
   it("los avisos mandan a la oficina", () => {
     expect(LIMITE_UNIDADES_COPY).toMatch(/oficina/);
     expect(LIMITE_IMPORTE_COPY).toMatch(/oficina/);
+  });
+});
+
+describe("capacidad del día", () => {
+  it("50 de lunes a jueves y domingo; 100 viernes y sábado", () => {
+    // 12-10-2026 es lunes (festivo: da igual, cuenta el día de la semana).
+    const semana = ["12", "13", "14", "15", "16", "17", "18"].map((d) =>
+      maxUnidadesDelDia(`2026-10-${d}`),
+    );
+    expect(semana).toEqual([50, 50, 50, 50, 100, 100, 50]);
+  });
+
+  it("cabe justo hasta el máximo; una unidad más, no", () => {
+    expect(cabeEnElDia("2026-10-14", 45, 5)).toBe(true);
+    expect(cabeEnElDia("2026-10-14", 45, 6)).toBe(false);
+    expect(cabeEnElDia("2026-10-16", 90, 10)).toBe(true);
+  });
+});
+
+describe("días sin hueco", () => {
+  it("marca los días en que no cabe el pedido, con el máximo de cada día", () => {
+    // Jueves 15 (50), viernes 16 (100), sábado 17 (100), domingo 18 (50).
+    const encargadas = new Map([
+      ["2026-10-15", 45],
+      ["2026-10-16", 90],
+      ["2026-10-17", 96],
+    ]);
+    expect(diasSinHueco("2026-10-15", "2026-10-18", encargadas, 6)).toEqual([
+      "2026-10-15",
+      "2026-10-17",
+    ]);
   });
 });

@@ -35,6 +35,9 @@ conDefiniciones();
 // se prueba en su propio fichero.
 const esFotoDePedido = vi.fn();
 vi.mock("~/lib/storage/fotos-pedido", () => ({ esFotoDePedido }));
+// Lo ya encargado para el día: por defecto, nada.
+const unidadesEncargadas = vi.fn();
+vi.mock("~/lib/db/capacidad", () => ({ unidadesEncargadas }));
 
 const { priceOrder, orderPayloadSchema } = await import("~/lib/pedido");
 type OrderPayload = import("~/lib/pedido").OrderPayload;
@@ -89,6 +92,7 @@ const FECHA_DOMICILIO = earliestDate("domicilio", AHORA);
 
 beforeEach(() => {
   productosParaPedido.mockReset().mockResolvedValue(catalogo(SENCILLO));
+  unidadesEncargadas.mockReset().mockResolvedValue(new Map());
 });
 
 const pedidoBase = (): OrderPayload => ({
@@ -353,6 +357,25 @@ describe("priceOrder — límites del pedido online", () => {
     const payload = { ...pedidoBase(), items: [{ slug: CARA.slug, qty: 10 }] };
     await expect(priceOrder(payload, { now: AHORA })).rejects.toThrow(
       /hasta 400 €.*oficina/,
+    );
+  });
+});
+
+describe("priceOrder — capacidad del día", () => {
+  const conEncargadas = (n: number) =>
+    unidadesEncargadas.mockResolvedValue(new Map([[FECHA_RECOGIDA, n]]));
+  // FECHA_RECOGIDA es martes 10-3-2026: capacidad de 50.
+
+  it("admite el pedido si cabe justo", async () => {
+    conEncargadas(48);
+    await expect(priceOrder(pedidoBase(), { now: AHORA })).resolves.toBeDefined();
+    expect(unidadesEncargadas).toHaveBeenCalledWith(FECHA_RECOGIDA);
+  });
+
+  it("lo rechaza si con él se pasa de la capacidad del día", async () => {
+    conEncargadas(49);
+    await expect(priceOrder(pedidoBase(), { now: AHORA })).rejects.toThrow(
+      /no nos caben tantos encargos.*oficina/,
     );
   });
 });

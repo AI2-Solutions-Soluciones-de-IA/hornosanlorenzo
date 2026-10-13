@@ -1,10 +1,11 @@
 import { site } from "~/data/site";
 import { stores } from "~/data/stores";
+import { fromISO, toISO } from "~/lib/entrega";
 
 /**
  * Límites del pedido online. Por encima de ellos el pedido se cierra hablando
- * con la oficina, no por la web. Para cambiarlos basta con tocar estas dos
- * constantes: el carrito, la ficha y el servidor leen de aquí.
+ * con la oficina, no por la web. Para cambiarlos basta con tocar las
+ * constantes: el carrito, la ficha, el calendario y el servidor leen de aquí.
  */
 
 /** Unidades de un mismo producto (sume las líneas que sume) por pedido. */
@@ -12,6 +13,21 @@ export const MAX_UNIDADES_POR_PRODUCTO = 10;
 
 /** Importe máximo de un pedido online, en céntimos. */
 export const MAX_IMPORTE_PEDIDO_CENTS = 40_000;
+
+/**
+ * Capacidad del obrador: unidades encargadas en total para un mismo día de
+ * entrega o recogida, sumando todos los pedidos. Un pack cuenta como una
+ * unidad, igual que en el límite por producto. Los festivos no cambian nada:
+ * solo cuenta el día de la semana.
+ */
+export const MAX_UNIDADES_DIA = 50;
+/** Viernes y sábados. */
+export const MAX_UNIDADES_DIA_FIN_DE_SEMANA = 100;
+
+export function maxUnidadesDelDia(dateISO: string): number {
+  const dia = fromISO(dateISO).getDay();
+  return dia === 5 || dia === 6 ? MAX_UNIDADES_DIA_FIN_DE_SEMANA : MAX_UNIDADES_DIA;
+}
 
 /** La oficina es la del obrador central. */
 const oficina = stores[0];
@@ -27,7 +43,37 @@ export const LIMITE_UNIDADES_COPY = `Máximo ${MAX_UNIDADES_POR_PRODUCTO} unidad
 
 export const LIMITE_IMPORTE_COPY = `El pedido online admite hasta ${MAX_IMPORTE_PEDIDO_CENTS / 100} €. Para pedidos de importe superior, ${CONSULTA_OFICINA}.`;
 
+export const DIA_COMPLETO_COPY = `Ese día ya no nos caben tantos encargos. Elige otro día o ${CONSULTA_OFICINA}.`;
+
+/** Debajo del calendario, cuando hay algún día tachado. */
+export const DIAS_TACHADOS_COPY = `Los días tachados ya no tienen hueco para tu pedido. Elige otro o ${CONSULTA_OFICINA}.`;
+
 type Linea = { slug: string; qty: number };
+
+export const unidadesTotales = (items: readonly { qty: number }[]): number =>
+  items.reduce((n, i) => n + i.qty, 0);
+
+/** ¿Cabe un pedido de `unidades` en un día que ya tiene `encargadas`? */
+export const cabeEnElDia = (dateISO: string, encargadas: number, unidades: number): boolean =>
+  encargadas + unidades <= maxUnidadesDelDia(dateISO);
+
+/**
+ * Días del rango `desde`–`hasta` (incluidos) en los que ya no cabe un pedido
+ * de `unidades`, sabiendo lo encargado en cada uno.
+ */
+export function diasSinHueco(
+  desde: string,
+  hasta: string,
+  encargadas: ReadonlyMap<string, number>,
+  unidades: number,
+): string[] {
+  const fuera: string[] = [];
+  for (let d = fromISO(desde); toISO(d) <= hasta; d.setDate(d.getDate() + 1)) {
+    const iso = toISO(d);
+    if (!cabeEnElDia(iso, encargadas.get(iso) ?? 0, unidades)) fuera.push(iso);
+  }
+  return fuera;
+}
 
 /** Unidades de cada producto, sumando sus líneas (tamaños, sabores de pack…). */
 export function unidadesPorProducto(

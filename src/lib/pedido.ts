@@ -22,12 +22,16 @@ import {
   type PiezaResuelta,
 } from "~/data/packs";
 import { esFotoDePedido } from "~/lib/storage/fotos-pedido";
+import { unidadesEncargadas } from "~/lib/db/capacidad";
 import {
   productoSobreLimite,
   superaImporte,
   LIMITE_IMPORTE_COPY,
   MAX_UNIDADES_POR_PRODUCTO,
   OFICINA_CONTACTO,
+  cabeEnElDia,
+  unidadesTotales,
+  DIA_COMPLETO_COPY,
 } from "~/lib/limites-pedido";
 
 /** ¿Las claves de `opciones` son exactamente los huecos de la definición actual? */
@@ -335,6 +339,16 @@ export async function priceOrder(
           : `Ese día la tienda cierra a las ${tienda?.pickupUntilReducido ?? "14:30"}: elige la franja de mañana.`,
       );
     }
+  }
+
+  // La capacidad del obrador para ese día, sumando lo ya encargado. Va al
+  // final: es la única comprobación que lee pedidos, y solo merece la pena
+  // si todo lo demás ya vale. Dos pagos a la vez pueden pasarse por muy
+  // poco; el obrador lo ve en la hoja de producción.
+  const encargadas =
+    (await unidadesEncargadas(payload.dateISO)).get(payload.dateISO) ?? 0;
+  if (!cabeEnElDia(payload.dateISO, encargadas, unidadesTotales(payload.items))) {
+    throw new OrderError(DIA_COMPLETO_COPY);
   }
 
   // El mínimo depende del día de entrega, no del día en que se pide.
