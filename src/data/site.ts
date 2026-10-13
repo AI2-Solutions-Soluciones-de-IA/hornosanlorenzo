@@ -4,11 +4,11 @@ export const site = {
   /** Arquitectura de mensajes, nivel I — portadas, cierres y firma. */
   tagline: "Más de 40 años haciéndolo bien.",
   /** Nivel II — el concepto hecho frase: abre campañas, manifiesto y web. */
-  claim: "El futuro es volver a comer de verdad.",
+  claim: "El futuro es volver a comer de verdad, con producto fresco recién salido del horno cada día.",
   /** Nivel III — sitúa el negocio en una línea. */
-  descriptor: "Comida casera para hogares y empresas.",
+  descriptor: "Producto fresco y artesanal, recién salido del horno, para hogares y empresas.",
   /** Nivel IV — el argumento comercial central. */
-  usp: "La confianza de siempre, con una calidad-precio difícil de igualar y capacidad para servir cada día.",
+  usp: "La confianza de siempre: producto artesanal fresco que sale del horno cada día, con una calidad precio difícil de igualar.",
   /** Marca gráfica. */
   legend: "Obrador artesano · Madrid",
   founded: 1986,
