@@ -10,10 +10,10 @@ import { site } from "~/data/site";
 >
   <!-- Manifiesto de la marca (Brand Guidelines Avellana, diapositiva 8):
        la foto principal a la izquierda y el texto a la derecha; en el
-       móvil, la foto encima. -->
+       móvil, el texto primero y la foto debajo. -->
   <section class="border-b border-[color:var(--color-avellana)]">
     <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-[5fr_7fr] lg:gap-16">
-      <div class="relative aspect-[4/5] md:aspect-auto overflow-hidden bg-[color:var(--color-moka)]">
+      <div class="relative order-last md:order-first aspect-[4/5] md:aspect-auto overflow-hidden bg-[color:var(--color-moka)]">
         <img
           src="/images/tradicion-principal.jpg"
           alt="Una panadera coloca tartas de chocolate recién hechas junto al horno de leña del obrador"
