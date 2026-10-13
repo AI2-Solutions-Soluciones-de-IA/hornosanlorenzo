@@ -29,6 +29,22 @@ export default function CartPage({ prefill }: Props) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [reanudar, setReanudar] = useState<CheckoutAparcado | null>(null);
 
+  // De vuelta de la página de pago sin pagar: el hueco reservado en el día
+  // se suelta ya, y el parámetro se quita para que recargar no lo repita.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const pedidoId = url.searchParams.get("soltar");
+    if (!pedidoId) return;
+    fetch("/api/soltar-reserva", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ pedidoId }),
+      keepalive: true,
+    }).catch(() => {});
+    url.searchParams.delete("soltar");
+    window.history.replaceState(null, "", url);
+  }, []);
+
   // De vuelta de «Ya soy cliente»: el checkout se reabre solo donde estaba.
   // Solo con sesión; si no llegó a entrar, el carrito se ve como siempre.
   useEffect(() => {

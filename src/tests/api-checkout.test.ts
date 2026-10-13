@@ -23,10 +23,14 @@ vi.mock("~/lib/pedido", async (original) => ({
 // fichero fallaría al cargar en cualquier entorno sin `DATABASE_URL`.
 vi.mock("~/lib/db/productos", () => ({ productosParaPedido: vi.fn() }));
 
+const sesionesQueCerrar = vi.fn();
+vi.mock("~/lib/db/capacidad", () => ({ sesionesQueCerrar, unidadesEncargadas: vi.fn() }));
+
 const sessionsCreate = vi.fn();
+const sessionsExpire = vi.fn();
 vi.mock("stripe", () => ({
   default: class {
-    checkout = { sessions: { create: sessionsCreate } };
+    checkout = { sessions: { create: sessionsCreate, expire: sessionsExpire } };
   },
 }));
 
@@ -73,6 +77,8 @@ beforeEach(() => {
   crearPedidoIniciado.mockReset().mockResolvedValue("pedido-1");
   anotarSesionStripe.mockReset().mockResolvedValue(undefined);
   priceOrder.mockReset().mockResolvedValue(PEDIDO_VALORADO);
+  sesionesQueCerrar.mockReset().mockResolvedValue([]);
+  sessionsExpire.mockReset().mockResolvedValue({});
   sessionsCreate
     .mockReset()
     .mockResolvedValue({ id: "cs_test_1", url: "https://stripe.test/pagar" });
@@ -148,6 +154,7 @@ describe("POST /api/checkout", () => {
         estado: "sin_pago",
         // Sin User-Agent en la petición de prueba: cuenta como ordenador.
         dispositivo: "ordenador",
+        comprobarHueco: true,
       });
       expect(sessionsCreate).not.toHaveBeenCalled();
     });
@@ -176,5 +183,35 @@ describe("POST /api/checkout", () => {
       expect(respuesta.status).toBe(400);
       expect(crearPedidoIniciado).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("capacidad del día al pagar", () => {
+  it("si el día se ha llenado entre medias, 409 y no se abre el pago", async () => {
+    const { OrderError } = await import("~/lib/pedido");
+    crearPedidoIniciado.mockRejectedValue(new OrderError("Ese día ya no nos caben tantos encargos.", 409));
+    const { POST } = await import("~/pages/api/checkout");
+    const res = await POST(contexto() as never);
+    expect(res.status).toBe(409);
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it("pide comprobar el hueco, la página caduca a los 31 minutos y volver suelta la reserva", async () => {
+    const { POST } = await import("~/pages/api/checkout");
+    const antes = Math.floor(Date.now() / 1000);
+    await POST(contexto() as never);
+    expect(crearPedidoIniciado.mock.calls[0][1]).toMatchObject({ comprobarHueco: true });
+    const args = sessionsCreate.mock.calls[0][0];
+    expect(args.expires_at - antes).toBeGreaterThanOrEqual(31 * 60);
+    expect(args.expires_at - antes).toBeLessThan(32 * 60);
+    expect(args.cancel_url).toMatch(/\/carrito\?soltar=pedido-1$/);
+  });
+
+  it("cierra las páginas de pago de reservas vencidas si el día va justo", async () => {
+    sesionesQueCerrar.mockResolvedValue(["cs_vieja"]);
+    const { POST } = await import("~/pages/api/checkout");
+    const res = await POST(contexto() as never);
+    expect(res.status).toBe(200);
+    expect(sessionsExpire).toHaveBeenCalledWith("cs_vieja");
   });
 });

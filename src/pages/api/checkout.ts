@@ -14,6 +14,7 @@ import {
   OrderError,
 } from "~/lib/pedido";
 import { crearPedidoIniciado, anotarSesionStripe, numeroDePedido } from "~/lib/db/pedidos";
+import { sesionesQueCerrar } from "~/lib/db/capacidad";
 import { dispositivoDe } from "~/lib/dispositivo";
 
 // El cobro se calcula en servidor: esta ruta no puede prerenderizarse.
@@ -67,8 +68,13 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
   if (!secret) {
     let id: string;
     try {
-      id = await crearPedidoIniciado(order, { estado: "sin_pago", dispositivo });
+      id = await crearPedidoIniciado(order, {
+        estado: "sin_pago",
+        dispositivo,
+        comprobarHueco: true,
+      });
     } catch (err) {
+      if (err instanceof OrderError) return json({ error: err.message }, err.status);
       console.error(
         "[checkout] sin Stripe y sin poder anotar el pedido:",
         err instanceof Error ? err.message : err,
@@ -99,8 +105,11 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
   // pero mejor eso que un cobro que no aparece en ningún sitio.
   let pedidoId: string | null = null;
   try {
-    pedidoId = await crearPedidoIniciado(order, { dispositivo });
+    pedidoId = await crearPedidoIniciado(order, { dispositivo, comprobarHueco: true });
   } catch (err) {
+    // El día se ha llenado entre la valoración y ahora: eso sí para el cobro.
+    // Cualquier otro fallo de Postgres no (ver arriba).
+    if (err instanceof OrderError) return json({ error: err.message }, err.status);
     console.error(
       "[checkout] no se pudo anotar el pedido, se cobra igual:",
       err instanceof Error ? err.message : err,
@@ -176,8 +185,12 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
             },
           }
         : {}),
+      // Lo más corto que admite Stripe (30 min; un minuto de margen por los
+      // relojes). Por defecto serían 24 horas con la página de pago abierta.
+      expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
       success_url: `${origin}/pedido/gracias?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/carrito`,
+      // Volver al carrito suelta el hueco reservado (`/api/soltar-reserva`).
+      cancel_url: pedidoId ? `${origin}/carrito?soltar=${pedidoId}` : `${origin}/carrito`,
       locale: "es",
       // Los metadatos viajan con el pago: son lo que lee el webhook para
       // avisar al obrador. Stripe limita cada valor a 500 caracteres.
@@ -222,6 +235,19 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
           err instanceof Error ? err.message : err,
         );
       }
+    }
+
+    // Si el día va justo, se cierran las páginas de pago de quien dejó vencer
+    // su reserva: si no, podría pagar igual y pasar el día del límite. No
+    // puede fallar el pago de este cliente por esto.
+    try {
+      for (const id of await sesionesQueCerrar(payload.dateISO))
+        await stripe.checkout.sessions.expire(id).catch(() => {});
+    } catch (err) {
+      console.error(
+        "[checkout] no se pudieron cerrar reservas vencidas:",
+        err instanceof Error ? err.message : err,
+      );
     }
 
     return json({ url: session.url });

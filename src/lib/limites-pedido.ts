@@ -24,6 +24,13 @@ export const MAX_UNIDADES_DIA = 50;
 /** Viernes y sábados. */
 export const MAX_UNIDADES_DIA_FIN_DE_SEMANA = 100;
 
+/**
+ * Minutos que un pedido a medio pagar guarda su hueco. Stripe no deja que su
+ * página de pago caduque antes de 30 minutos: si alguien tarda más que esto y
+ * otro cliente necesita el hueco, se le cierra la página de pago.
+ */
+export const MINUTOS_RESERVA = 15;
+
 export function maxUnidadesDelDia(dateISO: string): number {
   const dia = fromISO(dateISO).getDay();
   return dia === 5 || dia === 6 ? MAX_UNIDADES_DIA_FIN_DE_SEMANA : MAX_UNIDADES_DIA;

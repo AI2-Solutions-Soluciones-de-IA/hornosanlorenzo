@@ -13,7 +13,9 @@ describeSiHayBD("unidades encargadas por día", () => {
   const CORREO = "capacidad@prueba.test";
   // Un día lejano y propio: otros ficheros escriben pedidos a la vez.
   const DIA = "2031-05-16";
-  const pedido = (qtys: number[], totalCents = 1000) => ({
+  // Martes: capacidad de 50.
+  const MARTES = "2031-05-20";
+  const pedido = (qtys: number[], totalCents = 1000, dateISO = DIA) => ({
     lines: qtys.map((qty, i) => ({
       slug: `producto-${i}`,
       name: `Producto ${i}`,
@@ -27,7 +29,7 @@ describeSiHayBD("unidades encargadas por día", () => {
     payload: {
       items: [],
       mode: "recogida" as const,
-      dateISO: DIA,
+      dateISO,
       slot: "morning" as const,
       storeId: "alcobendas",
       email: CORREO,
@@ -64,5 +66,98 @@ describeSiHayBD("unidades encargadas por día", () => {
     const m = await capacidad.unidadesEncargadas(DIA);
     expect(m.get(DIA)).toBe(7);
     expect((await capacidad.unidadesEncargadas("2031-05-17")).get("2031-05-17")).toBeUndefined();
+  });
+
+  describe("reserva de hueco al pagar", () => {
+    const ocupadas = async () =>
+      (await capacidad.unidadesEncargadas(MARTES)).get(MARTES) ?? 0;
+
+    it("un pago en marcha ocupa su hueco hasta que vence la reserva", async () => {
+      const id = await pedidos.crearPedidoIniciado(pedido([5], 1000, MARTES) as never, {
+        comprobarHueco: true,
+      });
+      expect(await ocupadas()).toBe(5);
+      await pool.query(
+        "update pedidos set reserva_hasta = now() - interval '1 minute' where id = $1",
+        [id],
+      );
+      expect(await ocupadas()).toBe(0);
+      await pool.query("delete from pedidos where id = $1", [id]);
+    });
+
+    it("con el día lleno no se anota el pedido: 409", async () => {
+      const lleno = await pedidos.crearPedidoIniciado(
+        pedido([10, 10, 10, 10, 8], 1000, MARTES) as never,
+        { estado: "sin_pago", comprobarHueco: true },
+      );
+      await expect(
+        pedidos.crearPedidoIniciado(pedido([3], 1000, MARTES) as never, {
+          comprobarHueco: true,
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+      expect(await ocupadas()).toBe(48);
+      await pool.query("delete from pedidos where id = $1", [lleno]);
+    });
+
+    it("dos pedidos a la vez por el último hueco: entra uno solo", async () => {
+      const previo = await pedidos.crearPedidoIniciado(
+        pedido([10, 10, 10, 10, 5], 1000, MARTES) as never,
+        { estado: "sin_pago", comprobarHueco: true },
+      );
+      const a = pedidos.crearPedidoIniciado(pedido([4], 1000, MARTES) as never, {
+        comprobarHueco: true,
+      });
+      const b = pedidos.crearPedidoIniciado(pedido([4], 1000, MARTES) as never, {
+        comprobarHueco: true,
+      });
+      const res = await Promise.allSettled([a, b]);
+      expect(res.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+      expect(await ocupadas()).toBe(49);
+      await pool.query("delete from pedidos where email = $1 and fecha_entrega = $2", [
+        CORREO,
+        MARTES,
+      ]);
+      void previo;
+    });
+
+    it("volver al carrito suelta el hueco y devuelve la página de pago a cerrar", async () => {
+      const id = await pedidos.crearPedidoIniciado(pedido([5], 1000, MARTES) as never, {
+        comprobarHueco: true,
+      });
+      await pedidos.anotarSesionStripe(id, "cs_test_soltar");
+      expect(await capacidad.soltarReserva(id)).toBe("cs_test_soltar");
+      expect(await ocupadas()).toBe(0);
+      // Una segunda vez ya no hay nada que soltar.
+      expect(await capacidad.soltarReserva(id)).toBeNull();
+      await pool.query("delete from pedidos where id = $1", [id]);
+    });
+
+    it("cierra las páginas de reservas vencidas solo si el día se pasaría", async () => {
+      const vencida = await pedidos.crearPedidoIniciado(pedido([6], 1000, MARTES) as never, {
+        comprobarHueco: true,
+      });
+      await pedidos.anotarSesionStripe(vencida, "cs_test_vencida");
+      await pool.query(
+        "update pedidos set reserva_hasta = now() - interval '1 minute' where id = $1",
+        [vencida],
+      );
+      // 6 vencidas + 40 ocupadas = 46: cabe, se deja pagar.
+      const cuarenta = await pedidos.crearPedidoIniciado(
+        pedido([10, 10, 10, 10], 1000, MARTES) as never,
+        { estado: "sin_pago", comprobarHueco: true },
+      );
+      expect(await capacidad.sesionesQueCerrar(MARTES)).toEqual([]);
+      // 6 + 48 = 54: se pasaría, se cierra.
+      await pedidos.crearPedidoIniciado(pedido([8], 1000, MARTES) as never, {
+        estado: "sin_pago",
+        comprobarHueco: true,
+      });
+      expect(await capacidad.sesionesQueCerrar(MARTES)).toEqual(["cs_test_vencida"]);
+      await pool.query("delete from pedidos where email = $1 and fecha_entrega = $2", [
+        CORREO,
+        MARTES,
+      ]);
+      void cuarenta;
+    });
   });
 });

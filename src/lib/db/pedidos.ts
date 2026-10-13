@@ -1,6 +1,13 @@
 import { pool } from "~/lib/db/pool";
 import { patronBusqueda } from "~/lib/db/busqueda";
-import type { PricedOrder } from "~/lib/pedido";
+import { OrderError, type PricedOrder } from "~/lib/pedido";
+import { bloquearDia, unidadesEncargadas } from "~/lib/db/capacidad";
+import {
+  cabeEnElDia,
+  unidadesTotales,
+  DIA_COMPLETO_COPY,
+  MINUTOS_RESERVA,
+} from "~/lib/limites-pedido";
 import type { PiezaResuelta } from "~/data/packs";
 
 /**
@@ -93,22 +100,39 @@ export async function crearPedidoIniciado(
   {
     estado = "iniciado",
     dispositivo = null,
+    comprobarHueco = false,
   }: {
     estado?: "iniciado" | "sin_pago";
     /** Móvil, tablet u ordenador, para el Resumen (migración 022). */
     dispositivo?: "movil" | "tablet" | "ordenador" | null;
+    /**
+     * El checkout lo pide: con el día bloqueado, vuelve a contar el hueco y
+     * lanza OrderError (409) si ya no cabe. Un `iniciado` reserva su hueco
+     * `MINUTOS_RESERVA` minutos. Las pruebas y los arreglos a mano no lo usan.
+     */
+    comprobarHueco?: boolean;
   } = {},
 ): Promise<string> {
   const p = order.payload;
   const cliente = await pool.connect();
   try {
     await cliente.query("begin");
+    if (comprobarHueco) {
+      await bloquearDia(cliente, p.dateISO);
+      const ocupadas =
+        (await unidadesEncargadas(p.dateISO, p.dateISO, cliente)).get(p.dateISO) ?? 0;
+      if (!cabeEnElDia(p.dateISO, ocupadas, unidadesTotales(order.lines)))
+        throw new OrderError(DIA_COMPLETO_COPY, 409);
+    }
+    const reservaMinutos = comprobarHueco && estado === "iniciado" ? MINUTOS_RESERVA : null;
     const { rows } = await cliente.query<{ id: string }>(
       `insert into pedidos (
          user_id, mode, fecha_entrega, slot, store_id, address, postal_code,
          email, telefono, nombre, notas,
-         subtotal_cents, envio_cents, total_cents, estado, dispositivo
-       ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         subtotal_cents, envio_cents, total_cents, estado, dispositivo,
+         reserva_hasta
+       ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
+                 now() + make_interval(mins => $17::int))
        returning id`,
       [
         order.userId ?? null,
@@ -127,6 +151,7 @@ export async function crearPedidoIniciado(
         order.totalCents,
         estado,
         dispositivo,
+        reservaMinutos,
       ],
     );
     const id = rows[0].id;
