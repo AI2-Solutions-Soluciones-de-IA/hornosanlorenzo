@@ -33,32 +33,40 @@ export const tradicion = {
 
   /**
    * Los cinco valores del sistema de marca. Cada uno se cumple en algo
-   * concreto. Textos de la imagen «valores HSL» del cliente (9-10-2026).
+   * concreto. Textos de la imagen «valores HSL» del cliente (9-10-2026);
+   * fotos de la carpeta «fotos para poner en carrusel de los 5 valores».
    */
   valores: [
     {
       number: "01",
       title: "Oficio",
+      foto: "/images/valores/oficio.jpg",
       body: "Lo artesanal empieza en nuestro propio obrador, desde 1986. Cada día, recién salido del horno, para hogares y empresas.",
     },
     {
       number: "02",
       title: "Constancia",
+      foto: "/images/valores/constancia.jpg",
+      /** Encuadre: la brocha y la taza quedan a la izquierda del centro. */
+      encuadre: "25% center",
       body: "Más de 40 años después la receta es la misma. Los ingredientes no se cambian por coste.",
     },
     {
       number: "03",
       title: "Honestidad",
+      foto: "/images/valores/honestidad.jpg",
       body: "Artesanal, con una relación calidad-precio difícil de igualar. Decimos lo que lleva, lo que cuesta y cuándo estará.",
     },
     {
       number: "04",
       title: "Cercanía",
+      foto: "/images/valores/cercania.jpg",
       body: "Conocemos a nuestros clientes por su nombre, no por su número de pedido. Reparto propio de lunes a sábado.",
     },
     {
       number: "05",
       title: "Generosidad",
+      foto: "/images/valores/generosidad.jpg",
       body: "La receta de siempre con raciones generosas. Porque creemos que comer bien no debería ser un lujo.",
     },
   ],

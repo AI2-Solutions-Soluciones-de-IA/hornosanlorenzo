@@ -60,10 +60,13 @@ import { site } from "~/data/site";
         {[0, 1].map((copia) => (
           <div class="valores-tanda" aria-hidden={copia === 1 ? "true" : undefined}>
             {tradicion.valores.map((v) => (
-              <article class="valores-item border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-6 sm:p-8">
-                <p class="font-[family-name:var(--font-display)] text-5xl text-[color:var(--color-avellana)]">{v.number}</p>
-                <h3 class="font-[family-name:var(--font-display)] text-2xl mt-4">{v.title}</h3>
-                <p class="mt-2 leading-relaxed text-[color:var(--color-ink-muted)]">{v.body}</p>
+              <article class="valores-item">
+                <img src={v.foto} alt="" loading="lazy" decoding="async" class="valores-foto" style={"encuadre" in v ? `object-position:${v.encuadre}` : undefined} />
+                <div class="valores-texto p-6 sm:p-7">
+                  <p class="font-[family-name:var(--font-display)] text-4xl">{v.number}</p>
+                  <h3 class="font-[family-name:var(--font-display)] text-2xl mt-2">{v.title}</h3>
+                  <p class="mt-2 text-sm leading-relaxed">{v.body}</p>
+                </div>
               </article>
             ))}
           </div>
@@ -129,9 +132,31 @@ import { site } from "~/data/site";
     gap: 1.25rem;
     padding-right: 1.25rem;
   }
+  /* Foto a sangre y el texto encima, abajo, en latte; un degradado moka
+     por debajo para que se lea sobre cualquier foto. */
   .valores-item {
+    position: relative;
     flex: none;
     width: min(80vw, 22rem);
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    background: var(--color-moka);
+  }
+  .valores-foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .valores-texto {
+    position: relative;
+    color: var(--color-latte);
+    background: linear-gradient(to top, rgb(50 40 32 / 0.92) 0%, rgb(50 40 32 / 0.75) 55%, rgb(50 40 32 / 0) 100%);
+    padding-top: 5rem;
   }
   @keyframes valores-cinta {
     to {
