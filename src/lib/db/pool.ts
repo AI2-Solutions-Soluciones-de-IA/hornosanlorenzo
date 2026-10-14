@@ -28,6 +28,15 @@ export const pool = new Pool({
   connectionTimeoutMillis: 10_000,
 });
 
+// Una conexión libre que se cae (corte de red, Neon que la cierra por
+// inactividad) emite «error» en el pool; sin oyente, Node lo trata como
+// excepción no capturada y tumba el proceso entero (pasó el 13-10-2026 con
+// `read EADDRNOTAVAIL`). El pool ya descarta esa conexión y abre otra
+// cuando haga falta: basta con dejarlo en los logs.
+pool.on("error", (err) => {
+  console.error("[pool] conexión libre caída:", err.message);
+});
+
 /**
  * Quién ejecuta una consulta: el pool, o un cliente ya reservado dentro de
  * una transacción.
