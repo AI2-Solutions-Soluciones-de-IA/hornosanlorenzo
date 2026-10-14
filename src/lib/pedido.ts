@@ -8,7 +8,6 @@ import {
   ZONA_REPARTO_COPY,
   minimoPedidoCents,
   franjasRecogida,
-  RECOGIDA_MISMO_DIA_DESDE,
   MIN_ORDER_COPY,
 } from "~/lib/entrega";
 import { stores, type StoreId } from "~/data/stores";
@@ -327,16 +326,14 @@ export async function priceOrder(
     );
   }
 
-  // La franja depende del día: para hoy solo hay tarde, y en Alcobendas los
-  // sábados, domingos y festivos solo mañana.
+  // La franja depende del día: en Alcobendas los sábados, domingos y
+  // festivos solo hay mañana (y en Pozuelo, los festivos).
   if (payload.mode === "recogida") {
     const franjas = franjasRecogida(payload.storeId, payload.dateISO, now);
     if (!franjas.includes(payload.slot ?? "morning")) {
       const tienda = stores.find((s) => s.id === payload.storeId);
       throw new OrderError(
-        franjas.includes("afternoon")
-          ? `La recogida del mismo día es a partir de las ${RECOGIDA_MISMO_DIA_DESDE}: elige la franja de tarde.`
-          : `Ese día la tienda cierra a las ${tienda?.pickupUntilReducido ?? "14:30"}: elige la franja de mañana.`,
+        `Ese día la tienda cierra a las ${tienda?.pickupUntilReducido ?? tienda?.cierreFestivo ?? "14:30"}: elige la franja de mañana.`,
       );
     }
   }

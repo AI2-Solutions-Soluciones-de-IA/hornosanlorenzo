@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useCart } from "~/hooks/useCart";
 import { claveLinea } from "~/lib/cart";
 import { formatPriceCents } from "~/lib/format";
-import { MODE_COPY } from "~/lib/entrega";
 import {
   unidadesPorProducto,
   productoSobreLimite,
@@ -268,38 +267,8 @@ export default function CartPage({ prefill }: Props) {
         </span>
       </div>
 
-      {/* Condiciones de entrega del brief, antes de entrar al flujo */}
-      <div
-        style={{
-          marginTop: 24,
-          display: "grid",
-          gap: 12,
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-        }}
-      >
-        {(["domicilio", "recogida"] as const).map((m) => (
-          <div
-            key={m}
-            style={{
-              padding: "1rem 1.25rem",
-              border: "1px solid var(--color-avellana)",
-              background: "var(--color-latte)",
-            }}
-          >
-            <p className="numeracion">{MODE_COPY[m].label}</p>
-            <p
-              style={{
-                marginTop: 8,
-                fontSize: 13,
-                lineHeight: 1.5,
-                color: "var(--color-ink-muted)",
-              }}
-            >
-              {MODE_COPY[m].body}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Las condiciones de entrega ya no van aquí (14-10-2026): salen una
+          sola vez, dentro del pedido, al elegir modalidad. */}
 
       {bloqueado && (
         <div

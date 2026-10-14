@@ -121,13 +121,13 @@ describe("recogida en fin de semana y festivo", () => {
     ]);
   });
 
-  it("el domingo se recoge en Alcobendas, no en Pozuelo ni a domicilio", () => {
+  it("el domingo se recoge en las dos tiendas, pero no hay reparto", () => {
     const domingo = new Date("2026-10-04T00:00:00");
     expect(isClosed(domingo, { mode: "recogida", storeId: "alcobendas" })).toBe(
       false,
     );
     expect(isClosed(domingo, { mode: "recogida", storeId: "pozuelo" })).toBe(
-      true,
+      false,
     );
     expect(isClosed(domingo, { mode: "domicilio" })).toBe(true);
     expect(
@@ -150,29 +150,47 @@ describe("recogida en fin de semana y festivo", () => {
   });
 });
 
-describe("recogida al día siguiente: hasta las 17:00", () => {
-  it("Alcobendas", () => {
+describe("plazo: un día de antelación, hasta las 18:00 (14-10-2026)", () => {
+  // Martes 29-9-2026.
+  it("recogida: nunca para el mismo día, ni en Alcobendas por la mañana", () => {
     const opts = { storeId: "alcobendas" };
-    expect(
-      earliestDate("recogida", new Date("2026-09-29T16:59:00"), opts),
-    ).toBe("2026-09-30");
-    expect(
-      earliestDate("recogida", new Date("2026-09-29T17:00:00"), opts),
-    ).toBe("2026-10-01");
+    const manana = new Date("2026-09-29T09:00:00");
+    expect(earliestDate("recogida", manana, opts)).toBe("2026-09-30");
+    expect(isDateAllowed("recogida", "2026-09-29", manana, opts)).toBe(false);
   });
 
-  it("Pozuelo", () => {
-    const opts = { storeId: "pozuelo" };
+  it("recogida: para mañana hasta las 17:59; desde las 18:00, pasado", () => {
+    for (const storeId of ["alcobendas", "pozuelo"]) {
+      expect(
+        earliestDate("recogida", new Date("2026-09-29T17:59:00"), { storeId }),
+      ).toBe("2026-09-30");
+      expect(
+        earliestDate("recogida", new Date("2026-09-29T18:00:00"), { storeId }),
+      ).toBe("2026-10-01");
+    }
+  });
+
+  it("domicilio: igual, hasta las 18:00", () => {
+    expect(earliestDate("domicilio", new Date("2026-09-29T17:59:00"))).toBe(
+      "2026-09-30",
+    );
+    expect(earliestDate("domicilio", new Date("2026-09-29T18:00:00"))).toBe(
+      "2026-10-01",
+    );
+  });
+
+  it("Pozuelo, viernes por la tarde: ya vale el domingo", () => {
     expect(
-      earliestDate("recogida", new Date("2026-09-29T10:00:00"), opts),
-    ).toBe("2026-09-30");
+      earliestDate("recogida", new Date("2026-10-02T18:00:00"), {
+        storeId: "pozuelo",
+      }),
+    ).toBe("2026-10-04");
+  });
+
+  it("Pozuelo, domingo: solo de mañana (cierra a las 15:00)", () => {
     expect(
-      earliestDate("recogida", new Date("2026-09-29T17:00:00"), opts),
-    ).toBe("2026-10-01");
-    // Viernes tarde: pasado mañana es domingo, y Pozuelo no recoge en domingo.
-    expect(
-      earliestDate("recogida", new Date("2026-10-02T18:00:00"), opts),
-    ).toBe("2026-10-05");
+      franjasRecogida("pozuelo", "2026-10-04", new Date("2026-10-01T10:00:00")),
+    ).toEqual(["morning"]);
   });
 });
 

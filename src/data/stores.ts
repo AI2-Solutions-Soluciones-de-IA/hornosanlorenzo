@@ -21,14 +21,16 @@ export type Store = {
    */
   pickupUntilReducido?: string;
   /**
-   * Hora de cierre los festivos entre semana, si la tienda cierra antes
-   * pero NO tiene horario reducido el fin de semana (Pozuelo abre el
-   * sábado por la tarde). Esos días solo se recoge de mañana.
+   * Hora de cierre los domingos y festivos, si la tienda cierra antes pero
+   * NO tiene horario reducido el sábado (Pozuelo abre el sábado por la
+   * tarde). Esos días solo se recoge de mañana.
    */
   cierreFestivo?: string;
   openDays: number[]; // 0=Sun ... 6=Sat
   /** Días en que se puede elegir recoger aquí. 0=domingo ... 6=sábado. */
   diasRecogida: readonly number[];
+  /** El reparto a domicilio sale de aquí (solo Alcobendas, 14-10-2026). */
+  reparto: boolean;
   mapsEmbed: string;
   mapsLink: string;
   coords: { lat: number; lng: number };
@@ -57,6 +59,7 @@ export const stores: readonly Store[] = [
     pickupUntilReducido: "14:30",
     openDays: [0, 1, 2, 3, 4, 5, 6],
     diasRecogida: [0, 1, 2, 3, 4, 5, 6],
+    reparto: true,
     mapsEmbed:
       "https://www.google.com/maps?q=C%2FValgrande+21+Alcobendas&output=embed",
     mapsLink: "https://www.google.com/maps?q=C%2FValgrande+21+Alcobendas",
@@ -80,8 +83,9 @@ export const stores: readonly Store[] = [
     pickupUntil: "20:30",
     cierreFestivo: "15:00",
     openDays: [0, 1, 2, 3, 4, 5, 6],
-    // La tienda abre el domingo, pero de momento no se recoge ese día.
-    diasRecogida: [1, 2, 3, 4, 5, 6],
+    // Recogida también el domingo, de mañana (14-10-2026).
+    diasRecogida: [0, 1, 2, 3, 4, 5, 6],
+    reparto: false,
     mapsEmbed:
       "https://www.google.com/maps?q=Avenida+Europa+28+Pozuelo+de+Alarcon&output=embed",
     mapsLink:

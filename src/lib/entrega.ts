@@ -1,15 +1,11 @@
 /**
  * Reglas de entrega.
  *
- *   Envío a domicilio — «Entregamos en 24 horas. Entrega programada al día
- *   siguiente para pedidos realizados antes de las 18:00 del día anterior.»
- *
- *   Recogida en tienda — el mismo día en Alcobendas, a partir de las 17:00,
- *   si se pide antes de las 13:00; en Pozuelo, siempre de un día para otro.
- *   Para el día siguiente hay que pedir antes de las 17:00: a esa hora se
- *   cierra la lista que el obrador prepara al día siguiente.
+ *   Envío a domicilio y recogida en tienda — siempre con un día de
+ *   antelación: para mañana, hasta las 18:00 de hoy; después, pasado mañana.
+ *   Nada para el mismo día por la web (14-10-2026): quien lo necesite llama.
  *   Alcobendas abre también los domingos; sábados, domingos y festivos
- *   cierra a las 14:30, así que ese día solo hay mañana y no hay mismo día.
+ *   cierra a las 14:30, así que ese día solo hay mañana.
  *
  *   Cualquier modalidad — desde 250 € el obrador necesita dos días.
  */
@@ -18,38 +14,35 @@ import { stores } from "~/data/stores";
 
 export type DeliveryMode = "domicilio" | "recogida";
 
-/** Hora límite para que el envío salga al día siguiente. */
+/** Hora límite, en las dos modalidades, para que el pedido sea para mañana. */
 export const CUTOFF_HOUR = 18;
-
-/** Hora límite para que la recogida del mismo día siga siendo posible. */
-export const RECOGIDA_MISMO_DIA_HOUR = 13;
-
-/** Hora límite para recoger al día siguiente: se cierra la lista del obrador. */
-export const RECOGIDA_DIA_SIGUIENTE_HOUR = 17;
-
-/** Una recogida del mismo día no está lista hasta esta hora: solo vale la tarde. */
-export const RECOGIDA_MISMO_DIA_DESDE = "17:00";
 
 /** Desde este importe el obrador necesita dos días: no vale el día siguiente. */
 export const DOS_DIAS_DESDE_CENTS = 25_000;
 
-/** Tiendas que nunca preparan para el mismo día. */
-const TIENDAS_SIN_MISMO_DIA: readonly string[] = ["pozuelo"];
-
 export const DOS_DIAS_COPY =
   "Los pedidos desde 250 € necesitan dos días de preparación.";
 
+/**
+ * Textos de cada modalidad, del cliente (14-10-2026). En el pedido salen
+ * una sola vez: al elegir la modalidad solo se ven los nombres y
+ * `ANTELACION_COPY`; el texto de la elegida va encima del calendario.
+ */
 export const MODE_COPY: Record<DeliveryMode, { label: string; body: string }> =
   {
     domicilio: {
       label: "Envío a domicilio",
-      body: "Reparto de lunes a sábado. Entregamos en 24 horas. Entrega programada al día siguiente para pedidos realizados antes de las 18:00 del día anterior. Pedido mínimo 25 € de lunes a jueves y 35 € viernes, sábados y vísperas de festivo. Solo Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón.",
+      body: "De lunes a sábado laborables, de 9:00 a 14:30 (para estimar una franja horaria según tu zona, llámanos y consulta). Pedido mínimo de 25 € de lunes a jueves; viernes, sábados y vísperas de festivo, de 35 €. Servimos en Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo. Otras zonas, consultar.",
     },
     recogida: {
       label: "Recogida en tienda",
-      body: "Recogida el mismo día en Alcobendas a partir de las 17h para pedidos antes de las 13h. Para el día siguiente, pide antes de las 17h. Sábados, domingos y festivos, Alcobendas de 09:30 a 14:30. En Pozuelo, siempre de un día para otro.",
+      body: "En el obrador central de Alcobendas, de lunes a viernes de 9:30 a 19:30 ininterrumpido; sábados, domingos y festivos, de 9:30 a 14:30. En la pastelería de Pozuelo, de lunes a viernes de 9:30 a 20:30; sábados, de 10:00 a 15:00 y de 17:00 a 20:30; domingos y festivos, de 10:00 a 15:00.",
     },
   };
+
+/** Va debajo de las dos modalidades, antes de elegir. */
+export const ANTELACION_COPY =
+  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación, antes de las 18:00 del día anterior. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
 
 /**
  * El envío a domicilio no se elige por franja: el reparto propio sale por la
@@ -155,44 +148,25 @@ const addDays = (date: Date, days: number): Date => {
 export type PlazoOpts = {
   /** Subtotal del pedido: desde 250 € hacen falta dos días. */
   subtotalCents?: number;
-  /** Solo en recogida: Pozuelo nunca prepara para el mismo día. */
+  /** Solo en recogida: los días y franjas dependen de la tienda. */
   storeId?: string;
 };
 
 /**
- * Primer día que se puede elegir.
- *
- * Recogida: hoy mismo si aún no son las 13:00, salvo en Pozuelo, que siempre
- * es de un día para otro; mañana si aún no son las 17:00; si no, pasado.
- * Domicilio: mañana si aún no son las 18:00; si no, pasado.
- * En ambas, un pedido de 250 € o más no baja de dos días.
+ * Primer día que se puede elegir, igual en las dos modalidades: mañana si
+ * aún no son las 18:00; si no, pasado. Un pedido de 250 € o más no baja de
+ * dos días.
  */
 export function earliestDate(
   mode: DeliveryMode,
   now: Date = new Date(),
   { subtotalCents = 0, storeId }: PlazoOpts = {},
 ): string {
-  const hora = now.getHours();
-  const sinMismoDia = Boolean(
-    storeId && TIENDAS_SIN_MISMO_DIA.includes(storeId),
-  );
-  let dias =
-    mode === "recogida"
-      ? // Pozuelo nunca prepara para hoy; en Alcobendas hay hasta las 13:00.
-        // Para mañana, hasta las 17:00; después, pasado mañana.
-        !sinMismoDia && hora < RECOGIDA_MISMO_DIA_HOUR
-        ? 0
-        : hora < RECOGIDA_DIA_SIGUIENTE_HOUR
-          ? 1
-          : 2
-      : hora < CUTOFF_HOUR
-        ? 1
-        : 2;
+  let dias = now.getHours() < CUTOFF_HOUR ? 1 : 2;
 
   if (subtotalCents >= DOS_DIAS_DESDE_CENTS) dias = Math.max(dias, 2);
 
-  // Se salta lo cerrado y, en recogida, los días sin ninguna franja posible
-  // (un sábado para el mismo día en Alcobendas, por ejemplo).
+  // Se salta lo cerrado y, en recogida, los días sin ninguna franja posible.
   let d = addDays(now, dias);
   while (
     isClosed(d, { mode, storeId }) ||
@@ -216,22 +190,22 @@ export const esDiaReducido = (dateISO: string): boolean => {
  * Franjas en que se puede recoger ese día en esa tienda.
  *
  * Con horario reducido (Alcobendas cierra a las 14:30 en fin de semana y
- * festivo; Pozuelo, a las 15:00 solo en festivo) solo hay mañana. Para hoy mismo el pedido no está listo hasta las
- * 17:00, así que solo hay tarde. Las dos cosas a la vez dejan el día vacío.
+ * festivo; Pozuelo, a las 15:00 en domingo y festivo) solo hay mañana.
+ *
+ * `now` ya no cuenta (no hay recogida para el mismo día): se mantiene en la
+ * firma para no tocar a quien la llama.
  */
 export function franjasRecogida(
   storeId: string | undefined,
   dateISO: string,
-  now: Date = new Date(),
+  _now: Date = new Date(),
 ): Franja[] {
   const tienda = stores.find((s) => s.id === storeId);
   const reducido =
     (tienda?.pickupUntilReducido && esDiaReducido(dateISO)) ||
-    (tienda?.cierreFestivo && FESTIVOS.has(dateISO));
-  let franjas: Franja[] = reducido ? ["morning"] : ["morning", "afternoon"];
-  if (dateISO === toISO(now))
-    franjas = franjas.filter((f) => f === "afternoon");
-  return franjas;
+    (tienda?.cierreFestivo &&
+      (FESTIVOS.has(dateISO) || fromISO(dateISO).getDay() === 0));
+  return reducido ? ["morning"] : ["morning", "afternoon"];
 }
 
 /** El calendario abre con la opción más permisiva: la recogida. */

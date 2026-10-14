@@ -2,7 +2,7 @@
 import LegalLayout from "~/layouts/LegalLayout.astro";
 import { site } from "~/data/site";
 import { stores } from "~/data/stores";
-import { MODE_COPY, CUTOFF_HOUR } from "~/lib/entrega";
+import { MODE_COPY, ANTELACION_COPY } from "~/lib/entrega";
 ---
 <LegalLayout
   title="Condiciones de compra"
@@ -42,17 +42,17 @@ import { MODE_COPY, CUTOFF_HOUR } from "~/lib/entrega";
   <h2>4. Pedidos, entrega y recogida</h2>
   <ul>
     <li>
-      <strong>{MODE_COPY.domicilio.label}.</strong> {MODE_COPY.domicilio.body} La hora
-      límite para los pedidos del día siguiente son las {CUTOFF_HOUR}:00.
+      <strong>{MODE_COPY.domicilio.label}.</strong> {MODE_COPY.domicilio.body}
     </li>
     <li>
       <strong>{MODE_COPY.recogida.label}.</strong> {MODE_COPY.recogida.body}
     </li>
   </ul>
+  <p>{ANTELACION_COPY}</p>
   <p>
-    El obrador y el reparto propio operan de lunes a sábado. Los domingos no hay
-    servicio. La franja horaria seleccionada es orientativa y puede ajustarse avisando
-    al cliente.
+    El reparto propio opera de lunes a sábado; la recogida en tienda, según el horario
+    de cada tienda. La franja horaria seleccionada es orientativa y puede ajustarse
+    avisando al cliente.
   </p>
 
   <h2>5. Pago</h2>

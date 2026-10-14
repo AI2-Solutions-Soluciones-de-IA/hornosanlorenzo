@@ -3,6 +3,7 @@ import { stores, type StoreId } from "~/data/stores";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
 import {
   MODE_COPY,
+  ANTELACION_COPY,
   DOS_DIAS_DESDE_CENTS,
   DOS_DIAS_COPY,
   earliestDate,
@@ -17,10 +18,8 @@ import {
   municipioDeCP,
   esTelefonoValido,
   minimoPedidoCents,
-  MIN_ORDER_COPY,
   franjasRecogida,
   type Franja,
-  RECOGIDA_MISMO_DIA_DESDE,
   isDateAllowed,
   meetsMinimum,
 } from "~/lib/entrega";
@@ -285,7 +284,6 @@ export default function CheckoutFlow({
       ? franjasRecogida(storeId, dateISO, today)
       : ["morning", "afternoon"];
   const tiendaElegida = stores.find((s) => s.id === storeId);
-  const mismoDia = mode === "recogida" && dateISO === toISO(today);
   useEffect(() => {
     if (franjas.length > 0 && !franjas.includes(slot)) setSlot(franjas[0]);
   }, [franjas.join(), slot]);
@@ -613,18 +611,6 @@ export default function CheckoutFlow({
                 })}
               </div>
 
-              <p
-                style={{
-                  marginTop: 14,
-                  fontSize: 12,
-                  color: "var(--color-ink-muted)",
-                }}
-              >
-                {mode === "recogida" && tiendaElegida?.pickupUntilReducido
-                  ? `En ${tiendaElegida.shortName}, recogida también en domingo. Sábados, domingos y festivos, de 09:30 a ${tiendaElegida.pickupUntilReducido} y sin recogida para el mismo día.`
-                  : "Obrador y reparto propio de lunes a sábado. Los domingos no hay servicio."}
-              </p>
-
               {cells.some((d) => d && completos.has(toISO(d))) && (
                 <p
                   style={{
@@ -637,21 +623,13 @@ export default function CheckoutFlow({
                 </p>
               )}
 
-              {mode === "domicilio" && (
+              {/* El mínimo ya va en el texto de arriba: aquí solo el aviso. */}
+              {mode === "domicilio" && dateISO && !llegaAlMinimo && (
                 <p
-                  role={dateISO && !llegaAlMinimo ? "alert" : undefined}
-                  style={{
-                    marginTop: 8,
-                    fontSize: 12,
-                    color:
-                      dateISO && !llegaAlMinimo
-                        ? "var(--color-teja)"
-                        : "var(--color-ink-muted)",
-                  }}
+                  role="alert"
+                  style={{ marginTop: 8, fontSize: 12, color: "var(--color-teja)" }}
                 >
-                  {dateISO && !llegaAlMinimo
-                    ? `Para ese día el pedido mínimo es de ${formatPriceCents(minimoCents)}: te faltan ${formatPriceCents(minimoCents - totalCents)}. Añade algo más o elige otro día.`
-                    : MIN_ORDER_COPY}
+                  {`Para ese día el pedido mínimo es de ${formatPriceCents(minimoCents)}: te faltan ${formatPriceCents(minimoCents - totalCents)}. Añade algo más o elige otro día.`}
                 </p>
               )}
 
@@ -699,19 +677,13 @@ export default function CheckoutFlow({
                   >
                     {MODE_COPY[m].label}
                   </span>
-                  <span
-                    style={{
-                      display: "block",
-                      marginTop: 6,
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: "var(--color-ink-muted)",
-                    }}
-                  >
-                    {MODE_COPY[m].body}
-                  </span>
                 </button>
               ))}
+              {/* El texto de cada modalidad sale después, encima del
+                  calendario; aquí solo lo común a las dos. */}
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: "var(--color-ink-muted)" }}>
+                {ANTELACION_COPY}
+              </p>
               {totalCents >= DOS_DIAS_DESDE_CENTS && (
                 <p style={{ fontSize: 12, color: "var(--color-ink-muted)" }}>
                   {DOS_DIAS_COPY}
@@ -1013,9 +985,7 @@ export default function CheckoutFlow({
                         },
                         {
                           id: "afternoon",
-                          label: mismoDia
-                            ? `Tarde · desde las ${RECOGIDA_MISMO_DIA_DESDE}`
-                            : "Tarde",
+                          label: "Tarde",
                         },
                       ] as const
                     )

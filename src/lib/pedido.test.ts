@@ -99,8 +99,7 @@ const pedidoBase = (): OrderPayload => ({
   items: [{ slug: SENCILLO.slug, qty: 2 }],
   mode: "recogida",
   dateISO: FECHA_RECOGIDA,
-  // FECHA_RECOGIDA es el mismo día (se pide a las 10:00 en Alcobendas), y
-  // la recogida del mismo día solo es de tarde.
+  // FECHA_RECOGIDA es el día siguiente: no hay recogida para el mismo día.
   slot: "afternoon",
   storeId: "alcobendas",
   email: "cliente@example.com",
@@ -175,13 +174,11 @@ describe("priceOrder", () => {
     });
   });
 
-  it("la recogida del mismo día no admite la franja de mañana", async () => {
-    expect(FECHA_RECOGIDA).toBe("2026-03-10");
+  it("la recogida es de un día para otro: el servidor rechaza el mismo día", async () => {
+    expect(FECHA_RECOGIDA).toBe("2026-03-11");
     await expect(
-      priceOrder({ ...pedidoBase(), slot: "morning" }, { now: AHORA }),
-    ).rejects.toMatchObject({
-      message: expect.stringContaining("a partir de las 17:00"),
-    });
+      priceOrder({ ...pedidoBase(), dateISO: "2026-03-10" }, { now: AHORA }),
+    ).rejects.toThrow(/fecha elegida no está disponible/i);
   });
 
   it("en Alcobendas el sábado solo se recoge por la mañana", async () => {
@@ -196,17 +193,10 @@ describe("priceOrder", () => {
     ).resolves.toBeTruthy();
   });
 
-  it("a partir de las 13:00 Alcobendas ya no prepara para hoy", () => {
-    expect(
-      earliestDate("recogida", new Date("2026-03-10T12:59:00"), {
-        storeId: "alcobendas",
-      }),
-    ).toBe("2026-03-10");
-    expect(
-      earliestDate("recogida", new Date("2026-03-10T13:00:00"), {
-        storeId: "alcobendas",
-      }),
-    ).toBe("2026-03-11");
+  it("desde las 18:00 ya no se puede pedir para mañana", async () => {
+    await expect(
+      priceOrder(pedidoBase(), { now: new Date("2026-03-10T18:00:00") }),
+    ).rejects.toThrow(/fecha elegida no está disponible/i);
   });
 
   it("rechaza una fecha de recogida anterior a la primera disponible", async () => {
