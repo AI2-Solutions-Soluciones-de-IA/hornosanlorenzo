@@ -6,7 +6,7 @@ export const tradicion = {
    * espacios sueltos del original. `**…**` marca la negrita.
    */
   manifiesto: {
-    titulo: "Más de 40 años haciéndolo bien.",
+    titulo: "Más de 40 años haciendo pastelería artesanal de calidad.",
     entradilla:
       "Personas que vuelven. Familias que nos recomiendan. Empresas que confían. Producto fresco, artesanal y generoso, con una calidad y un precio difíciles de igualar.",
     parrafos: [
