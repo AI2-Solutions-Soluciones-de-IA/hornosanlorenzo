@@ -9,11 +9,11 @@ import { site } from "~/data/site";
   description="Obrador propio desde 1986: método tradicional, ingredientes de siempre y cinco valores que se cumplen en algo concreto."
 >
   <!-- Manifiesto de la marca (Brand Guidelines Avellana, diapositiva 8):
-       la foto principal a la izquierda y el texto a la derecha; en el
+       el texto a la izquierda y la foto principal a la derecha; en el
        móvil, el texto primero y la foto debajo. -->
   <section class="border-b border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-[5fr_7fr] lg:gap-16">
-      <div class="relative order-last md:order-first aspect-[4/5] md:aspect-auto overflow-hidden bg-[color:var(--color-moka)]">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-[7fr_5fr] lg:gap-16">
+      <div class="relative order-last aspect-[4/5] md:aspect-auto overflow-hidden bg-[color:var(--color-moka)]">
         <img
           src="/images/tradicion-principal.jpg"
           alt="Una panadera coloca tartas de chocolate recién hechas junto al horno de leña del obrador"
@@ -42,17 +42,19 @@ import { site } from "~/data/site";
     </div>
   </section>
 
-  <section class="bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]">
+  <!-- Cifras: banda roja teja a todo el ancho, como la cabecera, sin
+       marcos; letra en leche. Se animan de una en una (14-10-2026). -->
+  <section class="bg-[color:var(--color-teja)] text-[color:var(--color-leche)]">
     <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-16">
-      <dl class="cifras grid gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] sm:grid-cols-2 lg:grid-cols-4" data-cifras>
+      <dl class="cifras grid gap-8 sm:grid-cols-2 lg:grid-cols-4" data-cifras>
         {tradicion.cifras.map((c, i) => (
-          <div class="cifra bg-[color:var(--color-leche)] p-6" style={`--i:${i}`}>
+          <div class="cifra" style={`--i:${i}`}>
             <dt class="font-[family-name:var(--font-display)] text-4xl">
               {/^\d+$/.test(c.figure) ? <span data-cuenta={c.figure}>{c.figure}</span> : c.figure}
             </dt>
             <span class="cifra-raya" aria-hidden="true"></span>
-            <dd class="numeracion mt-2">{c.label}</dd>
-            <dd class="mt-3 text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{c.body}</dd>
+            <dd class="numeracion mt-2" style="color:var(--color-leche)">{c.label}</dd>
+            <dd class="mt-3 text-sm leading-relaxed text-[color:var(--color-leche)]/80">{c.body}</dd>
           </div>
         ))}
       </dl>
@@ -241,14 +243,15 @@ import { site } from "~/data/site";
     }
   }
 
-  /* Cifras: entran escalonadas, cuentan desde cero y dibujan una raya teja
-     al aparecer en pantalla, y lo repiten cada 6 s mientras se ven. Sin JS o con «reducir movimiento», quietas. */
+  /* Cifras: entran escalonadas y, después, de una en una y en bucle, cada
+     cifra vuelve a contar desde cero y a dibujar su raya mientras las demás
+     esperan algo apagadas. Sin JS o con «reducir movimiento», quietas. */
   .cifra-raya {
     display: block;
     width: 2.5rem;
     height: 2px;
     margin-top: 0.75rem;
-    background: var(--color-teja);
+    background: var(--color-latte);
     transform-origin: left;
   }
   .cifras.listo .cifra {
@@ -259,22 +262,21 @@ import { site } from "~/data/site";
       transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
     transition-delay: calc(var(--i) * 140ms);
   }
+  .cifras.visto .cifra {
+    opacity: 0.7;
+    transform: none;
+  }
+  .cifras.visto .cifra.activa {
+    opacity: 1;
+    transform: translateY(-4px);
+    transition-delay: 0s;
+  }
   .cifras.listo .cifra-raya {
     transform: scaleX(0);
     transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
-    transition-delay: calc(var(--i) * 140ms + 0.5s);
   }
-  .cifras.visto .cifra {
-    opacity: 1;
-    transform: none;
-  }
-  .cifras.visto .cifra-raya {
+  .cifras.visto .cifra.activa .cifra-raya {
     transform: scaleX(1);
-  }
-  /* Un instante sin raya ni transición para que vuelva a dibujarse. */
-  .cifras.redibuja .cifra-raya {
-    transform: scaleX(0);
-    transition: none;
   }
 </style>
 
@@ -283,11 +285,10 @@ import { site } from "~/data/site";
     const dl = document.querySelector<HTMLElement>("[data-cifras]");
     if (!dl || dl.classList.contains("listo")) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const numeros = [...dl.querySelectorAll<HTMLElement>("[data-cuenta]")];
+    const cifras = [...dl.querySelectorAll<HTMLElement>(".cifra")];
     dl.classList.add("listo");
-    numeros.forEach((n) => (n.textContent = "0"));
 
-    const cuenta = (n: HTMLElement, retraso: number) => {
+    const cuenta = (n: HTMLElement) => {
       const fin = Number(n.dataset.cuenta);
       const DURACION = 1400;
       let inicio = 0;
@@ -299,24 +300,27 @@ import { site } from "~/data/site";
         n.textContent = String(Math.round(fin * suave));
         if (p < 1) requestAnimationFrame(paso);
       };
-      setTimeout(() => requestAnimationFrame(paso), retraso);
+      requestAnimationFrame(paso);
     };
 
-    /** Vuelve a contar desde cero y redibuja las rayas. */
-    const repite = () => {
-      dl.classList.add("redibuja");
-      void dl.offsetWidth;
-      dl.classList.remove("redibuja");
-      numeros.forEach((n) => {
-        const i = Number(n.closest<HTMLElement>(".cifra")?.style.getPropertyValue("--i") || 0);
+    /** Enciende la cifra `i`: cuenta desde cero y dibuja su raya. */
+    let actual = -1;
+    const enciende = (i: number) => {
+      cifras.forEach((c) => c.classList.remove("activa"));
+      const c = cifras[i];
+      void c.offsetWidth;
+      c.classList.add("activa");
+      const n = c.querySelector<HTMLElement>("[data-cuenta]");
+      if (n) {
         n.textContent = "0";
-        cuenta(n, i * 140);
-      });
+        cuenta(n);
+      }
+      actual = i;
     };
 
-    // En bucle mientras se ven: cada 6 s vuelven a contar. Fuera de
-    // pantalla se para, y al volver a verlas empieza otra vez.
-    const CADA = 6000;
+    // Una cada 2,5 s, en bucle, mientras se ven. Fuera de pantalla se para,
+    // y al volver sigue por la siguiente.
+    const CADA = 2500;
     let reloj: ReturnType<typeof setInterval> | undefined;
     const io = new IntersectionObserver(
       ([e]) => {
@@ -324,12 +328,12 @@ import { site } from "~/data/site";
         if (!e.isIntersecting) return;
         if (!dl.isConnected) return io.disconnect();
         dl.classList.add("visto");
-        repite();
+        enciende((actual + 1) % cifras.length);
         reloj = setInterval(() => {
           if (!dl.isConnected) {
             clearInterval(reloj);
             io.disconnect();
-          } else if (!document.hidden) repite();
+          } else if (!document.hidden) enciende((actual + 1) % cifras.length);
         }, CADA);
       },
       { threshold: 0.35 },
