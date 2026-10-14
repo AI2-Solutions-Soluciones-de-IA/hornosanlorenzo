@@ -68,7 +68,7 @@ const MITAD_MENU = 3;
   transition:persist
 >
   <!-- Banda superior: La Firma · buscador y acceso -->
-  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-3 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] md:grid-cols-[1fr_7.5rem_1fr] lg:grid-cols-[1fr_10rem_1fr] xl:grid-cols-[1fr_11rem_1fr] items-center gap-4 max-md:border-b max-md:border-[color:var(--color-avellana)]">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-3 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] md:grid-cols-[1fr_7.5rem_1fr] lg:grid-cols-[1fr_11.5rem_1fr] xl:grid-cols-[1fr_13.5rem_1fr] items-center gap-4 max-md:border-b max-md:border-[color:var(--color-avellana)]">
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
@@ -140,9 +140,9 @@ const MITAD_MENU = 3;
         src={sello}
         alt=""
         loading="eager"
-        widths={[128, 192, 256, 384]}
-        sizes="(min-width:1280px) 160px, (min-width:1024px) 144px, 120px"
-        class="hidden md:block w-[120px] h-[120px] lg:w-36 lg:h-36 xl:w-40 xl:h-40"
+        widths={[128, 192, 256, 384, 448]}
+        sizes="(min-width:1280px) 216px, (min-width:1024px) 184px, 120px"
+        class="hidden md:block w-[120px] h-[120px] lg:w-[184px] lg:h-[184px] xl:w-[216px] xl:h-[216px]"
       />
     </a>
 
@@ -212,7 +212,7 @@ const MITAD_MENU = 3;
          (`invisible`), ensanchaban la página: scroll lateral a 1024 px. -->
     <!-- Desde 768 px (la barra no sale en el móvil), dos mitades con el
          hueco del sello en medio; en tableta, letra más junta para que quepa. -->
-    <div class="relative mx-auto max-w-6xl md:max-w-none px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-3 md:grid md:grid-cols-[1fr_7.5rem_1fr] lg:grid-cols-[1fr_10rem_1fr] xl:grid-cols-[1fr_11rem_1fr] md:gap-0 text-[10px] xl:text-[11px] font-medium uppercase tracking-[0.02em] lg:tracking-[0.1em] xl:tracking-[0.14em] 2xl:tracking-[0.16em]">
+    <div class="relative mx-auto max-w-6xl md:max-w-none px-4 sm:px-6 2xl:px-10 flex items-stretch justify-center gap-3 md:grid md:grid-cols-[1fr_7.5rem_1fr] lg:grid-cols-[1fr_11.5rem_1fr] xl:grid-cols-[1fr_13.5rem_1fr] md:gap-0 text-[10px] xl:text-[11px] font-medium uppercase tracking-[0.02em] lg:tracking-[0.1em] xl:tracking-[0.14em] 2xl:tracking-[0.16em]">
     {[mainNav.slice(0, MITAD_MENU), mainNav.slice(MITAD_MENU)].map((grupo, g) => (
     <>
     {g === 1 && <div class="hidden md:block" aria-hidden="true"></div>}
