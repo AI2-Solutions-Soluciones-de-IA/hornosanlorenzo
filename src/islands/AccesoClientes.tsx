@@ -64,10 +64,10 @@ export default function AccesoClientes({
                 textAlign: "left",
                 padding: "1.25rem",
                 border: activo
-                  ? "1px solid var(--color-caramelo)"
+                  ? "1px solid var(--color-boton)"
                   : "1px solid var(--color-line)",
                 background: activo
-                  ? "var(--color-caramelo)"
+                  ? "var(--color-boton)"
                   : "var(--color-leche)",
                 color: activo ? "var(--color-leche)" : "var(--color-ink)",
                 borderRadius: 0,

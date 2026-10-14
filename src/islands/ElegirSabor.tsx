@@ -182,7 +182,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
             onClick={onAdd}
             disabled={!listo}
             style={{
-              background: "var(--color-caramelo)",
+              background: "var(--color-boton)",
               color: "var(--color-leche)",
               border: "none",
               padding: "0.5rem 1rem",

@@ -18,6 +18,10 @@
   --color-moka: #322820; /* 3%  · tipografía principal */
   --color-teja: #8e241d; /* 1%  · sello y acentos */
 
+  /* Color de los botones y de lo seleccionado en toda la web (14-10-2026:
+     de caramelo a teja). Para cambiarlo, solo esta línea. */
+  --color-boton: var(--color-teja);
+
   /* Alias semánticos (compatibilidad con el resto del sistema) */
   --color-paper: var(--color-leche);
   --color-cream: var(--color-latte);
@@ -172,7 +176,7 @@
     border-color 0.15s ease;
 }
 .btn-primario {
-  background: var(--color-caramelo);
+  background: var(--color-boton);
   color: var(--color-leche);
 }
 .btn-primario:hover {
@@ -251,10 +255,10 @@
   font-size: 14px;
   background: var(--color-leche);
   color: var(--color-moka);
-  border-color: var(--color-caramelo);
+  border-color: var(--color-boton);
 }
 .zona-foto:hover .zona-foto-boton {
-  background: var(--color-caramelo);
+  background: var(--color-boton);
   color: var(--color-leche);
 }
 .zona-foto:focus-within {
@@ -263,17 +267,6 @@
 }
 .zona-foto[data-desactivada] {
   cursor: progress;
-}
-
-/* Móvil (< md): los CTA principales van en el rojo de la paleta.
-   Alcanza a «Haz tu pedido» del header y a «Ver el catálogo». */
-@media (max-width: 767.98px) {
-  .btn-primario {
-    background: var(--color-teja);
-  }
-  .btn-primario:hover {
-    background: var(--color-moka);
-  }
 }
 
 /* Móvil: menos aire entre «Haz tu pedido» de la cabecera y el contenido

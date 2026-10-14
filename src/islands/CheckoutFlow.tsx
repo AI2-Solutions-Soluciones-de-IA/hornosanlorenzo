@@ -590,10 +590,10 @@ export default function CheckoutFlow({
                         textDecoration: lleno ? "line-through" : undefined,
                         height: 40,
                         border: selected
-                          ? "1px solid var(--color-caramelo)"
+                          ? "1px solid var(--color-boton)"
                           : "1px solid transparent",
                         background: selected
-                          ? "var(--color-caramelo)"
+                          ? "var(--color-boton)"
                           : "transparent",
                         color: selected
                           ? "var(--color-leche)"
@@ -1002,7 +1002,7 @@ export default function CheckoutFlow({
                             border: "1px solid var(--color-avellana)",
                             background:
                               slot === s.id
-                                ? "var(--color-caramelo)"
+                                ? "var(--color-boton)"
                                 : "transparent",
                             color:
                               slot === s.id
@@ -1121,7 +1121,7 @@ export default function CheckoutFlow({
                   width: "100%",
                   marginTop: 20,
                   minHeight: 48,
-                  background: "var(--color-caramelo)",
+                  background: "var(--color-boton)",
                   color: "var(--color-leche)",
                   border: "none",
                   fontSize: 15,

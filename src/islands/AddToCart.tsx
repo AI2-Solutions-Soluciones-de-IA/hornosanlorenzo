@@ -71,7 +71,7 @@ export default function AddToCart({
     <button
       onClick={onAdd}
       style={{
-        background: "var(--color-caramelo)",
+        background: "var(--color-boton)",
         color: "var(--color-leche)",
         border: "none",
         padding: "0.5rem 1rem",
@@ -294,7 +294,7 @@ export default function AddToCart({
       <button
         onClick={onAdd}
         style={{
-          background: "var(--color-caramelo)",
+          background: "var(--color-boton)",
           color: "var(--color-leche)",
           border: "none",
           padding: "0.875rem 1.5rem",

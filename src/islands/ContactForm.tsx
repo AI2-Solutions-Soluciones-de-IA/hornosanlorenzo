@@ -172,7 +172,7 @@ export default function ContactForm({ variant = "general" }: Props) {
         type="submit"
         disabled={!canSend}
         style={{
-          background: canSend ? "var(--color-caramelo)" : "var(--color-ink-muted)",
+          background: canSend ? "var(--color-boton)" : "var(--color-ink-muted)",
           color: "var(--color-leche)",
           border: "none",
           padding: "0.875rem 1.5rem",

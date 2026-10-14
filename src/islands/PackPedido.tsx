@@ -420,7 +420,7 @@ const pasoStyle: React.CSSProperties = {
 function botonStyle(activo: boolean): React.CSSProperties {
   return {
     width: "100%",
-    background: activo ? "var(--color-caramelo)" : "var(--color-latte)",
+    background: activo ? "var(--color-boton)" : "var(--color-latte)",
     color: activo ? "var(--color-leche)" : "var(--color-ink-muted)",
     border: activo ? "none" : "1px solid var(--color-avellana)",
     padding: "0.875rem 1.5rem",

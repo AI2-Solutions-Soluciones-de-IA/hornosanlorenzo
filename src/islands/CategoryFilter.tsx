@@ -199,7 +199,7 @@ export default function CategoryFilter({
                 padding: "0.5rem 1rem",
                 borderRadius: "var(--radius-boton)",
                 border: isActive ? "none" : "1px solid var(--color-line)",
-                background: isActive ? "var(--color-caramelo)" : "transparent",
+                background: isActive ? "var(--color-boton)" : "transparent",
                 color: isActive ? "var(--color-leche)" : "var(--color-ink)",
                 fontSize: 14,
                 fontWeight: 600,

@@ -15,10 +15,10 @@ type Props = {
   noDisponibles: string[];
 };
 
-// Mismo botón que `AddToCart.tsx` y el `.btn-primario` del sitio: caramelo,
+// Mismo botón que `AddToCart.tsx` y el `.btn-primario` del sitio (`--color-boton`),
 // con las esquinas redondeadas de todos los botones (`--radius-boton`).
 const boton: React.CSSProperties = {
-  background: "var(--color-caramelo)",
+  background: "var(--color-boton)",
   color: "var(--color-leche)",
   border: "none",
   padding: "0.75rem 1.5rem",
