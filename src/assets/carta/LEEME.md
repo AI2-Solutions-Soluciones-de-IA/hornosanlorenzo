@@ -1,7 +1,11 @@
 Páginas de la carta para `/carta`, sacadas de `public/carta-horno-san-lorenzo.pdf`.
 
-La carta viene del obrador en PowerPoint (`CARTA_PRECIOS_FINAL.pptx`, septiembre
-de 2026). Para rehacer el PDF y las imágenes:
+Desde el 14-10-2026 la carta es «carta final.pdf» (hecha en Google, tres páginas
+apaisadas), copiada tal cual a `public/` (1 MB, no hace falta comprimirla); para
+las imágenes basta el paso 3 con `-scale-to-x 2000`.
+
+Antes venía del obrador en PowerPoint (`CARTA_PRECIOS_FINAL.pptx`, septiembre
+de 2026). Para rehacer el PDF y las imágenes desde un pptx:
 
 1. Poppins y Lora tienen que estar instaladas (el pptx las trae incrustadas en
    un formato que LibreOffice no lee). Están en Google Fonts; Lora hay que

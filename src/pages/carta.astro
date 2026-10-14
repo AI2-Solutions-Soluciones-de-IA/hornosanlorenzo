@@ -7,7 +7,8 @@ import MarketingLayout from "~/layouts/MarketingLayout.astro";
 /**
  * La carta impresa, página a página, con la opción de descargar el PDF.
  *
- * En carrusel, de dos en dos, para no hacer bajar doce páginas. Se enseña
+ * En carrusel, de una en una: desde la carta del 14-10-2026 las páginas son
+ * apaisadas (tres, a doble cara) y de dos en dos no se leen. Se enseña
  * como imágenes y no incrustando el PDF: en iPhone un PDF dentro de
  * un iframe solo muestra la primera página. Las imágenes salen de ese mismo
  * PDF (cómo regenerarlas, en `src/assets/carta/LEEME.md`).
@@ -23,7 +24,7 @@ const paginas = Object.entries(
   .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
   .map(([, m]) => m.default);
 
-// Para el visor: cada página a su tamaño original (1200 px de ancho), que es
+// Para el visor: cada página a su tamaño original (2000 px de ancho), que es
 // lo que se ve al ampliar. Se carga solo al abrirla.
 const grandes = await Promise.all(
   paginas.map((img) => getImage({ src: img, width: img.width, quality: 80 })),
@@ -33,7 +34,7 @@ const grandes = await Promise.all(
   title="Carta"
   description="La carta del obrador, con precios y raciones. Consúltala aquí o descárgala en PDF."
 >
-  <section class="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
+  <section class="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="font-[family-name:var(--font-display)] text-3xl sm:text-4xl">La carta</h1>
@@ -44,8 +45,8 @@ const grandes = await Promise.all(
       <a href={PDF} download class="btn btn-primario">Descargar PDF</a>
     </div>
 
-    <!-- Página a página en horizontal: de dos en dos desde tablet, una en el
-         móvil (dos en 390 px no se leen). Cada flecha pasa lo que se ve. -->
+    <!-- Página a página en horizontal, de una en una (son apaisadas). Cada
+         flecha pasa a la siguiente. -->
     <div class="mt-8" data-carrusel="pantalla">
     <div class="carta-marco">
       <button type="button" class="carta-flecha carta-flecha--prev" data-carrusel-prev aria-controls="carta-paginas" aria-label="Páginas anteriores">‹</button>
@@ -71,8 +72,8 @@ const grandes = await Promise.all(
             <Image
               src={img}
               alt={`Carta del obrador, página ${i + 1} de ${paginas.length}`}
-              widths={[480, 720, 1080]}
-              sizes="(min-width: 640px) 440px, calc(100vw - 2rem)"
+              widths={[480, 800, 1200, 1600]}
+              sizes="(min-width: 1152px) 992px, (min-width: 640px) calc(100vw - 10rem), calc(100vw - 2rem)"
               quality={80}
               loading={i < 2 ? "eager" : "lazy"}
               class="block w-full h-auto"
@@ -83,7 +84,7 @@ const grandes = await Promise.all(
       </ol>
     </div>
     <p class="carta-contador numeracion mt-4 text-center" aria-live="polite">
-      Páginas <span data-carrusel-contador>1–2 de {paginas.length}</span>
+      Páginas <span data-carrusel-contador>1 de {paginas.length}</span>
     </p>
     <p class="mt-1 text-center text-sm text-[color:var(--color-ink-muted)]">
       Pulsa una página para verla en grande.
@@ -104,7 +105,7 @@ const grandes = await Promise.all(
         <button type="button" class="visor-boton" data-visor-cerrar aria-label="Cerrar">×</button>
       </div>
       <div class="visor-lienzo" data-visor-lienzo>
-        <img data-visor-img alt="" width="1200" height="2134" />
+        <img data-visor-img alt="" width="2000" height="1403" />
       </div>
     </dialog>
   </section>
@@ -130,16 +131,6 @@ const grandes = await Promise.all(
   .carta-pagina {
     flex-basis: 100%;
   }
-  @media (min-width: 640px) {
-    .carta-pagina {
-      flex-basis: calc((100% - 1rem) / 2);
-    }
-    /* De dos en dos, el carrusel solo encaja en las impares: al girar la
-       tablet con la 2 abierta se ve 1–2, no 2–3. */
-    .carta-pagina:nth-child(even) {
-      scroll-snap-align: none;
-    }
-  }
   .carta-flecha {
     position: absolute;
     z-index: 2;
@@ -155,10 +146,17 @@ const grandes = await Promise.all(
     cursor: pointer;
   }
   .carta-flecha--prev {
-    left: 8px;
+    left: 0;
   }
   .carta-flecha--next {
-    right: 8px;
+    right: 0;
+  }
+  /* Desde tablet, las flechas a los lados, fuera de la página: en las
+     apaisadas tapaban la columna de precios. */
+  @media (min-width: 640px) {
+    .carta-marco {
+      padding: 0 56px;
+    }
   }
   .carta-flecha:hover {
     background: var(--color-latte);
