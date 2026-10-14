@@ -5,8 +5,12 @@ import { useState } from "react";
  * (sin correo de confirmación) con casilla de consentimiento obligatoria.
  * El campo `web` es una trampa para bots: va oculto y una persona lo deja
  * vacío.
+ *
+ * `rojo`: sobre la franja teja (Este mes y A quién servimos, 14-10-2026):
+ * campo y botón en leche, y los textos y errores también en leche, que el
+ * teja de error no se vería sobre teja.
  */
-export default function SuscripcionOfertas() {
+export default function SuscripcionOfertas({ rojo = false }: { rojo?: boolean }) {
   const [email, setEmail] = useState("");
   const [acepto, setAcepto] = useState(false);
   const [web, setWeb] = useState("");
@@ -45,7 +49,7 @@ export default function SuscripcionOfertas() {
 
   if (estado === "hecho")
     return (
-      <p role="status" className="text-lg font-[family-name:var(--font-display)]">
+      <p role="status" className="text-xl font-[family-name:var(--font-display)]">
         {mensaje}
       </p>
     );
@@ -64,9 +68,17 @@ export default function SuscripcionOfertas() {
           placeholder="tu@correo.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 min-h-12 border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-4 text-base"
+          className={
+            rojo
+              ? "flex-1 min-h-12 border border-[color:var(--color-leche)] bg-[color:var(--color-leche)] px-4 text-base text-[color:var(--color-ink)]"
+              : "flex-1 min-h-12 border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-4 text-base"
+          }
         />
-        <button type="submit" className="btn btn-primario" disabled={estado === "enviando"}>
+        <button
+          type="submit"
+          className={rojo ? "btn btn-claro-rojo whitespace-nowrap" : "btn btn-primario"}
+          disabled={estado === "enviando"}
+        >
           {estado === "enviando" ? "Apuntando…" : "Quiero las ofertas"}
         </button>
       </div>
@@ -80,7 +92,9 @@ export default function SuscripcionOfertas() {
         onChange={(e) => setWeb(e.target.value)}
         style={{ position: "absolute", left: "-9999px", width: 1, height: 1 }}
       />
-      <label className="flex gap-2 items-start text-xs leading-snug text-[color:var(--color-ink-muted)]">
+      <label
+        className={`flex gap-2 items-start text-xs leading-snug ${rojo ? "text-[color:var(--color-leche)]/85" : "text-[color:var(--color-ink-muted)]"}`}
+      >
         <input
           type="checkbox"
           checked={acepto}
@@ -97,7 +111,10 @@ export default function SuscripcionOfertas() {
         </span>
       </label>
       {error && (
-        <p role="alert" className="text-sm text-[color:var(--color-teja)]">
+        <p
+          role="alert"
+          className={`text-sm ${rojo ? "font-semibold text-[color:var(--color-leche)]" : "text-[color:var(--color-teja)]"}`}
+        >
           {error}
         </p>
       )}

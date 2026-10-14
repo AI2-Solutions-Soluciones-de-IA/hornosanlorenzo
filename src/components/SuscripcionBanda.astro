@@ -1,0 +1,30 @@
+---
+import SuscripcionOfertas from "~/islands/SuscripcionOfertas.tsx";
+
+/**
+ * Franja de suscripción a las ofertas por correo (tabla `suscriptores`),
+ * lo primero de Este mes y de A quién servimos. En rojo teja para que se
+ * vea (14-10-2026). Baja a propósito: en Este mes el precio de la oferta
+ * tiene que verse sin hacer scroll.
+ */
+---
+<section class="bg-[color:var(--color-teja)] text-[color:var(--color-leche)]">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-5 sm:py-6 grid gap-3 md:gap-8 md:grid-cols-2 lg:grid-cols-[1fr_11.5rem_1fr] xl:grid-cols-[1fr_13.5rem_1fr] lg:gap-0 md:items-center">
+    <div>
+      <p class="numeracion" style="color:var(--color-latte)">Ofertas del obrador</p>
+      <h2 class="mt-1 text-2xl sm:text-3xl font-[family-name:var(--font-display)]">
+        Que no se te escape <em class="italic">ninguna.</em>
+      </h2>
+      <p class="mt-1 text-sm text-[color:var(--color-leche)]/85 max-w-md">
+        Déjanos tu correo y te avisamos cuando salga la oferta del mes. Sin
+        spam: solo las ofertas del obrador.
+      </p>
+    </div>
+    <!-- Desde 1024 px el sello de la cabecera asoma sobre la franja: la
+         columna del medio queda vacía para él (mismo ancho que su hueco en
+         el menú). -->
+    <div class="lg:col-start-3">
+      <SuscripcionOfertas client:load rojo />
+    </div>
+  </div>
+</section>

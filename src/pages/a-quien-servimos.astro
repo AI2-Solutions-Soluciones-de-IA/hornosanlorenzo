@@ -1,6 +1,7 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import SectionLabel from "~/components/SectionLabel.astro";
+import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
 
 /**
  * Los tres públicos de la casa, en el mismo orden que el submenú de
@@ -33,14 +34,13 @@ const publicos = [
     icono: "taza",
     resumen: "Bares, restaurantes y hoteles: suministro diario de obrador.",
     tag: "Base B2B consolidada",
-    title: "Hostelería",
-    lead: "Suministro recurrente de tartas y empanadas en la zona norte de Madrid.",
+    title: "Hostelería y eventos",
+    // Texto del cliente (14-10-2026), repartido entre la entrada y la lista.
+    lead: "Trabajamos con restaurantes, bares, cafeterías, pastelerías, salones de bodas y banquetes, eventos y catering.",
     key: "Producto de obrador, entrega diaria y constancia: más de 40 años haciéndolo bien.",
-    // Texto del cliente (9-10-2026).
     points: [
-      "Servicio a restaurantes, bares, cafeterías, pastelerías, salones de bodas y banquetes, eventos y catering.",
-      "Ofrecemos un servicio de atención comercial personalizado para cada cliente.",
-      "Disponemos de una amplia variedad de productos, tanto en dulce como en salado, para menú, carta, raciones, celebraciones, desayunos, meriendas y otros.",
+      "Cada cliente cuenta con una atención comercial personalizada.",
+      "Una amplia variedad de dulce y salado para menú, carta, raciones, celebraciones, desayunos y tapas para tu negocio.",
     ],
     cta: { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
     foot: "Entrega diaria L–S · formato mayorista",
@@ -52,12 +52,13 @@ const publicos = [
     resumen: "Desayunos de equipo, coffee breaks y catering de reuniones.",
     tag: "Canal prioritario",
     title: "Empresas",
-    lead: "Desayunos de equipo, coffee breaks, catering de reuniones y regalos corporativos.",
+    // Texto del cliente (14-10-2026), repartido entre la entrada y la lista.
+    lead: "Cada empresa es distinta, y por eso te atendemos de forma personalizada.",
     key: "Comida de verdad servida cada día, con el precio y la fiabilidad que una empresa necesita.",
     points: [
-      // Sin «factura mensual»: la web aún no lo hace (9-10-2026).
-      "Alta con CIF.",
-      "Entrega en oficina con reparto propio.",
+      "Elige uno de nuestros packs en la web o cuéntanos qué necesitas y preparamos tu catering a medida.",
+      "Sin pedido mínimo en Alcobendas y alrededores (consúltanos). En el resto de zonas, el mismo pedido mínimo que en el servicio a domicilio.",
+      "¿Tienes dudas? Llámanos y cerramos la entrega contigo.",
     ],
     // Al alta de empresa, que crea la cuenta en el momento (9-10-2026).
     cta: { href: "/acceso?modo=registro&perfil=empresa", label: "Dar de alta mi empresa", style: "btn-primario" },
@@ -69,7 +70,10 @@ const publicos = [
   title="A quién servimos"
   description="Particulares, hostelería y empresas. El mismo obrador para la mesa de casa, la barra del bar y el desayuno de oficina."
 >
-  <!-- Lo primero: los tres canales, cada uno a su sección. -->
+  <!-- Arriba del todo, la misma suscripción que en Este mes. -->
+  <SuscripcionBanda />
+
+  <!-- Después, los tres canales, cada uno a su sección. -->
   <section class="bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]">
     <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-10 sm:py-14">
       <h1 class="numeracion">A quién servimos</h1>

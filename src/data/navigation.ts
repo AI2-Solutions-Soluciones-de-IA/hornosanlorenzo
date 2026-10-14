@@ -73,7 +73,7 @@ export const mainNav: readonly NavItem[] = [
       },
       {
         href: "/a-quien-servimos#hosteleria",
-        label: "Hostelería",
+        label: "Hostelería y eventos",
         short: "Suministro diario en formato mayorista para bares y restaurantes.",
       },
       {

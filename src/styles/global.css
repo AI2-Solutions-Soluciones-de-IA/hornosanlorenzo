@@ -199,6 +199,16 @@
 .btn-claro:hover {
   background: var(--color-latte);
 }
+/* Leche con letra teja: la acción sobre una franja roja (suscripción). */
+.btn-claro-rojo {
+  background: var(--color-leche);
+  color: var(--color-teja);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.btn-claro-rojo:hover {
+  background: var(--color-latte);
+}
 
 /* Contorno claro: para botones sobre fondo teja (barra de menú). */
 .btn-contorno-claro {
