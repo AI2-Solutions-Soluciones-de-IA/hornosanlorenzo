@@ -134,15 +134,16 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     .hero-rojo {
       background: #fff;
     }
-    /* El vídeo ocupa toda la mitad derecha de la franja roja, de arriba
-       abajo y hasta el borde de la pantalla, sin marco. La altura la da el
-       texto de la izquierda (con aire), y el vídeo la rellena recortándose. */
+    /* El vídeo ocupa toda la mitad derecha de la franja, de arriba abajo y
+       hasta el borde de la pantalla, sin marco. El bloque llena la pantalla
+       bajo la cabecera (que mide el script en --alto-cabecera) para que no
+       asome la sección siguiente en pantallas grandes (14-10-2026). */
     .hero-rojo {
       position: relative;
     }
     .hero-rojo > div {
       padding-block: 4.5rem;
-      min-height: min(78vh, 44rem);
+      min-height: calc(100svh - var(--alto-cabecera, 10rem));
     }
     .hero-rojo .hero-media {
       position: absolute;
@@ -256,4 +257,18 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
     });
   }
   document.addEventListener("astro:page-load", arrancaVideo);
+
+  /** La altura de la cabecera fija, para que el hero llene el resto. */
+  function mideCabecera() {
+    const cabecera = document.querySelector("header");
+    if (!cabecera) return;
+    const pon = () =>
+      document.documentElement.style.setProperty(
+        "--alto-cabecera",
+        `${cabecera.getBoundingClientRect().height}px`,
+      );
+    pon();
+    new ResizeObserver(pon).observe(cabecera);
+  }
+  document.addEventListener("astro:page-load", mideCabecera);
 </script>
