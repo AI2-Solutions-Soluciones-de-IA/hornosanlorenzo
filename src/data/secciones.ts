@@ -9,8 +9,8 @@ export const seccionIds = [
   "tartas-obrador",
   "cremosas",
   "planchas",
-  "bocados",
   "coleccion-especial",
+  "bocados",
   "bizcochos",
   "brazos",
   "detalles-celebracion",
@@ -69,15 +69,15 @@ export const secciones: readonly Seccion[] = [
     order: 400,
   },
   {
-    id: "bocados",
-    label: "Bocaditos del Obrador",
-    eyebrow: "Dulce · Recomendación del chef",
-    order: 500,
-  },
-  {
     id: "coleccion-especial",
     label: "La Colección Especial de Planchas",
     eyebrow: "Dulce · Planchas",
+    order: 500,
+  },
+  {
+    id: "bocados",
+    label: "Bocaditos del Obrador",
+    eyebrow: "Dulce · Recomendación del chef",
     order: 600,
   },
   {
@@ -137,7 +137,7 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "para-compartir",
-    label: "Para compartir",
+    label: "Bocaditos para compartir",
     eyebrow: "Salado · Cóctel",
     order: 1600,
   },

@@ -29,6 +29,16 @@ export const mainNav: readonly NavItem[] = [
     label: "Tienda Online",
     children: [
       {
+        href: "/catalogo/top-ventas",
+        label: "Top Ventas",
+        short: "Lo que más sale del obrador.",
+      },
+      {
+        href: "/catalogo/packs",
+        label: "Packs",
+        short: "Nuestras cajitas para cada ocasión, listas para llevar.",
+      },
+      {
         href: "/catalogo/dulce",
         label: "Dulce",
         short: "Repostería de obrador con la receta tradicional desde 1986.",
@@ -45,16 +55,6 @@ export const mainNav: readonly NavItem[] = [
         label: "Sin alérgenos",
         short: "Dulce y salado sin alérgenos, para que nadie se quede sin probarlo.",
         categories: ["sin-alergenos"],
-      },
-      {
-        href: "/catalogo/packs",
-        label: "Packs",
-        short: "Nuestras cajitas para cada ocasión, listas para llevar.",
-      },
-      {
-        href: "/catalogo/top-ventas",
-        label: "Top Ventas",
-        short: "Lo que más sale del obrador.",
       },
     ],
   },
