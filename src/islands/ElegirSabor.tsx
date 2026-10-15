@@ -140,7 +140,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
         </select>
       )}
 
-      {/* Comprable: precio y «Añadir» en la línea roja, como en ProductCard. */}
+      {/* Comprable: precio y «Añadir» en la línea moka, como en ProductCard. */}
       <div
         className={comprable(sabor) ? "linea-compra" : undefined}
         style={
@@ -184,7 +184,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
             disabled={!listo}
             style={{
               background: "var(--color-leche)",
-              color: "var(--color-boton)",
+              color: "var(--color-moka)",
               border: "none",
               padding: "0.5rem 1rem",
               borderRadius: "var(--radius-boton)",
