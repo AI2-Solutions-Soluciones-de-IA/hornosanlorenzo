@@ -248,6 +248,12 @@ const { eyebrow, title, italicTail, body, image, imageAlt, video, mensajes, prim
         if (v.isConnected && v.paused) v.play().catch(() => {});
       };
       intenta();
+      // Bucle de respaldo: algunos Safari (y el iPhone en ahorro de batería)
+      // ignoran `loop` y se quedan parados al final. Se vuelve al principio.
+      v.addEventListener("ended", () => {
+        v.currentTime = 0;
+        intenta();
+      });
       const unaVez = { once: true, passive: true } as const;
       for (const e of ["touchstart", "pointerdown", "scroll", "keydown"])
         window.addEventListener(e, intenta, unaVez);
