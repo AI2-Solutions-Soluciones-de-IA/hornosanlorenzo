@@ -2,7 +2,7 @@
 import VolverTienda from "~/components/VolverTienda.astro";
 import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import { agruparSabores } from "~/lib/sabores";
-import CategoryFilter from "~/islands/CategoryFilter.tsx";
+import CategoryFilter, { CHIP_TOP_VENTAS } from "~/islands/CategoryFilter.tsx";
 import type { Producto } from "~/lib/db/productos";
 import type { DefinicionPack } from "~/data/packs";
 import { grupoCategories, grupoOfCategory, grupoLabel, type GrupoId, type CategoryId } from "~/data/categories";
@@ -24,6 +24,8 @@ interface Props {
   defsPacks: Map<string, DefinicionPack>;
   grupo?: GrupoId | null;
   eyebrow: string;
+  /** La etiqueta hace de h1: /catalogo no tiene titular grande. */
+  eyebrowH1?: boolean;
   /** Sin título ni entrada, el bloque arranca en la etiqueta (la página ya
       tiene su h1). */
   title?: string;
@@ -41,6 +43,7 @@ const {
   defsPacks,
   grupo = null,
   eyebrow,
+  eyebrowH1 = false,
   volver = false,
   title,
   intro,
@@ -94,12 +97,18 @@ const bloques = porSeccion
  */
 const sueltos = porSeccion ? products.filter((p) => !p.seccion) : products;
 
-/** Gamas presentes en el listado, para los chips del filtro. */
+/**
+ * Gamas presentes en el listado, para los chips del filtro. Delante, «Top
+ * ventas» (los destacados), justo después de «Todo» (15-10-2026).
+ */
 const gamas = porGrupo
-  ? ([...new Set(products.map((p) => grupoOfCategory(p.category as CategoryId)))]
-      .filter((g): g is GrupoId => g !== null)
-      .sort((a, b) => ORDEN_GAMAS.indexOf(a) - ORDEN_GAMAS.indexOf(b))
-      .map((g) => ({ id: g, label: grupoLabel[g] })))
+  ? [
+      ...(products.some((p) => p.destacado) ? [{ id: CHIP_TOP_VENTAS, label: "Top ventas" }] : []),
+      ...[...new Set(products.map((p) => grupoOfCategory(p.category as CategoryId)))]
+        .filter((g): g is GrupoId => g !== null)
+        .sort((a, b) => ORDEN_GAMAS.indexOf(a) - ORDEN_GAMAS.indexOf(b))
+        .map((g) => ({ id: g as string, label: grupoLabel[g] })),
+    ]
   : undefined;
 
 /**
@@ -117,7 +126,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
 ---
 <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12">
   {volver && <VolverTienda class="-mt-4 mb-4" />}
-  <p class="numeracion">{eyebrow}</p>
+  {eyebrowH1 ? <h1 class="numeracion">{eyebrow}</h1> : <p class="numeracion">{eyebrow}</p>}
   {title && <h1 class="text-4xl sm:text-5xl mt-2">{title}</h1>}
   {intro && <p class="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">{intro}</p>}
 

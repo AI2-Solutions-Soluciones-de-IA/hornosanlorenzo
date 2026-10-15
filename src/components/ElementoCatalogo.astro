@@ -54,6 +54,11 @@ const datos = sinFiltro
       // dejar ver también las supremas (`dentroDe` en `secciones.ts`).
       "data-seccion": isSeccionId(primero.seccion) ? bloqueDe(primero.seccion) : (primero.seccion ?? undefined),
       "data-search": search,
+      // Para el chip «Top ventas» de /catalogo: basta un sabor destacado.
+      "data-destacado":
+        (elemento.tipo === "producto" ? primero.destacado : elemento.sabores.some((s) => s.destacado))
+          ? ""
+          : undefined,
     };
 ---
 {(!esPack || defPack) && (

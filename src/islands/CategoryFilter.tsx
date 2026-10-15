@@ -10,6 +10,9 @@ import {
 
 type Chip = { id: string; label: string };
 
+/** Chip de los destacados entre las gamas: filtra por `data-destacado`. */
+export const CHIP_TOP_VENTAS = "top-ventas";
+
 type Props = {
   grupo?: GrupoId | null;
   /** Si se pasan, el filtro trabaja por sección de la carta, no por categoría. */
@@ -101,7 +104,11 @@ export default function CategoryFilter({
       const inGroup = allowed.includes(cat);
       const matches =
         active === "all" ||
-        (modo ? el.dataset[modo.attr] === active : cat === active);
+        (porGrupo && active === CHIP_TOP_VENTAS
+          ? el.dataset.destacado !== undefined
+          : modo
+            ? el.dataset[modo.attr] === active
+            : cat === active);
       const inSearch =
         needle === "" || normalize(el.dataset.search ?? "").includes(needle);
       const show = inGroup && matches && inSearch;

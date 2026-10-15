@@ -2,7 +2,6 @@
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import CatalogoGrid from "~/components/CatalogoGrid.astro";
 import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
-import { tiendaOnlineNav } from "~/data/navigation";
 
 // Lee el catálogo de la base de datos: bajo demanda, con la caché ISR delante
 // y el panel invalidándola al guardar.
@@ -23,38 +22,11 @@ const [productos, defsPacks] = await Promise.all([
   title="Tienda Online"
   description="Dulce, salado, packs y lo que más sale del obrador. Elige y haz tu pedido."
 >
-  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-12">
-    <!-- Sin titular grande: la etiqueta hace de h1 para que la página no se
-         quede sin él. -->
-    <h1 class="numeracion">Tienda Online</h1>
-
-    <!-- Las mismas entradas que el submenú: una sola fuente en navigation.ts -->
-    <ul class="mt-4 grid gap-px bg-[color:var(--color-avellana)] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 border border-[color:var(--color-avellana)]">
-      {tiendaOnlineNav.map((entrada) => (
-        <li class="bg-[color:var(--color-leche)]">
-          <a
-            href={entrada.href}
-            class="group flex h-full flex-col p-5 hover:bg-[color:var(--color-latte)] transition-colors"
-          >
-            <span class="font-[family-name:var(--font-display)] text-xl">
-              {entrada.label}
-            </span>
-            <span class="mt-2 text-sm leading-snug text-[color:var(--color-ink-muted)]">
-              {entrada.short}
-            </span>
-            <span class="numeracion mt-4 group-hover:text-[color:var(--color-moka)] transition-colors">
-              Ver →
-            </span>
-          </a>
-        </li>
-      ))}
-    </ul>
-  </section>
-
   <CatalogoGrid
     productos={productos}
     defsPacks={defsPacks}
     porGrupo
-    eyebrow="Todo el catálogo"
+    eyebrow="Tienda Online · Todo el catálogo"
+    eyebrowH1
   />
 </MarketingLayout>
