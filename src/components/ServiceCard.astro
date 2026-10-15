@@ -5,8 +5,7 @@ interface Props { service: Service; }
 const { service } = Astro.props;
 ---
 <article class="bg-[color:var(--color-leche)] border border-[color:var(--color-avellana)] p-6 flex flex-col">
-  <p class="numeracion">Nº {service.number} —</p>
-  <h3 class="font-[family-name:var(--font-display)] text-2xl mt-3">{service.title}</h3>
+  <h3 class="font-[family-name:var(--font-display)] text-2xl">{service.title}</h3>
   <p class="text-[color:var(--color-ink-muted)] mt-2">{service.short}</p>
   <p class="text-sm mt-4 pt-4 border-t border-[color:var(--color-avellana)] leading-relaxed text-[color:var(--color-ink-muted)]">{service.body}</p>
 </article>

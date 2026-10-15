@@ -3,7 +3,6 @@ import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import Hero from "~/components/Hero.astro";
 import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import { agruparSabores } from "~/lib/sabores";
-import SectionLabel from "~/components/SectionLabel.astro";
 import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
 import { stores } from "~/data/stores";
 import { site } from "~/data/site";
@@ -82,8 +81,8 @@ const localBizJsonLd = stores.map((s) => ({
   <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24">
     <div class="flex items-end justify-between gap-4 mb-8">
       <div>
-        <SectionLabel number="01" label="Lo que se comparte" />
-        <h2 class="text-3xl sm:text-4xl mt-2">Lo que se pone en el centro de la mesa.</h2>
+        <h2 class="text-4xl sm:text-5xl">Lo que se comparte</h2>
+        <p class="mt-2 text-2xl sm:text-3xl font-[family-name:var(--font-display)] italic text-[color:var(--color-ink-muted)]">Lo que se pone en el centro de la mesa.</p>
       </div>
       <a href="/catalogo" class="text-sm font-semibold underline whitespace-nowrap">Ver todo el catálogo →</a>
     </div>
