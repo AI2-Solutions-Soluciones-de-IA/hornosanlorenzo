@@ -45,6 +45,25 @@ const selectStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
+/**
+ * En /catalogo (por gama), los desplegables del móvil con los colores de las
+ * etiquetas de escritorio: la gama en rojo y la sección en moka (15-10-2026).
+ */
+const flechaClara =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='8' viewBox='0 0 12 12' fill='none' stroke='%23FEFCF8' stroke-width='1.6'%3E%3Cpath d='m2 4.5 4 3.5 4-3.5'/%3E%3C/svg%3E\") no-repeat right 1rem center";
+const selectRojo: React.CSSProperties = {
+  ...selectStyle,
+  border: "none",
+  background: `var(--color-boton) ${flechaClara}`,
+  color: "var(--color-leche)",
+};
+const selectMoka: React.CSSProperties = {
+  ...selectStyle,
+  border: "none",
+  background: `var(--color-moka) ${flechaClara}`,
+  color: "var(--color-leche)",
+};
+
 const normalize = (value: string) =>
   value
     .toLowerCase()
@@ -201,7 +220,7 @@ export default function CategoryFilter({
         <select
           value={active}
           onChange={(e) => setActive(e.target.value)}
-          style={selectStyle}
+          style={porGrupo ? selectRojo : selectStyle}
         >
           {chips.map((c) => (
             <option key={c.id} value={c.id}>
@@ -276,7 +295,7 @@ function SubFiltro({
     <div style={{ marginTop: "0.75rem" }}>
       <label className="md:hidden block">
         <span className="sr-only">{etiqueta}</span>
-        <select value={activo} onChange={(e) => onElegir(e.target.value)} style={selectStyle}>
+        <select value={activo} onChange={(e) => onElegir(e.target.value)} style={selectMoka}>
           {chips.map((c) => (
             <option key={c.id} value={c.id}>
               {c.label}
