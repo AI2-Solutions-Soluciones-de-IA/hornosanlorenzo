@@ -20,8 +20,10 @@ const [productsAll, defsPacks] = await Promise.all([
   catalogoPublico(Astro.response),
   definicionesPublicas(Astro.response),
 ]);
-// `listarProductos` ya devuelve en el orden de la carta.
-const featured = productsAll.filter((p) => p.destacado).slice(0, 6);
+// El carrusel lleva todo Top ventas (los destacados), como /catalogo/top-ventas
+// y sin el tope de seis de antes (15-10-2026). `listarProductos` ya devuelve
+// en el orden de la carta.
+const featured = productsAll.filter((p) => p.destacado);
 
 // Arquitectura de mensajes de la marca («Qué decimos, en qué orden»): de lo
 // más breve y estable a lo más argumentativo. El orden importa.
