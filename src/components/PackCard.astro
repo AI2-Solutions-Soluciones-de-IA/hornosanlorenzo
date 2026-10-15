@@ -32,7 +32,7 @@ const imagen =
     ? { url: pack.imageUrl, alt: pack.imageAlt ?? pack.name, ancho: pack.imageWidth, alto: pack.imageHeight }
     : null;
 ---
-<article class="h-full flex flex-col bg-[color:var(--color-paper)] border border-[color:var(--color-line)] overflow-hidden">
+<article class="h-full flex flex-col overflow-hidden">
   {imagen && (
     <a href={href} class="block aspect-[4/3] overflow-hidden" tabindex="-1" aria-hidden="true">
       <Image
@@ -47,7 +47,7 @@ const imagen =
       />
     </a>
   )}
-  <div class="flex flex-1 flex-col p-4 sm:p-5">
+  <div class="flex flex-1 flex-col pt-4 sm:pt-5">
     <p class="numeracion">{def.ocasion}</p>
     <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">
       <a href={href} class="hover:text-[color:var(--color-accent-dark)]">{pack.name}</a>
