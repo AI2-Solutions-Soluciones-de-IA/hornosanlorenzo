@@ -19,6 +19,11 @@ type Props = {
   secciones?: Chip[];
   /** Si se pasan, el filtro trabaja por grupo comercial (Dulce / Salado). */
   grupos?: Chip[];
+  /**
+   * Con `grupos`: las secciones de cada uno. Al elegir una gama sale debajo
+   * una segunda fila con sus secciones (parámetro `sec`).
+   */
+  seccionesPorGrupo?: Record<string, Chip[]>;
 };
 
 // Mismo desplegable que el de sabores (`ElegirSabor.tsx`), algo más alto
@@ -50,6 +55,7 @@ export default function CategoryFilter({
   grupo = null,
   secciones,
   grupos,
+  seccionesPorGrupo,
 }: Props) {
   const porSeccion = Boolean(secciones && secciones.length > 0);
   const porGrupo = !porSeccion && Boolean(grupos && grupos.length > 0);
@@ -60,7 +66,14 @@ export default function CategoryFilter({
       ? { attr: "grupo" as const, param: "g", opciones: grupos! }
       : null;
   // El sitio es estático: los parámetros de la URL solo existen en el cliente.
-  const [active, setActive] = useState<CategoryId | string>("all");
+  const [active, setActiveRaw] = useState<CategoryId | string>("all");
+  // La sección dentro de la gama elegida; vuelve a «todo» al cambiar de gama.
+  const [sub, setSub] = useState<string>("all");
+  const setActive = (v: string) => {
+    setActiveRaw(v);
+    setSub("all");
+  };
+  const subOpciones = porGrupo ? (seccionesPorGrupo?.[active] ?? []) : [];
   const [search, setSearch] = useState("");
   const [visible, setVisible] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
@@ -69,7 +82,11 @@ export default function CategoryFilter({
     const params = new URLSearchParams(window.location.search);
     if (modo) {
       const value = params.get(modo.param);
-      if (value && modo.opciones.some((o) => o.id === value)) setActive(value);
+      if (value && modo.opciones.some((o) => o.id === value)) {
+        setActiveRaw(value);
+        const sec = params.get("sec");
+        if (porGrupo && sec && seccionesPorGrupo?.[value]?.some((o) => o.id === sec)) setSub(sec);
+      }
     } else {
       const cat = params.get("cat");
       if (cat && (categoryIds as readonly string[]).includes(cat)) {
@@ -92,6 +109,10 @@ export default function CategoryFilter({
     const key = modo?.param ?? "cat";
     if (active === "all") url.searchParams.delete(key);
     else url.searchParams.set(key, active);
+    if (porGrupo) {
+      if (sub === "all") url.searchParams.delete("sec");
+      else url.searchParams.set("sec", sub);
+    }
     if (search) url.searchParams.set("q", search);
     else url.searchParams.delete("q");
     window.history.replaceState({}, "", url.toString());
@@ -109,9 +130,10 @@ export default function CategoryFilter({
           : modo
             ? el.dataset[modo.attr] === active
             : cat === active);
+      const inSub = !porGrupo || sub === "all" || el.dataset.seccion === sub;
       const inSearch =
         needle === "" || normalize(el.dataset.search ?? "").includes(needle);
-      const show = inGroup && matches && inSearch;
+      const show = inGroup && matches && inSub && inSearch;
       el.style.display = show ? "" : "none";
       if (show) shown += 1;
     });
@@ -128,7 +150,7 @@ export default function CategoryFilter({
 
     setVisible(shown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, search, allowed, ready]);
+  }, [active, sub, search, allowed, ready]);
 
   const chips: Array<{ id: string; label: string }> = [
     { id: "all", label: grupo ? `Todo ${grupoLabel[grupo].toLowerCase()}` : "Todo" },
@@ -220,6 +242,72 @@ export default function CategoryFilter({
       </div>
       </>
       )}
+
+      {subOpciones.length > 1 && (
+        <SubFiltro
+          etiqueta={`Secciones de ${chips.find((c) => c.id === active)?.label.toLowerCase() ?? ""}`}
+          chips={[
+            { id: "all", label: `Todo ${chips.find((c) => c.id === active)?.label.toLowerCase() ?? ""}` },
+            ...subOpciones,
+          ]}
+          activo={sub}
+          onElegir={setSub}
+        />
+      )}
+    </div>
+  );
+}
+
+/** La segunda fila: las secciones de la gama elegida. */
+function SubFiltro({
+  etiqueta,
+  chips,
+  activo,
+  onElegir,
+}: {
+  etiqueta: string;
+  chips: Chip[];
+  activo: string;
+  onElegir: (id: string) => void;
+}) {
+  return (
+    <div style={{ marginTop: "0.75rem" }}>
+      <label className="md:hidden block">
+        <span className="sr-only">{etiqueta}</span>
+        <select value={activo} onChange={(e) => onElegir(e.target.value)} style={selectStyle}>
+          {chips.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div role="tablist" aria-label={etiqueta} className="hidden md:flex flex-wrap gap-2">
+        {chips.map((c) => {
+          const isActive = c.id === activo;
+          return (
+            <button
+              key={c.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onElegir(c.id)}
+              style={{
+                minHeight: 34,
+                padding: "0.375rem 0.875rem",
+                borderRadius: "var(--radius-boton)",
+                border: isActive ? "1px solid var(--color-moka)" : "1px solid var(--color-line)",
+                background: isActive ? "var(--color-moka)" : "transparent",
+                color: isActive ? "var(--color-leche)" : "var(--color-ink)",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {c.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

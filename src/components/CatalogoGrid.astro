@@ -6,7 +6,7 @@ import CategoryFilter, { CHIP_TOP_VENTAS } from "~/islands/CategoryFilter.tsx";
 import type { Producto } from "~/lib/db/productos";
 import type { DefinicionPack } from "~/data/packs";
 import { grupoCategories, grupoOfCategory, grupoLabel, type GrupoId, type CategoryId } from "~/data/categories";
-import { secciones, seccionById, isSeccionId } from "~/data/secciones";
+import { secciones, seccionById, isSeccionId, bloqueDe } from "~/data/secciones";
 import { stores } from "~/data/stores";
 
 interface Props {
@@ -112,6 +112,25 @@ const gamas = porGrupo
   : undefined;
 
 /**
+ * Con las gamas como filtro, las secciones de cada una: al elegir «Dulce»
+ * salen debajo sus secciones, como en /catalogo/dulce (15-10-2026). Solo
+ * los bloques (las secciones con `dentroDe` van dentro del suyo) con algún
+ * producto de esa gama, en el orden de la carta.
+ */
+const seccionesPorGama: Record<string, { id: string; label: string }[]> = {};
+if (porGrupo) {
+  for (const s of secciones.filter((x) => !x.dentroDe)) {
+    const gamasDelBloque = new Set(
+      products
+        .filter((p) => isSeccionId(p.seccion) && bloqueDe(p.seccion) === s.id)
+        .map((p) => grupoOfCategory(p.category as CategoryId))
+        .filter((g): g is GrupoId => g !== null),
+    );
+    for (const g of gamasDelBloque) (seccionesPorGama[g] ??= []).push({ id: s.id, label: s.label });
+  }
+}
+
+/**
  * `seccion` es texto libre en la base de datos, sin CHECK ni FK: a
  * diferencia de antes (`z.enum(seccionIds)` en `content.config.ts`), el
  * compilador ya no puede garantizar que lo que hay en la fila sea uno de
@@ -137,6 +156,7 @@ function seccionLabelDe(seccion: string | null): string | undefined {
         grupo={grupo}
         secciones={porSeccion ? bloques.map((b) => ({ id: b.seccion.id, label: b.seccion.label })) : undefined}
         grupos={gamas}
+        seccionesPorGrupo={porGrupo ? seccionesPorGama : undefined}
       />
     </div>
   )}
