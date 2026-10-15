@@ -9,13 +9,9 @@ import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
 const publicos = [
   {
     id: "particulares",
-    number: "01",
-    icono: "casa",
-    resumen: "La mesa de casa: tienda, encargo online y reparto propio.",
     tag: "Mostrador y tienda online",
     title: "Particulares",
     lead: "La compra del día en cualquiera de las dos tiendas y el encargo de la semana desde la tienda online.",
-    key: "La misma bandeja que sale del obrador cada mañana, para la mesa de casa.",
     points: [
       "El catálogo completo: dulce, salado, packs y temporada.",
       // Los minis son cosa de particulares, no de hostelería (14-10-2026).
@@ -24,43 +20,43 @@ const publicos = [
       "Reparto propio de lunes a sábado a Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón.",
       "Tartas y encargos especiales avisando con antelación.",
     ],
-    cta: null,
+    // Llamadas a la acción (15-10-2026): registro en particulares; en
+    // hostelería y empresas, pedir condiciones y registrarse (alta de empresa,
+    // con razón social y CIF).
+    ctas: [{ href: "/acceso?modo=registro&perfil=particular", label: "Registrarme", style: "btn-primario" }],
     foot: "Recogida en tienda · reparto propio",
   },
   {
     id: "hosteleria",
-    number: "02",
-    icono: "taza",
-    resumen: "Bares, restaurantes y hoteles: suministro diario de obrador.",
     tag: "Base B2B consolidada",
     title: "Hostelería y eventos",
     // Texto del cliente (14-10-2026), repartido entre la entrada y la lista.
     lead: "Trabajamos con restaurantes, bares, cafeterías, pastelerías, salones de bodas y banquetes, eventos y catering.",
-    key: "Producto de obrador, entrega diaria y constancia: más de 40 años haciéndolo bien.",
     points: [
       "Cada cliente cuenta con una atención comercial personalizada.",
       "Una amplia variedad de dulce y salado para menú, carta, raciones, celebraciones, desayunos y tapas para tu negocio.",
     ],
-    cta: { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
+    ctas: [
+      { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
+      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme", style: "btn-primario" },
+    ],
     foot: "Entrega diaria L–S · formato mayorista",
   },
   {
     id: "empresas",
-    number: "03",
-    icono: "edificio",
-    resumen: "Desayunos de equipo, coffee breaks y catering de reuniones.",
     tag: "Canal prioritario",
     title: "Empresas",
     // Texto del cliente (14-10-2026), repartido entre la entrada y la lista.
     lead: "Cada empresa es distinta, y por eso te atendemos de forma personalizada.",
-    key: "Comida de verdad servida cada día, con el precio y la fiabilidad que una empresa necesita.",
     points: [
       "Elige uno de nuestros packs en la web o cuéntanos qué necesitas y preparamos tu catering a medida.",
       "Sin pedido mínimo en Alcobendas y alrededores (consúltanos). En el resto de zonas, el mismo pedido mínimo que en el servicio a domicilio.",
       "¿Tienes dudas? Llámanos y cerramos la entrega contigo.",
     ],
-    // Al alta de empresa, que crea la cuenta en el momento (9-10-2026).
-    cta: { href: "/acceso?modo=registro&perfil=empresa", label: "Dar de alta mi empresa", style: "btn-primario" },
+    ctas: [
+      { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
+      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme", style: "btn-primario" },
+    ],
     foot: "Propuesta B2B · reparto propio",
   },
 ];
@@ -72,55 +68,9 @@ const publicos = [
   <!-- Arriba del todo, la misma suscripción que en Este mes. -->
   <SuscripcionBanda />
 
-  <!-- Después, los tres canales, cada uno a su sección. -->
-  <section class="bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-10 sm:py-14">
-      <h1 class="numeracion">A quién servimos</h1>
-      <ul class="mt-5 grid gap-4 md:grid-cols-3">
-        {publicos.map((p) => (
-          <li>
-            <a
-              href={`#${p.id}`}
-              class="canal group flex h-full flex-col border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] p-6 sm:p-8 transition-colors hover:bg-[color:var(--color-latte)]"
-            >
-              <span class="flex items-start justify-between">
-                <span class="canal-icono" aria-hidden="true">
-                  {p.icono === "casa" && (
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
-                      <path d="M8 22 24 9l16 13" />
-                      <path d="M12 19v20h24V19" />
-                      <path d="M20 39V28h8v11" />
-                    </svg>
-                  )}
-                  {p.icono === "taza" && (
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
-                      <path d="M10 18h24v10a10 10 0 0 1-10 10h-4a10 10 0 0 1-10-10V18Z" />
-                      <path d="M34 21h3a5 5 0 0 1 0 10h-3.5" />
-                      <path d="M8 42h30" />
-                      <path d="M17 7c-1.5 2 1.5 3.5 0 6M23 7c-1.5 2 1.5 3.5 0 6M29 7c-1.5 2 1.5 3.5 0 6" />
-                    </svg>
-                  )}
-                  {p.icono === "edificio" && (
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
-                      <path d="M10 41V9h20v32" />
-                      <path d="M30 19h8v22" />
-                      <path d="M6 41h36" />
-                      <path d="M15 15h4M21 15h4M15 21h4M21 21h4M15 27h4M21 27h4" />
-                      <path d="M18 41v-7h4v7" />
-                    </svg>
-                  )}
-                </span>
-                <span class="numeracion">{p.number}</span>
-              </span>
-              <span class="mt-6 block font-[family-name:var(--font-display)] text-2xl sm:text-3xl">{p.title}</span>
-              <span class="mt-2 block text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{p.resumen}</span>
-              <span class="numeracion mt-auto pt-6 group-hover:text-[color:var(--color-moka)]">Ver más ↓</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
+  <!-- Las tres cajas de los canales que había aquí se quitaron (15-10-2026):
+       el submenú ya lleva a cada sección. El h1 queda para el lector. -->
+  <h1 class="sr-only">A quién servimos</h1>
 
   {publicos.map((p) => (
     <section
@@ -131,22 +81,23 @@ const publicos = [
         <div>
           <h2 class="text-4xl sm:text-5xl">{p.title}</h2>
           <p class="mt-2 text-2xl sm:text-3xl font-[family-name:var(--font-display)] italic text-[color:var(--color-ink-muted)]">{p.tag}</p>
-          <p class="mt-4 text-lg text-[color:var(--color-ink-muted)]">{p.lead}</p>
-          <blockquote class="mt-6 pt-5 border-t border-[color:var(--color-avellana)] font-[family-name:var(--font-display)] italic text-lg">
-            «{p.key}»
-          </blockquote>
-          {p.cta && <a href={p.cta.href} class:list={["btn mt-7", p.cta.style]}>{p.cta.label}</a>}
+          <div class="mt-7 flex flex-wrap gap-3">
+            {p.ctas.map((c) => <a href={c.href} class:list={["btn", c.style]}>{c.label}</a>)}
+          </div>
         </div>
-        <div class="border border-[color:var(--color-avellana)] p-6 sm:p-8 bg-[color:var(--color-leche)]">
-          <ul class="space-y-3 text-sm text-[color:var(--color-ink-muted)]">
+        <!-- Sin marco: fondo moka y letra clara. A la izquierda el título, el
+             subtítulo y los botones; la entrada y la lista, aquí (15-10-2026). -->
+        <div class="p-6 sm:p-8 bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
+          <p class="text-lg leading-relaxed">{p.lead}</p>
+          <ul class="mt-5 space-y-3 text-sm">
             {p.points.map((item) => (
               <li class="flex gap-3">
-                <span class="mt-2 h-1.5 w-1.5 shrink-0 bg-[color:var(--color-avellana)]" aria-hidden="true"></span>
+                <span class="mt-2 h-1.5 w-1.5 shrink-0 bg-[color:var(--color-latte)]" aria-hidden="true"></span>
                 <span>{item}</span>
               </li>
             ))}
           </ul>
-          <p class="numeracion mt-6 pt-5 border-t border-[color:var(--color-avellana)]">{p.foot}</p>
+          <p class="numeracion mt-6 pt-5 border-t border-white/20" style="color:var(--color-latte)">{p.foot}</p>
         </div>
       </div>
     </section>
@@ -154,22 +105,3 @@ const publicos = [
 
 
 </MarketingLayout>
-
-<style>
-  .canal-icono {
-    display: inline-flex;
-    width: 56px;
-    height: 56px;
-    padding: 8px;
-    border: 1px solid var(--color-avellana);
-    color: var(--color-caramelo);
-    background: var(--color-leche);
-  }
-  .canal-icono svg {
-    width: 100%;
-    height: 100%;
-  }
-  .canal:hover .canal-icono {
-    color: var(--color-moka);
-  }
-</style>
