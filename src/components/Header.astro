@@ -6,10 +6,9 @@ import SocialLinks from "~/components/SocialLinks.astro";
 import { site } from "~/data/site";
 import { mainNav } from "~/data/navigation";
 
-// Sin el aro blanco de fuera (8-10-2026): sobre el rojo se veía como un borde.
-import sello from "../../public/images/sello-hsl-sin-borde.png";
-// En el móvil, con el aro blanco y algo más grande (12-10-2026).
-import selloConBorde from "../../public/images/sello-hsl.png";
+// Con el aro blanco de fuera en todas las pantallas (vuelve el 15-10-2026;
+// del 8-10 al 15-10 el escritorio lo llevó sin aro).
+import sello from "../../public/images/sello-hsl.png";
 import imgDulce from "../../public/images/productos/menu-dulce.jpg";
 import imgSalado from "../../public/images/productos/menu-salado.jpg";
 import imgSinAlergenos from "../../public/images/productos/menu-sin-alergenos.jpg";
@@ -135,7 +134,7 @@ const menuMovil = [
       class="justify-self-center max-md:relative max-md:z-10 max-md:w-[108px] max-md:h-11 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-2 md:z-10"
     >
       <Image quality={85}
-        src={selloConBorde}
+        src={sello}
         alt=""
         loading="eager"
         widths={[108, 216, 324]}
