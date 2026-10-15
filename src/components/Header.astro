@@ -62,6 +62,12 @@ const isActive = (href: string) => {
 // El menú se parte en dos alrededor del sello: estas entradas a la izquierda
 // y el resto a la derecha (con este reparto las dos mitades miden parecido).
 const MITAD_MENU = 3;
+// Móvil: «Este mes» justo debajo de «Carta» y «A quién servimos» al final
+// (15-10-2026). En escritorio sigue el orden de `mainNav`.
+const menuMovil = [
+  ...mainNav.filter((i) => i.href !== "/a-quien-servimos"),
+  ...mainNav.filter((i) => i.href === "/a-quien-servimos"),
+];
 ---
 <header
   class="sticky top-0 z-50 bg-[color:var(--color-teja)]/95 backdrop-blur md:border-b border-[color:var(--color-avellana)]"
@@ -329,7 +335,7 @@ const MITAD_MENU = 3;
       </div>
 
       <ul class="flex flex-col text-[11px] font-medium uppercase tracking-[0.16em]">
-        {mainNav.map((item) => (
+        {menuMovil.map((item) => (
           <li class="border-b border-[color:var(--color-avellana)]">
             <a
               href={item.href}
