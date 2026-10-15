@@ -223,14 +223,16 @@ export default function CategoryFilter({
               role="tab"
               aria-selected={isActive}
               onClick={() => setActive(c.id)}
+              // En /catalogo (por gama) la primera fila va más grande: manda
+              // sobre la de secciones (15-10-2026).
               style={{
-                minHeight: 40,
-                padding: "0.5rem 1rem",
+                minHeight: porGrupo ? 50 : 40,
+                padding: porGrupo ? "0.625rem 1.5rem" : "0.5rem 1rem",
                 borderRadius: "var(--radius-boton)",
                 border: isActive ? "none" : "1px solid var(--color-line)",
                 background: isActive ? "var(--color-boton)" : "transparent",
                 color: isActive ? "var(--color-leche)" : "var(--color-ink)",
-                fontSize: 14,
+                fontSize: porGrupo ? 17 : 14,
                 fontWeight: 600,
                 cursor: "pointer",
               }}
