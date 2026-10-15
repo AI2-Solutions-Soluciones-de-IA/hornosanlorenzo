@@ -47,12 +47,11 @@ const imagen =
       />
     </a>
   )}
-  <div class="flex flex-1 flex-col pt-4 sm:pt-5">
+  <div class="tarjeta-cuerpo flex flex-1 flex-col">
     <p class="numeracion">{def.ocasion}</p>
     <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">
       <a href={href} class="hover:text-[color:var(--color-accent-dark)]">{pack.name}</a>
     </h3>
-    <p class="text-sm text-[color:var(--color-ink-muted)] mt-1 line-clamp-3">{pack.shortDescription}</p>
 
     <div class="mt-auto pt-4">
       {precio !== null && (
@@ -60,10 +59,10 @@ const imagen =
           <p class="font-[family-name:var(--font-display)] text-2xl">
             {formatPriceCents(precio)}
             {ahorro !== null && sueltoCents !== null && (
-              <span class="ml-2 font-[family-name:var(--font-body)] text-sm text-[color:var(--color-ink-muted)]">
-                <s>{formatPriceCents(sueltoCents)}</s>
-                {/* El único acento teja de la tarjeta. */}
-                <span class="ml-1 font-semibold text-[color:var(--color-teja)]">−{ahorro}&nbsp;%</span>
+              <span class="ml-2 font-[family-name:var(--font-body)] text-sm">
+                <s class="opacity-60">{formatPriceCents(sueltoCents)}</s>
+                {/* El único acento de la tarjeta (en latte: va sobre moka). */}
+                <span class="ml-1 font-semibold text-[color:var(--color-latte)]">−{ahorro}&nbsp;%</span>
               </span>
             )}
           </p>

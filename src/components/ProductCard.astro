@@ -31,7 +31,6 @@ const {
   category,
   seccionLabel,
   imagen = null,
-  shortDescription,
   priceCents,
   priceAntesCents,
   consultar = false,
@@ -74,13 +73,12 @@ const eyebrow = seccionLabel ?? (isCategoryId(category) ? categoryById(category)
   </a>
   <!-- Todas las tarjetas de una fila miden lo mismo: el cuerpo crece y el
        precio con «Añadir» (CompraRapida, `mt-auto`) se queda abajo. -->
-  <div class="pt-4 sm:pt-5 flex-1 flex flex-col">
+  <div class="tarjeta-cuerpo flex-1 flex flex-col">
     <p class="numeracion">{eyebrow}</p>
     <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">
       <a href={`/catalogo/${slug}`} class="hover:text-[color:var(--color-accent-dark)]">{name}</a>
     </h3>
     {especialidad && <p class="especialidad mt-1">{especialidad}</p>}
-    <p class="text-sm text-[color:var(--color-ink-muted)] mt-1 line-clamp-2">{shortDescription}</p>
     <CompraRapida
       slug={slug}
       name={name}

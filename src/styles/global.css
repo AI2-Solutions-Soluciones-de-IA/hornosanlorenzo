@@ -190,6 +190,35 @@
   margin: 0;
 }
 
+/* El cuerpo de las tarjetas de la tienda online, entre la foto y la línea
+   roja: fondo moka y letra clara (15-10-2026). La línea roja llega de
+   borde a borde y cierra la tarjeta; si no la hay (consultar, agotado,
+   packs), queda margen abajo. */
+.tarjeta-cuerpo {
+  background: var(--color-moka);
+  color: var(--color-leche);
+  padding: 1rem 1rem 0;
+}
+.tarjeta-cuerpo:not(:has(.linea-compra)) {
+  padding-bottom: 1rem;
+}
+.tarjeta-cuerpo .linea-compra {
+  margin-inline: -1rem;
+}
+.tarjeta-cuerpo :is(h3, h3 a, p, s) {
+  color: inherit;
+}
+.tarjeta-cuerpo h3 a:hover {
+  color: var(--color-latte);
+}
+.tarjeta-cuerpo :is(.numeracion, .especialidad) {
+  color: var(--color-latte);
+}
+.tarjeta-cuerpo a[href="/contacto"] {
+  color: var(--color-leche);
+  border-color: var(--color-leche);
+}
+
 .btn-primario {
   background: var(--color-boton);
   color: var(--color-leche);

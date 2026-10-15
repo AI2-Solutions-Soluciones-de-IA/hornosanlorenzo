@@ -140,13 +140,14 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
         </select>
       )}
 
+      {/* Comprable: precio y «Añadir» en la línea roja, como en ProductCard. */}
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "0.5rem",
-        }}
+        className={comprable(sabor) ? "linea-compra" : undefined}
+        style={
+          comprable(sabor)
+            ? undefined
+            : { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }
+        }
       >
         <p
           style={{
@@ -157,7 +158,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
           }}
         >
           {precio !== null && precioAntes !== undefined && (
-            <s style={{ fontSize: "0.7em", fontWeight: 400, color: "var(--color-ink-muted)", marginRight: "0.4em" }}>
+            <s style={{ fontSize: "0.7em", fontWeight: 400, opacity: 0.75, marginRight: "0.4em" }}>
               <span className="sr-only">Antes </span>
               {formatPriceCents(precioAntes)}
             </s>
@@ -167,7 +168,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
             <span
               style={{
                 fontSize: 12,
-                color: "var(--color-ink-muted)",
+                opacity: 0.75,
                 fontWeight: 400,
               }}
             >
@@ -182,8 +183,8 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
             onClick={onAdd}
             disabled={!listo}
             style={{
-              background: "var(--color-boton)",
-              color: "var(--color-leche)",
+              background: "var(--color-leche)",
+              color: "var(--color-boton)",
               border: "none",
               padding: "0.5rem 1rem",
               borderRadius: "var(--radius-boton)",
