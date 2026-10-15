@@ -42,7 +42,8 @@ export default function AddToCart({
       style={{
         fontSize: "0.7em",
         fontWeight: 400,
-        color: "var(--color-ink-muted)",
+        // En la tarjeta va sobre la línea roja: el color de esta, atenuado.
+        ...(compact ? { opacity: 0.75 } : { color: "var(--color-ink-muted)" }),
         marginRight: "0.4em",
       }}
     >
@@ -67,12 +68,13 @@ export default function AddToCart({
     emitToast(mensaje, { aviso });
   }
 
+  // Va dentro de la línea roja de la tarjeta (`.linea-compra`): en claro.
   const compactButton = (
     <button
       onClick={onAdd}
       style={{
-        background: "var(--color-boton)",
-        color: "var(--color-leche)",
+        background: "var(--color-leche)",
+        color: "var(--color-boton)",
         border: "none",
         padding: "0.5rem 1rem",
         borderRadius: "var(--radius-boton)",
@@ -119,14 +121,7 @@ export default function AddToCart({
           ))}
         </select>
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "0.5rem",
-          }}
-        >
+        <div className="linea-compra">
           <p
             style={{
               fontFamily: "var(--font-display)",

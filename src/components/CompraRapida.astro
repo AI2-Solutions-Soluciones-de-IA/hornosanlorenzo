@@ -103,12 +103,12 @@ const precioAntes =
       compact={true}
     />
   ) : (
-    <div class="flex items-center justify-between">
+    <div class="linea-compra">
       <p class="font-[family-name:var(--font-display)] text-xl font-semibold">
         {precioAntes !== undefined && (
-          <s class="text-sm font-normal text-[color:var(--color-ink-muted)] mr-1.5"><span class="sr-only">Antes </span>{formatPriceCents(precioAntes)}</s>
+          <s class="text-sm font-normal opacity-75 mr-1.5"><span class="sr-only">Antes </span>{formatPriceCents(precioAntes)}</s>
         )}
-        {formatPriceCents(precioTarjeta!)}{unit && <span class="text-xs text-[color:var(--color-ink-muted)] font-normal"> / {unit}</span>}
+        {formatPriceCents(precioTarjeta!)}{unit && <span class="text-xs opacity-75 font-normal"> / {unit}</span>}
       </p>
       <AddToCart
         client:visible

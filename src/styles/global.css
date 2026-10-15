@@ -175,6 +175,21 @@
     color 0.15s ease,
     border-color 0.15s ease;
 }
+/* La línea de compra de las tarjetas: precio y «Añadir» sobre una franja
+   del color de los botones (15-10-2026). */
+.linea-compra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--color-boton);
+  color: var(--color-leche);
+  padding: 0.5rem 0.5rem 0.5rem 0.875rem;
+}
+.linea-compra p {
+  margin: 0;
+}
+
 .btn-primario {
   background: var(--color-boton);
   color: var(--color-leche);
