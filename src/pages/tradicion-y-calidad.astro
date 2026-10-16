@@ -48,8 +48,15 @@ import { site } from "~/data/site";
       <dl class="cifras grid gap-8 sm:grid-cols-2 lg:grid-cols-4" data-cifras>
         {tradicion.cifras.map((c, i) => (
           <div class="cifra text-center" style={`--i:${i}`}>
-            <dt class="font-[family-name:var(--font-display)] text-4xl">
-              {/^\d+$/.test(c.figure) ? <span data-cuenta={c.figure}>{c.figure}</span> : c.figure}
+            <!-- Una cifra con prefijo («+40») cuenta solo el número; el «+» se
+                 queda quieto delante (16-10-2026). -->
+            <dt class="font-[family-name:var(--font-display)] text-4xl sm:text-5xl">
+              <span class="cifra-numero">
+                {(() => {
+                  const m = /^(\D*)(\d+)$/.exec(c.figure);
+                  return m ? <>{m[1]}<span data-cuenta={m[2]}>{m[2]}</span></> : c.figure;
+                })()}
+              </span>
             </dt>
             <span class="cifra-raya" aria-hidden="true"></span>
             <dd class="numeracion mt-2" style="color:var(--color-leche)">{c.label}</dd>
@@ -261,14 +268,30 @@ import { site } from "~/data/site";
       transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
     transition-delay: calc(var(--i) * 140ms);
   }
+  /* Más movimiento (16-10-2026): la que se enciende crece y sube, las
+     demás se apagan más, y el número da un pequeño salto al empezar. */
   .cifras.visto .cifra {
-    opacity: 0.7;
+    opacity: 0.65;
     transform: none;
   }
   .cifras.visto .cifra.activa {
     opacity: 1;
-    transform: translateY(-4px);
+    transform: translateY(-8px) scale(1.06);
     transition-delay: 0s;
+  }
+  .cifra-numero {
+    display: inline-block;
+  }
+  .cifras.visto .cifra.activa .cifra-numero {
+    animation: cifra-salto 0.6s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  @keyframes cifra-salto {
+    0% {
+      transform: scale(0.8);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
   .cifras.listo .cifra-raya {
     transform: scaleX(0);
