@@ -213,11 +213,13 @@ const MITAD_MENU = 3;
     <ul class:list={["contents md:flex md:items-stretch md:gap-2 lg:gap-4 xl:gap-7 2xl:gap-10", g === 0 ? "md:justify-end md:pr-1 lg:pr-4 xl:pr-6" : "md:justify-start md:pl-1 lg:pl-4 xl:pl-6"]}>
       {grupo.map((item) => {
         const active = isActive(item.href);
+        // La raya sale de `aria-current`, no de una clase: la cabecera es
+        // `transition:persist` y no se vuelve a pintar al cambiar de página,
+        // así que el script de abajo mueve el atributo (16-10-2026).
         const linkClass = [
           "flex items-center h-full py-4 border-b-2 transition-colors whitespace-nowrap",
-          active
-            ? "text-[color:var(--color-teja)] border-[color:var(--color-teja)]"
-            : "text-[color:var(--color-teja)]/85 border-transparent hover:text-[color:var(--color-teja)] hover:border-[color:var(--color-teja)]/50",
+          "text-[color:var(--color-teja)]/85 border-transparent hover:text-[color:var(--color-teja)] not-aria-[current=page]:hover:border-[color:var(--color-teja)]/50",
+          "aria-[current=page]:text-[color:var(--color-teja)] aria-[current=page]:border-[color:var(--color-teja)]",
         ];
 
         if (!item.children) {
@@ -227,6 +229,7 @@ const MITAD_MENU = 3;
                 href={item.href}
                 download={item.download}
                 aria-current={active ? "page" : undefined}
+                data-nav-principal
                 class:list={linkClass}
               >
                 {item.label}
@@ -240,6 +243,7 @@ const MITAD_MENU = 3;
             <a
               href={item.href}
               aria-current={active ? "page" : undefined}
+              data-nav-principal
               aria-haspopup="true"
               class:list={[...linkClass, "gap-1.5"]}
             >
@@ -414,6 +418,21 @@ const MITAD_MENU = 3;
   });
 
   // Also close after every view-transition page swap (covers back/forward)
+  /**
+   * Marca la entrada del menú de la página actual. La cabecera persiste entre
+   * páginas, así que lo que pintó el servidor se queda con la primera; misma
+   * regla que `isActive` del frontmatter.
+   */
+  function marcaMenu() {
+    const aqui = location.pathname;
+    document.querySelectorAll<HTMLAnchorElement>("[data-nav-principal]").forEach((a) => {
+      const ruta = new URL(a.href).pathname;
+      const activa = ruta === "/" ? aqui === "/" : aqui.startsWith(ruta);
+      if (activa) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+  }
+  document.addEventListener("astro:page-load", marcaMenu);
   document.addEventListener("astro:page-load", closeMobileNav);
   document.addEventListener("astro:page-load", cierraBuscador);
 </script>
