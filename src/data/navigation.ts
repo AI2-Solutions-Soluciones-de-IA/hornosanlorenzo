@@ -2,7 +2,7 @@ import type { CategoryId } from "~/data/categories";
 
 /**
  * Estructura de navegación del brief de front end:
- * Inicio y seis secciones, con submenú en «Tienda Online» y en «A quién servimos».
+ * Inicio y cinco secciones, con submenú en «Tienda Online» y en «A quién servimos».
  */
 export type NavChild = {
   href: string;
@@ -21,9 +21,14 @@ export type NavItem = {
 };
 
 export const mainNav: readonly NavItem[] = [
+  // Orden del 16-10-2026: las tres primeras a la izquierda del sello y las
+  // otras tres a su derecha. «Nuestras tiendas» sale del menú (sigue en el pie).
   { href: "/", label: "Inicio" },
-  { href: "/tiendas", label: "Nuestras tiendas" },
   { href: "/tradicion-y-calidad", label: "Tradición y Calidad" },
+  {
+    href: "/carta",
+    label: "Carta",
+  },
   {
     href: "/catalogo",
     label: "Tienda Online",
@@ -58,10 +63,7 @@ export const mainNav: readonly NavItem[] = [
       },
     ],
   },
-  {
-    href: "/carta",
-    label: "Carta",
-  },
+  { href: "/noticias", label: "Promociones del mes" },
   {
     href: "/a-quien-servimos",
     label: "A quién servimos",
@@ -83,8 +85,6 @@ export const mainNav: readonly NavItem[] = [
       },
     ],
   },
-  // Sin submenú de momento: entra como sección y ya se poblará.
-  { href: "/noticias", label: "Este mes" },
 ] as const;
 
 /** Las entradas del submenú de Tienda Online, reutilizadas en /catalogo. */
@@ -98,7 +98,7 @@ export const footerNav: readonly { href: string; label: string }[] = [
   { href: "/servicios", label: "Servicios" },
   { href: "/tradicion-y-calidad", label: "Tradición y calidad" },
   { href: "/tiendas", label: "Nuestras tiendas" },
-  { href: "/noticias", label: "Este mes" },
+  { href: "/noticias", label: "Promociones del mes" },
   { href: "/contacto", label: "Contacto" },
 ] as const;
 
