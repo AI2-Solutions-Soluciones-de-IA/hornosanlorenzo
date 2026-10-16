@@ -32,7 +32,11 @@ export default function FiltroBloques({ bloques, etiqueta }: Props) {
     else url.searchParams.set("s", activo);
     window.history.replaceState({}, "", url.toString());
     document.querySelectorAll<HTMLElement>("[data-bloque]").forEach((el) => {
-      el.style.display = activo === "all" || el.dataset.bloque === activo ? "" : "none";
+      el.style.display =
+        activo === "all" || el.dataset.bloque === activo ? "" : "none";
+      // La raya de arriba separa un bloque del anterior: con uno solo a la
+      // vista quedaba pegada a las etiquetas.
+      el.style.borderTopWidth = activo === "all" ? "" : "0";
     });
   }, [activo, listo]);
 
@@ -42,7 +46,11 @@ export default function FiltroBloques({ bloques, etiqueta }: Props) {
     <>
       <label className="md:hidden block">
         <span className="sr-only">{etiqueta}</span>
-        <select value={activo} onChange={(e) => setActivo(e.target.value)} style={selectRojo}>
+        <select
+          value={activo}
+          onChange={(e) => setActivo(e.target.value)}
+          style={selectRojo}
+        >
           {chips.map((c) => (
             <option key={c.id} value={c.id}>
               {c.label}
@@ -50,7 +58,11 @@ export default function FiltroBloques({ bloques, etiqueta }: Props) {
           ))}
         </select>
       </label>
-      <div role="tablist" aria-label={etiqueta} className="hidden md:flex flex-wrap gap-2">
+      <div
+        role="tablist"
+        aria-label={etiqueta}
+        className="hidden md:flex flex-wrap gap-2"
+      >
         {chips.map((c) => (
           <button
             key={c.id}
