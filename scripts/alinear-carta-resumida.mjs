@@ -34,7 +34,7 @@ const NOMBRES = {
   "surtido-de-pastelitos": "Pastelitos Variados",
 
   // Decoraciones y sin alérgenos
-  "tarta-retrato": "Fotos Personalizadas",
+  "tarta-retrato": "Tarta con Foto Personalizada",
   "tarta-de-chocolate-y-trufa-sin-alergenos":
     "Tarta Chocolate y Trufa · 6 rac.",
 
