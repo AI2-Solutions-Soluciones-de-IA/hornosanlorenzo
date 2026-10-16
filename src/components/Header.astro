@@ -71,8 +71,8 @@ const MITAD_MENU = 3;
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
-    <!-- Izquierda: la lupa y, desde tableta, Instagram y Facebook. En el
-         móvil, un filete que lleva hasta el sello. -->
+    <!-- Izquierda: la lupa y, desde tableta, Instagram y Facebook. Sin las
+         rayas blancas del móvil hasta el sello (16-10-2026). -->
     <div class="justify-self-stretch md:justify-self-start flex items-center gap-3">
     <div class="relative" data-buscador>
       <button
@@ -113,7 +113,6 @@ const MITAD_MENU = 3;
       </form>
     </div>
     <SocialLinks tono="leche" class="hidden md:flex" />
-    <span class="md:hidden flex-1 h-px bg-gradient-to-r from-transparent to-[color:var(--color-avellana)]" aria-hidden="true"></span>
     </div>
 
     <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). Desde
@@ -148,8 +147,6 @@ const MITAD_MENU = 3;
     <!-- `col-start-3`: desde 768 px el sello flota y deja la columna del
          centro vacía; sin esto, estos botones se metían debajo de él. -->
     <div class="flex items-center justify-end gap-2 md:col-start-3">
-      <!-- Móvil: el filete, como a la izquierda. -->
-      <span class="md:hidden flex-1 h-px bg-gradient-to-l from-transparent to-[color:var(--color-avellana)]" aria-hidden="true"></span>
       <!-- La puerta del pedido en escritorio, al lado de «Regístrate»: mismo
            tamaño y letra, pero rellena, porque es la acción principal. En el
            móvil va en su propia barra, debajo. Entre 1024 y 1280 px no cabe
@@ -164,8 +161,6 @@ const MITAD_MENU = 3;
       <AccesoSesion tono="claro" client:load />
 
       <CartBadge client:only="react" />
-
-      <span class="md:hidden w-px h-8 bg-[color:var(--color-leche)]/40" aria-hidden="true"></span>
 
       <button
         class="md:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
