@@ -6,7 +6,9 @@ import { MODE_COPY } from "~/lib/entrega";
 interface Props { store: Store; }
 const { store } = Astro.props;
 ---
-<article class="grid gap-6 md:grid-cols-2 items-start bg-[color:var(--color-paper)] border border-[color:var(--color-line)] rounded-[var(--radius-card)] p-5 sm:p-8 shadow-[var(--shadow-card)]">
+<!-- Sin caja (16-10-2026): el texto y el mapa usan todo el ancho; la raya de
+     arriba separa una tienda de la siguiente. -->
+<article class="grid gap-6 md:grid-cols-2 items-start border-t border-[color:var(--color-line)] pt-8">
   <div>
     <p class="numeracion">{store.shortName}</p>
     <h2 class="text-2xl sm:text-3xl mt-1">{store.name}</h2>
