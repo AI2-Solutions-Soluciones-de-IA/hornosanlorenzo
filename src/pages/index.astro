@@ -1,6 +1,7 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import Hero from "~/components/Hero.astro";
+import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
 import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import { agruparSabores } from "~/lib/sabores";
 import { catalogoPublico, definicionesPublicas } from "~/lib/lectura-publica";
@@ -117,10 +118,9 @@ const localBizJsonLd = stores.map((s) => ({
   </section>
   </div>
 
-  <!-- Claim de campaña: cierra la home, justo antes del pie (`-mb-24`
-       anula el `mt-24` del Footer solo aquí, para que vayan pegados). Entra palabra a palabra al
-       aparecer en pantalla (ver el script del final). -->
-  <section class="claim relative overflow-hidden -mb-24 bg-[color:var(--color-moka)] text-[color:var(--color-leche)]" data-claim>
+  <!-- Claim de campaña, justo antes de la franja de suscripción. Entra
+       palabra a palabra al aparecer en pantalla (ver el script del final). -->
+  <section class="claim relative overflow-hidden bg-[color:var(--color-moka)] text-[color:var(--color-leche)]" data-claim>
     <div class="claim-brillo" aria-hidden="true"></div>
     <div class="claim-brillo claim-brillo--2" aria-hidden="true"></div>
     <div class="relative mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end">
@@ -150,6 +150,12 @@ const localBizJsonLd = stores.map((s) => ({
       </div>
     </div>
   </section>
+
+  <!-- La suscripción a las ofertas cierra la home (16-10-2026), pegada al
+       pie: `-mb-24` anula el `mt-24` del Footer solo aquí. -->
+  <div class="-mb-24">
+    <SuscripcionBanda />
+  </div>
 </MarketingLayout>
 
 <style>
