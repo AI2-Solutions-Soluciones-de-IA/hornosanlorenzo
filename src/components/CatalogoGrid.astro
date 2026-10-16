@@ -64,12 +64,17 @@ const posGama = (cat: string): number => {
   const g = grupoOfCategory(cat as CategoryId);
   return g ? ORDEN_GAMAS.indexOf(g) : ORDEN_GAMAS.length;
 };
+// Estas dos van al final del catálogo, detrás de todo lo demás (16-10-2026).
+const AL_FINAL: readonly string[] = ["tarta-retrato", "plancha-de-celebracion-tematica"];
+const alFinal = (slug: string): number => (AL_FINAL.includes(slug) ? 1 : 0);
 const filtrados = productos
   .filter((p) => (destacados ? p.destacado : true))
   .filter((p) => !allowed || allowed.includes(p.category as CategoryId));
-const products = porGrupo
-  ? [...filtrados].sort((a, b) => posGama(a.category) - posGama(b.category))
-  : filtrados;
+const products = [...filtrados].sort(
+  (a, b) =>
+    alFinal(a.slug) - alFinal(b.slug) ||
+    (porGrupo ? posGama(a.category) - posGama(b.category) : 0),
+);
 
 /**
  * Solo las secciones que tienen producto, en el orden de la carta. Una con
