@@ -51,7 +51,7 @@ const selectStyle: React.CSSProperties = {
  */
 const flechaClara =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='8' viewBox='0 0 12 12' fill='none' stroke='%23FEFCF8' stroke-width='1.6'%3E%3Cpath d='m2 4.5 4 3.5 4-3.5'/%3E%3C/svg%3E\") no-repeat right 1rem center";
-const selectRojo: React.CSSProperties = {
+export const selectRojo: React.CSSProperties = {
   ...selectStyle,
   border: "none",
   background: `var(--color-boton) ${flechaClara}`,
@@ -63,6 +63,22 @@ const selectMoka: React.CSSProperties = {
   background: `var(--color-moka) ${flechaClara}`,
   color: "var(--color-leche)",
 };
+
+/**
+ * Las etiquetas grandes de la primera fila de /catalogo (por gama). También
+ * las usa el filtro de Este mes (`FiltroBloques.tsx`), para que se vean igual.
+ */
+export const chipGrande = (activa: boolean): React.CSSProperties => ({
+  minHeight: 50,
+  padding: "0.625rem 1.5rem",
+  borderRadius: "var(--radius-boton)",
+  border: activa ? "none" : "1px solid var(--color-line)",
+  background: activa ? "var(--color-boton)" : "transparent",
+  color: activa ? "var(--color-leche)" : "var(--color-ink)",
+  fontSize: 17,
+  fontWeight: 600,
+  cursor: "pointer",
+});
 
 const normalize = (value: string) =>
   value
@@ -244,17 +260,16 @@ export default function CategoryFilter({
               onClick={() => setActive(c.id)}
               // En /catalogo (por gama) la primera fila va más grande: manda
               // sobre la de secciones (15-10-2026).
-              style={{
-                minHeight: porGrupo ? 50 : 40,
-                padding: porGrupo ? "0.625rem 1.5rem" : "0.5rem 1rem",
-                borderRadius: "var(--radius-boton)",
-                border: isActive ? "none" : "1px solid var(--color-line)",
-                background: isActive ? "var(--color-boton)" : "transparent",
-                color: isActive ? "var(--color-leche)" : "var(--color-ink)",
-                fontSize: porGrupo ? 17 : 14,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
+              style={
+                porGrupo
+                  ? chipGrande(isActive)
+                  : {
+                      ...chipGrande(isActive),
+                      minHeight: 40,
+                      padding: "0.5rem 1rem",
+                      fontSize: 14,
+                    }
+              }
             >
               {c.label}
             </button>
