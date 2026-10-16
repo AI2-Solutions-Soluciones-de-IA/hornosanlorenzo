@@ -1,63 +1,78 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
+import { stores } from "~/data/stores";
 
 /**
- * Los tres públicos de la casa, en el mismo orden que el submenú de
- * «A quién servimos». Cada uno es una sección con ancla propia.
+ * Calco de la maqueta del cliente («a quien servimos.png», 16-10-2026):
+ * cabecera con teléfono, Particulares a lo ancho con sus servicios en dos
+ * columnas, y Hostelería (en teja) y Empresas lado a lado. Las anclas
+ * `#particulares`, `#hosteleria` y `#empresas` son las del submenú.
  */
-const publicos = [
-  {
-    id: "particulares",
-    tag: "Mostrador y tienda online",
-    title: "Particulares",
-    lead: "La compra del día en cualquiera de las dos tiendas y el encargo de la semana desde la tienda online.",
-    points: [
-      "El catálogo completo: dulce, salado, packs y temporada.",
-      // Los minis son cosa de particulares, no de hostelería (14-10-2026).
-      "Mini croissants dulces y salados, en bandejas de 6, 12 y 24 unidades.",
-      "Encargo online con recogida en Alcobendas o Pozuelo de Alarcón.",
-      "Reparto propio de lunes a sábado a Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón.",
-      "Tartas y encargos especiales avisando con antelación.",
-    ],
-    // Llamadas a la acción (15-10-2026): registro en particulares; en
-    // hostelería y empresas, pedir condiciones y registrarse (alta de empresa,
-    // con razón social y CIF).
-    ctas: [{ href: "/acceso?modo=registro&perfil=particular", label: "Registrarme", style: "btn-primario" }],
-    foot: "Recogida en tienda · reparto propio",
-  },
+const sede = stores[0];
+
+const iconos = {
+  bolsa: "M6 8h12l-1 12H7L6 8Zm3 0V6a3 3 0 0 1 6 0v2",
+  tienda: "M4 10 12 4l8 6M6 9v11h12V9M10 20v-5h4v5",
+  tarta: "M5 20h14M6 20v-6h12v6M6 14c2 1.5 4 1.5 6 0s4-1.5 6 0M12 14v-3M12 8.5v.5",
+  croissant: "M3 13c2-4 6-6 9-6s7 2 9 6c-2 1-4 1-5 0-1 1.5-2.5 2-4 2s-3-.5-4-2c-1 1-3 1-5 0Z",
+  furgoneta: "M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm10 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z",
+};
+
+// Dos columnas, como en la maqueta: se leen de arriba abajo.
+const particulares = [
+  [
+    { icono: iconos.bolsa, titulo: "El catálogo completo", texto: "Dulce, salado, packs y temporada." },
+    { icono: iconos.tienda, titulo: "Encargo online con recogida", texto: "En Alcobendas o Pozuelo de Alarcón." },
+    { icono: iconos.tarta, titulo: "Tartas y encargos especiales", texto: "Avisando con antelación." },
+  ],
+  [
+    // Los minis son cosa de particulares, no de hostelería (14-10-2026).
+    { icono: iconos.croissant, titulo: "Mini croissants dulces y salados", texto: "En bandejas de 6, 12 y 24 unidades." },
+    {
+      icono: iconos.furgoneta,
+      titulo: "Reparto propio de lunes a sábado",
+      texto: "Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón.",
+    },
+  ],
+];
+
+// Textos del cliente (14-10-2026).
+const negocios = [
   {
     id: "hosteleria",
-    tag: "Base B2B consolidada",
-    title: "Hostelería y eventos",
-    // Texto del cliente (14-10-2026), repartido entre la entrada y la lista.
-    lead: "Trabajamos con restaurantes, bares, cafeterías, pastelerías, salones de bodas y banquetes, eventos y catering.",
-    points: [
+    num: "02",
+    sello: "Base B2B consolidada",
+    titulo: "Hostelería y eventos",
+    entrada: "Trabajamos con restaurantes, bares, cafeterías, pastelerías, salones de bodas y banquetes, eventos y catering.",
+    puntos: [
       "Cada cliente cuenta con una atención comercial personalizada.",
       "Una amplia variedad de dulce y salado para menú, carta, raciones, celebraciones, desayunos y tapas para tu negocio.",
     ],
+    pie: "Entrega diaria L–S · formato mayorista",
     ctas: [
-      { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
-      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme", style: "btn-primario" },
+      { href: "/contacto", label: "Pedir condiciones", clase: "btn-claro-teja" },
+      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme", clase: "btn-contorno-claro" },
     ],
-    foot: "Entrega diaria L–S · formato mayorista",
+    teja: true,
   },
   {
     id: "empresas",
-    tag: "Canal prioritario",
-    title: "Empresas",
-    // Texto del cliente (14-10-2026), repartido entre la entrada y la lista.
-    lead: "Cada empresa es distinta, y por eso te atendemos de forma personalizada.",
-    points: [
+    num: "03",
+    sello: "Canal prioritario",
+    titulo: "Empresas",
+    entrada: "Cada empresa es distinta, y por eso te atendemos de forma personalizada.",
+    puntos: [
       "Elige uno de nuestros packs en la web o cuéntanos qué necesitas y preparamos tu catering a medida.",
       "Sin pedido mínimo en Alcobendas y alrededores (consúltanos). En el resto de zonas, el mismo pedido mínimo que en el servicio a domicilio.",
       "¿Tienes dudas? Llámanos y cerramos la entrega contigo.",
     ],
+    pie: "Propuesta B2B · reparto propio",
     ctas: [
-      { href: "/contacto", label: "Pedir condiciones", style: "btn-secundario" },
-      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme", style: "btn-primario" },
+      { href: "/contacto", label: "Pedir condiciones", clase: "btn-primario" },
+      { href: "/catalogo/packs", label: "Ver packs", clase: "btn-secundario" },
     ],
-    foot: "Propuesta B2B · reparto propio",
+    teja: false,
   },
 ];
 ---
@@ -65,43 +80,135 @@ const publicos = [
   title="A quién servimos"
   description="Particulares, hostelería y empresas. El mismo obrador para la mesa de casa, la barra del bar y el desayuno de oficina."
 >
-  <!-- Arriba del todo, la misma suscripción que en Este mes. -->
+  <!-- Arriba del todo, la misma suscripción que en Promociones del mes. -->
   <SuscripcionBanda />
 
-  <!-- Las tres cajas de los canales que había aquí se quitaron (15-10-2026):
-       el submenú ya lleva a cada sección. El h1 queda para el lector. -->
-  <h1 class="sr-only">A quién servimos</h1>
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10">
+    <!-- Cabecera: titular a la izquierda y, a la derecha, el teléfono. -->
+    <header class="pt-12 sm:pt-16 pb-10 sm:pb-12 grid gap-8 md:grid-cols-[1fr_auto] md:items-end border-b border-[color:var(--color-teja)]/40">
+      <div>
+        <p class="numeracion flex items-center gap-3" style="color:var(--color-teja)">
+          <span class="inline-block w-8 h-px bg-[color:var(--color-teja)]" aria-hidden="true"></span>
+          A quién servimos
+        </p>
+        <h1 class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.05]">
+          Un obrador,<br />tres formas de servirte.
+        </h1>
+        <p class="mt-5 max-w-lg text-[color:var(--color-ink-muted)] leading-relaxed">
+          Desde 1986 horneamos para la mesa de casa, para la carta de tu negocio y para el
+          desayuno de tu equipo. Mismo obrador, mismo pan, distinta manera de llegar.
+        </p>
+      </div>
+      <aside class="border border-[color:var(--color-avellana)] bg-white px-6 py-5 md:min-w-[17rem]">
+        <p class="numeracion" style="color:var(--color-teja)">¿No sabes cuál eres?</p>
+        <p class="mt-2 text-sm">Llámanos y te lo decimos en un minuto.</p>
+        <a href={`tel:${sede.phone}`} class="mt-2 inline-block font-[family-name:var(--font-display)] text-xl text-[color:var(--color-teja)] hover:underline">
+          {sede.phoneDisplay}
+        </a>
+      </aside>
+    </header>
 
-  {publicos.map((p) => (
-    <section
-      id={p.id}
-      class="scroll-mt-40 border-b border-[color:var(--color-avellana)]"
-    >
-      <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-10 md:grid-cols-[1fr_1fr] items-start">
-        <div>
-          <h2 class="text-4xl sm:text-5xl">{p.title}</h2>
-          <p class="mt-2 text-2xl sm:text-3xl font-[family-name:var(--font-display)] italic text-[color:var(--color-ink-muted)]">{p.tag}</p>
-          <div class="mt-7 flex flex-wrap gap-3">
-            {p.ctas.map((c) => <a href={c.href} class:list={["btn", c.style]}>{c.label}</a>)}
-          </div>
+    <!-- 01 · Particulares -->
+    <section id="particulares" class="scroll-mt-40 py-12 sm:py-16 grid gap-10 lg:grid-cols-[1fr_2fr] border-b border-[color:var(--color-avellana)]/60">
+      <div>
+        <p class="numeracion">01</p>
+        <h2 class="mt-2 text-4xl sm:text-5xl font-semibold">Particulares</h2>
+        <p class="numeracion mt-3" style="color:var(--color-teja)">Mostrador y tienda online</p>
+        <p class="mt-4 max-w-sm text-[color:var(--color-ink-muted)] leading-relaxed">
+          La compra del día en cualquiera de las dos tiendas y el encargo de la semana desde la
+          tienda online.
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="/catalogo" class="btn btn-primario">Haz tu pedido</a>
+          <a href="/acceso?modo=registro&perfil=particular" class="btn btn-secundario">Registrarme</a>
         </div>
-        <!-- Sin marco: fondo moka y letra clara. A la izquierda el título, el
-             subtítulo y los botones; la entrada y la lista, aquí (15-10-2026). -->
-        <div class="p-6 sm:p-8 bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
-          <p class="text-lg leading-relaxed">{p.lead}</p>
-          <ul class="mt-5 space-y-3 text-sm">
-            {p.points.map((item) => (
+      </div>
+      <div class="grid gap-8 sm:grid-cols-2 content-start">
+        {particulares.map((columna, c) => (
+          <ul class="flex flex-col gap-7">
+            {columna.map((s) => (
+              <li class="flex gap-4">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5 text-[color:var(--color-teja)]" aria-hidden="true">
+                  <path d={s.icono} />
+                </svg>
+                <div>
+                  <p class="text-sm font-semibold">{s.titulo}</p>
+                  <p class="mt-1 text-sm text-[color:var(--color-ink-muted)]">{s.texto}</p>
+                </div>
+              </li>
+            ))}
+            {c === 1 && (
+              <li>
+                <span class="numeracion inline-block rounded-full border border-[color:var(--color-teja)]/40 px-4 py-2" style="color:var(--color-teja)">
+                  Recogida en tienda · reparto propio
+                </span>
+              </li>
+            )}
+          </ul>
+        ))}
+      </div>
+    </section>
+
+    <!-- 02 · Hostelería (en teja) y 03 · Empresas, lado a lado. -->
+    <div class="py-12 sm:py-16 grid gap-6 lg:grid-cols-2 border-b border-[color:var(--color-avellana)]/60">
+      {negocios.map((n) => (
+        <section
+          id={n.id}
+          class:list={[
+            "scroll-mt-40 flex flex-col p-6 sm:p-8",
+            n.teja
+              ? "bg-[color:var(--color-teja)] text-[color:var(--color-leche)]"
+              : "bg-white border border-[color:var(--color-avellana)]",
+          ]}
+        >
+          <div class="flex items-start justify-between gap-4">
+            <p class="numeracion" style={n.teja ? "color:var(--color-latte)" : "color:var(--color-teja)"}>{n.num}</p>
+            <span
+              class:list={[
+                "numeracion rounded-full border px-3 py-1.5 text-right",
+                n.teja ? "border-[color:var(--color-leche)]/40" : "border-[color:var(--color-teja)]/40",
+              ]}
+              style={n.teja ? "color:var(--color-leche)" : "color:var(--color-teja)"}
+            >
+              {n.sello}
+            </span>
+          </div>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-semibold">{n.titulo}</h2>
+          <p class:list={["mt-4 text-sm leading-relaxed", n.teja ? "text-[color:var(--color-leche)]/90" : "text-[color:var(--color-ink-muted)]"]}>
+            {n.entrada}
+          </p>
+          <ul class:list={["mt-5 pt-5 border-t space-y-3 text-sm", n.teja ? "border-white/25" : "border-[color:var(--color-avellana)]/60"]}>
+            {n.puntos.map((p) => (
               <li class="flex gap-3">
-                <span class="mt-2 h-1.5 w-1.5 shrink-0 bg-[color:var(--color-latte)]" aria-hidden="true"></span>
-                <span>{item}</span>
+                <span class:list={["mt-2 h-1.5 w-1.5 shrink-0 rounded-full", n.teja ? "bg-[color:var(--color-leche)]" : "bg-[color:var(--color-moka)]"]} aria-hidden="true"></span>
+                <span>{p}</span>
               </li>
             ))}
           </ul>
-          <p class="numeracion mt-6 pt-5 border-t border-white/20" style="color:var(--color-latte)">{p.foot}</p>
-        </div>
-      </div>
-    </section>
-  ))}
+          <!-- El pie y los botones, siempre abajo: las dos cajas igualan alto. -->
+          <div class="mt-auto pt-8">
+            <p class="numeracion" style={n.teja ? "color:var(--color-leche)" : "color:var(--color-teja)"}>{n.pie}</p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              {n.ctas.map((c) => <a href={c.href} class:list={["btn", c.clase]}>{c.label}</a>)}
+            </div>
+          </div>
+        </section>
+      ))}
+    </div>
 
-
+    <!-- Cierre: el lema y los teléfonos de las dos tiendas. -->
+    <div class="py-10 grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
+      <p class="font-[family-name:var(--font-display)] italic text-xl sm:text-2xl max-w-md">
+        El secreto de comer bien lleva más de 40 años en nuestra casa.
+      </p>
+      <dl class="flex gap-10">
+        {stores.map((s) => (
+          <div>
+            <dt class="numeracion" style="color:var(--color-teja)">{s.shortName}</dt>
+            <dd class="mt-1 text-sm"><a href={`tel:${s.phone}`} class="hover:underline">{s.phoneDisplay}</a></dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  </div>
 </MarketingLayout>
