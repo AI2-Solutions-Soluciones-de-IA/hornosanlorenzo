@@ -117,24 +117,39 @@ import { tradicion } from "~/data/tradicion";
     </div>
   </section>
 
-  <!-- Los cinco valores, en fila: foto arriba y texto en moka debajo. En el
-       móvil no caben: se deslizan de lado. -->
+  <!-- Los cinco valores, en cinta continua (vuelve el carrusel, 17-10-2026). -->
   <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 lg:px-14">
     <p class="numeracion" style="color:var(--color-teja)">Cinco valores</p>
     <h2 class="text-4xl sm:text-5xl mt-3 max-w-2xl leading-[1.08]">Lo que no ha cambiado, y no va a cambiar</h2>
     <p class="mt-5 max-w-sm text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{tradicion.valoresIntro}</p>
-    <ul class="valores mt-10" role="list">
-      {tradicion.valores.map((v) => (
-        <li class="valores-item">
-          <img src={v.foto} alt="" loading="lazy" decoding="async" class="valores-foto" style={"encuadre" in v ? `object-position:${v.encuadre}` : undefined} />
-          <div class="p-5">
-            <p class="font-[family-name:var(--font-display)] text-xl text-[color:var(--color-avellana)]">{v.number}</p>
-            <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">{v.title}</h3>
-            <p class="mt-2 text-xs leading-relaxed text-[color:var(--color-latte)]/85">{v.body}</p>
+    <!-- Cinta continua: las cinco tarjetas dos veces, desplazándose sin
+         parar; al llegar a la mitad vuelve a empezar sin que se note. La
+         copia no la lee el lector de pantalla. Las flechas la adelantan o
+         la atrasan una tarjeta y luego sigue sola. -->
+    <div class="valores-marco mt-10" role="region" aria-label="Nuestros 5 valores" data-valores>
+      <button type="button" class="valores-flecha valores-flecha--ant" data-valores-ant aria-label="Valor anterior" hidden>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <button type="button" class="valores-flecha valores-flecha--sig" data-valores-sig aria-label="Valor siguiente" hidden>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      </button>
+      <div class="valores-pista">
+        {[0, 1].map((copia) => (
+          <div class="valores-tanda" aria-hidden={copia === 1 ? "true" : undefined}>
+            {tradicion.valores.map((v) => (
+              <article class="valores-item">
+                <img src={v.foto} alt="" loading="lazy" decoding="async" class="valores-foto" style={"encuadre" in v ? `object-position:${v.encuadre}` : undefined} />
+                <div class="valores-texto p-6 sm:p-7">
+                  <p class="font-[family-name:var(--font-display)] text-4xl">{v.number}</p>
+                  <h3 class="font-[family-name:var(--font-display)] text-2xl mt-2">{v.title}</h3>
+                  <p class="mt-2 text-sm leading-relaxed">{v.body}</p>
+                </div>
+              </article>
+            ))}
           </div>
-        </li>
-      ))}
-    </ul>
+        ))}
+      </div>
+    </div>
   </section>
 
   <section class="bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
@@ -174,35 +189,106 @@ import { tradicion } from "~/data/tradicion";
     box-shadow: 0 18px 40px -18px rgb(50 40 32 / 0.28);
   }
 
-  /* Cinco valores: fila de cinco en escritorio; en el móvil, deslizables. */
-  .valores {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: min(70vw, 16rem);
-    gap: 1rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 0.5rem;
-  }
-  @media (min-width: 64rem) {
-    .valores {
-      grid-auto-flow: row;
-      grid-template-columns: repeat(5, 1fr);
-      overflow: visible;
-    }
-  }
-  .valores-item {
-    scroll-snap-align: start;
+  /* Cinta de los cinco valores: avanza siempre, a velocidad constante. */
+  .valores-marco {
+    position: relative;
     overflow: hidden;
-    border-radius: 0.25rem;
+  }
+  /* Con JS la mueve el script (para poder usar las flechas). */
+  .valores-marco.con-js .valores-pista {
+    animation: none;
+  }
+  .valores-flecha {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-top: -1.375rem;
+    border-radius: 9999px;
+    background: var(--color-latte);
+    color: var(--color-moka);
+    box-shadow: 0 2px 10px rgb(50 40 32 / 0.25);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .valores-flecha[hidden] {
+    display: none;
+  }
+  .valores-flecha:hover {
+    transform: scale(1.06);
+  }
+  .valores-flecha:focus-visible {
+    outline: 2px solid var(--color-teja);
+    outline-offset: 2px;
+  }
+  .valores-flecha--ant {
+    left: 0.75rem;
+  }
+  .valores-flecha--sig {
+    right: 0.75rem;
+  }
+  .valores-pista {
+    display: flex;
+    width: max-content;
+    animation: valores-cinta 46s linear infinite;
+  }
+  .valores-tanda {
+    display: flex;
+    gap: 1.25rem;
+    padding-right: 1.25rem;
+  }
+  /* Foto a sangre y el texto encima, abajo, en latte; un degradado moka
+     por debajo para que se lea sobre cualquier foto. */
+  .valores-item {
+    position: relative;
+    flex: none;
+    width: min(80vw, 22rem);
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     background: var(--color-moka);
-    color: var(--color-leche);
   }
   .valores-foto {
-    display: block;
+    position: absolute;
+    inset: 0;
     width: 100%;
-    aspect-ratio: 4 / 3;
+    height: 100%;
     object-fit: cover;
+  }
+  .valores-texto {
+    position: relative;
+    color: var(--color-latte);
+    background: linear-gradient(to top, rgb(50 40 32 / 0.92) 0%, rgb(50 40 32 / 0.75) 55%, rgb(50 40 32 / 0) 100%);
+    padding-top: 5rem;
+  }
+  @keyframes valores-cinta {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  /* Con «reducir movimiento», quieta y deslizable a mano, sin la copia. */
+  @media (prefers-reduced-motion: reduce) {
+    .valores-marco {
+      overflow-x: auto;
+    }
+    .valores-pista {
+      animation: none;
+    }
+    .valores-tanda[aria-hidden="true"] {
+      display: none;
+    }
+    /* Con JS no avanza sola, pero las flechas la siguen moviendo. */
+    .valores-marco.con-js {
+      overflow-x: hidden;
+    }
+    .valores-marco.con-js .valores-tanda[aria-hidden="true"] {
+      display: flex;
+    }
   }
 
   /* Cifras: entran escalonadas y, después, de una en una y en bucle, cada
@@ -318,6 +404,58 @@ import { tradicion } from "~/data/tradicion";
     );
     io.observe(dl);
   }
+
+  /** Cinta de valores: avanza sola y las flechas la mueven una tarjeta. */
+  function cintaValores() {
+    const marco = document.querySelector<HTMLElement>("[data-valores]");
+    if (!marco || marco.classList.contains("con-js")) return;
+    const pista = marco.querySelector<HTMLElement>(".valores-pista")!;
+    const tanda = marco.querySelector<HTMLElement>(".valores-tanda")!;
+    const item = marco.querySelector<HTMLElement>(".valores-item")!;
+    const quieta = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    marco.classList.add("con-js");
+
+    const DURACION_VUELTA = 46; // s, como la animación sin JS
+    const DURACION_SALTO = 450; // ms
+    let pos = 0;
+    let salto: { desde: number; hasta: number; inicio: number } | null = null;
+    let antes = 0;
+
+    // Una tarjeta = su ancho más el hueco entre tarjetas.
+    const paso = () => item.offsetWidth + parseFloat(getComputedStyle(tanda).columnGap || "0");
+    const vuelta = () => tanda.offsetWidth;
+    const coloca = () => {
+      const v = vuelta();
+      pista.style.transform = `translateX(${-(((pos % v) + v) % v)}px)`;
+    };
+
+    const mueve = (signo: number) => {
+      // Si ya iba saltando, cuenta desde donde iba a acabar.
+      const base = salto ? salto.hasta : pos;
+      salto = { desde: pos, hasta: base + signo * paso(), inicio: performance.now() };
+    };
+    marco.querySelector("[data-valores-ant]")!.addEventListener("click", () => mueve(-1));
+    marco.querySelector("[data-valores-sig]")!.addEventListener("click", () => mueve(1));
+    marco.querySelectorAll<HTMLElement>(".valores-flecha").forEach((b) => (b.hidden = false));
+
+    const marca = (t: number) => {
+      if (!marco.isConnected) return;
+      const dt = antes ? Math.min(t - antes, 100) : 0;
+      antes = t;
+      if (salto) {
+        const p = Math.min((t - salto.inicio) / DURACION_SALTO, 1);
+        const suave = 1 - Math.pow(1 - p, 3);
+        pos = salto.desde + (salto.hasta - salto.desde) * suave;
+        if (p === 1) salto = null;
+      } else if (!quieta) {
+        pos += (vuelta() / DURACION_VUELTA) * (dt / 1000);
+      }
+      coloca();
+      requestAnimationFrame(marca);
+    };
+    requestAnimationFrame(marca);
+  }
+  document.addEventListener("astro:page-load", cintaValores);
   document.addEventListener("astro:page-load", animaCifras);
 
 </script>
