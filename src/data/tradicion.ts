@@ -1,4 +1,41 @@
 export const tradicion = {
+  /** Cabecera de la página (imagen «tradicion y calidad» del cliente, 17-10-2026). */
+  cabecera: {
+    antetitulo: "Tradición y calidad · Desde 1986",
+    titulo: ["Más de 40 años.", "Y todos te los debemos a ti."],
+    texto:
+      "Esta página debería hablar de nosotros. Pero si algo hemos aprendido en cuatro décadas de obrador es que la historia de Horno San Lorenzo no la hemos escrito solos. La han escrito nuestros clientes.",
+  },
+
+  /** Las tres tarjetas de agradecimiento, una por canal. */
+  gracias: [
+    {
+      number: "01",
+      canal: "Particulares",
+      title: "Gracias a quien vuelve",
+      body: "A quien compra el pan de cada día y la tarta de cada domingo. A quien era niño cuando entraba de la mano y ahora entra con los suyos. A quien pide «lo de siempre» y no necesita explicar más.",
+      cita: "La receta no ha cambiado porque no nos atrevemos a tocar lo que es vuestro.",
+    },
+    {
+      number: "02",
+      canal: "Hostelería y eventos",
+      title: "Gracias a quien confía",
+      body: "A los bares, restaurantes, cafeterías y salones que ponen nuestro nombre en su carta sin que nadie lo vea. Cada mañana sale la furgoneta con vuestro pedido y vuelve con la confianza de que mañana volveréis a contar con nosotros.",
+      cita: "Hace años que ya no sois clientes. Sois compañeros de oficio.",
+    },
+    {
+      number: "03",
+      canal: "Empresas",
+      title: "Gracias a quien nos recomienda",
+      body: "A las empresas que nos llevan a sus desayunos y a sus celebraciones. A quien nos ha traído a su oficina, a su boda, a su familia. Todo lo que somos hoy ha crecido de boca en boca.",
+      cita: "Eso solo pasa cuando alguien se juega su palabra por ti. No lo olvidamos.",
+    },
+  ],
+
+  /** Entradilla de los cinco valores. */
+  valoresIntro:
+    "Tú has puesto la confianza. Esto es lo que ponemos nosotros, hoy igual que en 1986.",
+
   /**
    * Manifiesto de la marca, tal cual en las Brand Guidelines (versión
    * Avellana, diapositiva 8, «05 · Manifiesto»), revisado con la imagen
@@ -25,10 +62,26 @@ export const tradicion = {
     "Misma receta, mismo método y mismo precio justo, cada día, para la mesa de casa y la mesa de la empresa.",
 
   cifras: [
-    { figure: "+40", label: "años de trayectoria", body: "Fundado en 1986: mismo oficio, mismas recetas de base." },
-    { figure: "2", label: "obradores en Madrid", body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón." },
-    { figure: "3", label: "canales de negocio", body: "Empresas y oficinas, hostelería y particulares." },
-    { figure: "L–S", label: "reparto propio", body: "Entrega diaria con furgoneta y repartidor de la casa." },
+    {
+      figure: "+40",
+      label: "años de trayectoria",
+      body: "Fundado en 1986: mismo oficio, mismas recetas de base.",
+    },
+    {
+      figure: "2",
+      label: "obradores en Madrid",
+      body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón.",
+    },
+    {
+      figure: "3",
+      label: "canales de negocio",
+      body: "Empresas y oficinas, hostelería y particulares.",
+    },
+    {
+      figure: "L–S",
+      label: "reparto propio",
+      body: "Entrega diaria con furgoneta y repartidor de la casa.",
+    },
   ],
 
   /**

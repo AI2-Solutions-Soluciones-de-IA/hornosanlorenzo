@@ -1,44 +1,94 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import { tradicion } from "~/data/tradicion";
-import { site } from "~/data/site";
 ---
 <MarketingLayout
   title="Tradición y Calidad"
-  description="Obrador propio desde 1986: método tradicional, ingredientes de siempre y cinco valores que se cumplen en algo concreto."
+  description="Más de 40 años de obrador propio, y todos se los debemos a nuestros clientes: particulares, hostelería y empresas."
 >
-  <!-- Manifiesto de la marca (Brand Guidelines Avellana, diapositiva 8):
-       el texto a la izquierda y la foto principal a la derecha; en el
-       móvil, el texto primero y la foto debajo. -->
-  <section class="border-b border-[color:var(--color-avellana)]">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 sm:py-20 grid gap-10 md:grid-cols-[7fr_5fr] lg:gap-16">
-      <div class="relative order-last aspect-[4/5] md:aspect-auto overflow-hidden bg-[color:var(--color-moka)]">
-        <img
-          src="/images/tradicion-principal.jpg"
-          alt="Una panadera coloca tartas de chocolate recién hechas junto al horno de leña del obrador"
-          width="900"
-          height="1600"
-          decoding="async"
-          class="absolute inset-0 h-full w-full object-cover object-[center_60%]"
-        />
-      </div>
-      <div>
-        <p class="numeracion">Manifiesto</p>
-        <h1 class="text-4xl sm:text-5xl mt-3">{tradicion.manifiesto.titulo}</h1>
-        <p class="text-xl text-[color:var(--color-ink-muted)] mt-6 leading-relaxed font-[family-name:var(--font-display)] italic">{tradicion.manifiesto.entradilla}</p>
-        <div class="mt-8 space-y-5 leading-relaxed text-[color:var(--color-ink)]">
-          {/* `**…**` en el texto es negrita: se parte por ahí y los trozos
-              impares van en <strong>. */}
-          {tradicion.manifiesto.parrafos.map((p) => (
-            <p>{p.split("**").map((trozo, i) => (i % 2 === 1 ? <strong>{trozo}</strong> : trozo))}</p>
-          ))}
-        </div>
-        <p class="mt-10 border-l-2 border-[color:var(--color-teja)] pl-5 font-[family-name:var(--font-display)] italic text-2xl sm:text-3xl leading-snug">
-          {tradicion.manifiesto.cierre}
-        </p>
-        <p class="mt-6 font-[family-name:var(--font-display)] italic text-lg text-[color:var(--color-ink-muted)]">{tradicion.manifiesto.firma}</p>
+  <!-- Diseño de la imagen «tradicion y calidad» del cliente (17-10-2026):
+       cabecera roja con la foto del obrador a la derecha, a sangre; tres
+       tarjetas de agradecimiento montadas sobre su borde inferior. -->
+  <section class="relative flex flex-col md:block bg-[color:var(--color-teja)] text-[color:var(--color-leche)]">
+    <div class="relative md:absolute md:inset-y-0 md:right-0 md:w-1/2 order-last aspect-[4/3] md:aspect-auto bg-[color:var(--color-moka)]">
+      <img
+        src="/images/tradicion-principal.jpg"
+        alt="Una panadera coloca tartas de chocolate recién hechas junto al horno de leña del obrador"
+        width="900"
+        height="1600"
+        decoding="async"
+        class="absolute inset-0 h-full w-full object-cover object-[center_55%]"
+      />
+    </div>
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-12 pb-14 sm:pt-20 md:pb-44">
+      <div class="md:w-1/2 md:pr-12">
+        <p class="numeracion antetitulo" style="color:var(--color-avellana)">{tradicion.cabecera.antetitulo}</p>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl mt-5 leading-[1.05]">
+          {tradicion.cabecera.titulo.map((linea) => <span class="block">{linea}</span>)}
+        </h1>
+        <p class="mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[color:var(--color-leche)]/85">{tradicion.cabecera.texto}</p>
       </div>
     </div>
+  </section>
+
+  <section class="relative z-10 mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 -mt-8 md:-mt-28">
+    <div class="grid gap-6 md:grid-cols-3 md:gap-8 lg:px-8">
+      {tradicion.gracias.map((g) => (
+        <article class="gracias-tarjeta flex flex-col bg-white p-7 sm:p-9">
+          <p class="font-[family-name:var(--font-display)] text-5xl text-[color:var(--color-teja)]">{g.number}</p>
+          <p class="numeracion mt-4" style="color:var(--color-teja)">{g.canal}</p>
+          <h2 class="text-2xl sm:text-3xl mt-3 leading-tight">{g.title}</h2>
+          <p class="mt-4 text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{g.body}</p>
+          <p class="mt-auto pt-6">
+            <span class="block border-t border-[color:var(--color-latte)] pt-5 font-[family-name:var(--font-display)] italic text-[color:var(--color-teja)] leading-snug">{g.cita}</span>
+          </p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- Manifiesto (Brand Guidelines Avellana, diapositiva 8): el texto a la
+       izquierda y la playa de San Lorenzo, que da nombre a la casa, a la
+       derecha; en el móvil, la foto debajo. -->
+  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 grid gap-10 md:grid-cols-[7fr_5fr] lg:gap-16 lg:px-14">
+    <div>
+      <p class="numeracion antetitulo" style="color:var(--color-teja)">Manifiesto</p>
+      <h2 class="text-4xl sm:text-5xl mt-4 leading-[1.08]">{tradicion.manifiesto.titulo}</h2>
+      <p class="text-xl text-[color:var(--color-teja)] mt-6 leading-relaxed font-[family-name:var(--font-display)] italic">{tradicion.manifiesto.entradilla}</p>
+      <div class="mt-8 space-y-5 text-sm sm:text-base leading-relaxed text-[color:var(--color-ink)]">
+        {/* `**…**` en el texto es negrita: se parte por ahí y los trozos
+            impares van en <strong>. */}
+        {tradicion.manifiesto.parrafos.map((p) => (
+          <p>{p.split("**").map((trozo, i) => (i % 2 === 1 ? <strong>{trozo}</strong> : trozo))}</p>
+        ))}
+      </div>
+      <p class="mt-10 font-[family-name:var(--font-display)] italic text-2xl leading-snug">
+        {tradicion.manifiesto.cierre}
+      </p>
+      <p class="numeracion mt-6" style="color:var(--color-teja)">{tradicion.manifiesto.firma}</p>
+    </div>
+    <figure class="md:mt-16">
+      <div class="aspect-[4/5] overflow-hidden rounded-sm bg-[color:var(--color-latte)]">
+        <img
+          src="/images/playa-san-lorenzo.jpg"
+          alt="La playa de San Lorenzo, en Gijón, con la iglesia de San Pedro al fondo"
+          width="900"
+          height="1125"
+          loading="lazy"
+          decoding="async"
+          class="h-full w-full object-cover"
+        />
+      </div>
+      <figcaption class="mt-3 text-right">
+        <span class="numeracion" style="color:var(--color-teja)">Playa de San Lorenzo · Gijón</span>
+        <!-- Foto de Mentxuwiki en Wikimedia Commons, licencia CC BY-SA 4.0. -->
+        <a
+          href="https://commons.wikimedia.org/wiki/File:Playa_de_San_Lorenzo_en_Gij%C3%B3n_3.jpg"
+          class="block mt-1 text-[0.625rem] text-[color:var(--color-ink-muted)] no-underline hover:underline"
+          rel="noopener"
+        >Foto: Mentxuwiki · CC BY-SA 4.0</a>
+      </figcaption>
+    </figure>
   </section>
 
   <!-- Cifras: banda roja teja a todo el ancho, como la cabecera, sin
@@ -67,186 +117,92 @@ import { site } from "~/data/site";
     </div>
   </section>
 
-  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20">
-    <h2 class="text-4xl sm:text-5xl">Nuestros 5 valores:</h2>
-    <p class="mt-2 text-2xl sm:text-3xl font-[family-name:var(--font-display)] italic text-[color:var(--color-ink-muted)]">Lo que no ha cambiado, y no va a cambiar.</p>
-    <p class="mt-3 max-w-2xl text-[color:var(--color-ink-muted)]">
-      Cada valor se traduce en una decisión concreta del negocio. Si no se puede señalar
-      dónde se cumple, no es un valor: es un adorno.
-    </p>
-    <!-- Cinta continua: las cinco tarjetas dos veces, desplazándose sin
-         parar; al llegar a la mitad vuelve a empezar sin que se note. La
-         copia no la lee el lector de pantalla. Las flechas la adelantan o
-         la atrasan una tarjeta y luego sigue sola. -->
-    <div class="valores-marco mt-10" role="region" aria-label="Nuestros 5 valores" data-valores>
-      <button type="button" class="valores-flecha valores-flecha--ant" data-valores-ant aria-label="Valor anterior" hidden>
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
-      </button>
-      <button type="button" class="valores-flecha valores-flecha--sig" data-valores-sig aria-label="Valor siguiente" hidden>
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
-      </button>
-      <div class="valores-pista">
-        {[0, 1].map((copia) => (
-          <div class="valores-tanda" aria-hidden={copia === 1 ? "true" : undefined}>
-            {tradicion.valores.map((v) => (
-              <article class="valores-item">
-                <img src={v.foto} alt="" loading="lazy" decoding="async" class="valores-foto" style={"encuadre" in v ? `object-position:${v.encuadre}` : undefined} />
-                <div class="valores-texto p-6 sm:p-7">
-                  <p class="font-[family-name:var(--font-display)] text-4xl">{v.number}</p>
-                  <h3 class="font-[family-name:var(--font-display)] text-2xl mt-2">{v.title}</h3>
-                  <p class="mt-2 text-sm leading-relaxed">{v.body}</p>
-                </div>
-              </article>
-            ))}
+  <!-- Los cinco valores, en fila: foto arriba y texto en moka debajo. En el
+       móvil no caben: se deslizan de lado. -->
+  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-16 sm:py-24 lg:px-14">
+    <p class="numeracion" style="color:var(--color-teja)">Cinco valores</p>
+    <h2 class="text-4xl sm:text-5xl mt-3 max-w-2xl leading-[1.08]">Lo que no ha cambiado, y no va a cambiar</h2>
+    <p class="mt-5 max-w-sm text-sm leading-relaxed text-[color:var(--color-ink-muted)]">{tradicion.valoresIntro}</p>
+    <ul class="valores mt-10" role="list">
+      {tradicion.valores.map((v) => (
+        <li class="valores-item">
+          <img src={v.foto} alt="" loading="lazy" decoding="async" class="valores-foto" style={"encuadre" in v ? `object-position:${v.encuadre}` : undefined} />
+          <div class="p-5">
+            <p class="font-[family-name:var(--font-display)] text-xl text-[color:var(--color-avellana)]">{v.number}</p>
+            <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">{v.title}</h3>
+            <p class="mt-2 text-xs leading-relaxed text-[color:var(--color-latte)]/85">{v.body}</p>
           </div>
-        ))}
-      </div>
-    </div>
+        </li>
+      ))}
+    </ul>
   </section>
 
   <section class="bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
-    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-end">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center">
       <div>
         <p class="numeracion" style="color:var(--color-avellana)">Lo que garantizamos</p>
         <p class="font-[family-name:var(--font-display)] italic text-3xl sm:text-4xl mt-3 leading-[1.15]">
           {tradicion.promesa}
         </p>
-        <p class="mt-4 text-[color:var(--color-avellana)] max-w-lg">{tradicion.promesaBody}</p>
+        <p class="mt-4 text-sm text-[color:var(--color-avellana)] max-w-lg">{tradicion.promesaBody}</p>
       </div>
-      <ul class="space-y-4">
+      <ul>
         {tradicion.pruebas.map((prueba) => (
-          <li class="border-t border-[color:var(--color-leche)]/25 pt-4 text-sm text-[color:var(--color-avellana)]">
+          <li class="border-t border-[color:var(--color-leche)]/15 py-4 text-sm text-[color:var(--color-avellana)]">
             {prueba}
           </li>
         ))}
       </ul>
     </div>
   </section>
-
-  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-14 sm:py-20 grid gap-10 md:grid-cols-2">
-    <div>
-      <p class="numeracion">{tradicion.especialidad.title}</p>
-      <p class="mt-3 font-[family-name:var(--font-display)] text-2xl leading-snug">
-        {tradicion.especialidad.body}
-      </p>
-      <a href="/catalogo" class="btn btn-primario mt-6">Ver el catálogo</a>
-    </div>
-    <div>
-      <p class="numeracion">Cómo trabajamos</p>
-      <ul class="mt-4 space-y-3 text-sm text-[color:var(--color-ink-muted)]">
-        {tradicion.certifications.map((c) => (
-          <li class="flex gap-3">
-            <span class="mt-2 h-1.5 w-1.5 shrink-0 bg-[color:var(--color-avellana)]" aria-hidden="true"></span>
-            <span>{c}</span>
-          </li>
-        ))}
-      </ul>
-      <p class="mt-6 text-sm italic text-[color:var(--color-ink-muted)]">«{site.usp}»</p>
-    </div>
-  </section>
 </MarketingLayout>
 
 <style>
-  /* Cinta de los cinco valores: avanza siempre, a velocidad constante. */
-  .valores-marco {
-    position: relative;
-    overflow: hidden;
+  /* Antetítulo con una raya delante, como en el diseño. */
+  .antetitulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
-  /* Con JS la mueve el script (para poder usar las flechas). */
-  .valores-marco.con-js .valores-pista {
-    animation: none;
+  .antetitulo::before {
+    content: "";
+    width: 2rem;
+    height: 1px;
+    background: currentColor;
   }
-  .valores-flecha {
-    position: absolute;
-    top: 50%;
-    z-index: 1;
+  .gracias-tarjeta {
+    box-shadow: 0 18px 40px -18px rgb(50 40 32 / 0.28);
+  }
+
+  /* Cinco valores: fila de cinco en escritorio; en el móvil, deslizables. */
+  .valores {
     display: grid;
-    place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    margin-top: -1.375rem;
-    border-radius: 9999px;
-    background: var(--color-latte);
-    color: var(--color-moka);
-    box-shadow: 0 2px 10px rgb(50 40 32 / 0.25);
-    cursor: pointer;
-    transition: transform 0.15s ease;
+    grid-auto-flow: column;
+    grid-auto-columns: min(70vw, 16rem);
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.5rem;
   }
-  .valores-flecha[hidden] {
-    display: none;
+  @media (min-width: 64rem) {
+    .valores {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(5, 1fr);
+      overflow: visible;
+    }
   }
-  .valores-flecha:hover {
-    transform: scale(1.06);
-  }
-  .valores-flecha:focus-visible {
-    outline: 2px solid var(--color-teja);
-    outline-offset: 2px;
-  }
-  .valores-flecha--ant {
-    left: 0.75rem;
-  }
-  .valores-flecha--sig {
-    right: 0.75rem;
-  }
-  .valores-pista {
-    display: flex;
-    width: max-content;
-    animation: valores-cinta 46s linear infinite;
-  }
-  .valores-tanda {
-    display: flex;
-    gap: 1.25rem;
-    padding-right: 1.25rem;
-  }
-  /* Foto a sangre y el texto encima, abajo, en latte; un degradado moka
-     por debajo para que se lea sobre cualquier foto. */
   .valores-item {
-    position: relative;
-    flex: none;
-    width: min(80vw, 22rem);
-    aspect-ratio: 4 / 5;
+    scroll-snap-align: start;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
+    border-radius: 0.25rem;
     background: var(--color-moka);
+    color: var(--color-leche);
   }
   .valores-foto {
-    position: absolute;
-    inset: 0;
+    display: block;
     width: 100%;
-    height: 100%;
+    aspect-ratio: 4 / 3;
     object-fit: cover;
-  }
-  .valores-texto {
-    position: relative;
-    color: var(--color-latte);
-    background: linear-gradient(to top, rgb(50 40 32 / 0.92) 0%, rgb(50 40 32 / 0.75) 55%, rgb(50 40 32 / 0) 100%);
-    padding-top: 5rem;
-  }
-  @keyframes valores-cinta {
-    to {
-      transform: translateX(-50%);
-    }
-  }
-  /* Con «reducir movimiento», quieta y deslizable a mano, sin la copia. */
-  @media (prefers-reduced-motion: reduce) {
-    .valores-marco {
-      overflow-x: auto;
-    }
-    .valores-pista {
-      animation: none;
-    }
-    .valores-tanda[aria-hidden="true"] {
-      display: none;
-    }
-    /* Con JS no avanza sola, pero las flechas la siguen moviendo. */
-    .valores-marco.con-js {
-      overflow-x: hidden;
-    }
-    .valores-marco.con-js .valores-tanda[aria-hidden="true"] {
-      display: flex;
-    }
   }
 
   /* Cifras: entran escalonadas y, después, de una en una y en bucle, cada
@@ -364,56 +320,5 @@ import { site } from "~/data/site";
   }
   document.addEventListener("astro:page-load", animaCifras);
 
-  /** Cinta de valores: avanza sola y las flechas la mueven una tarjeta. */
-  function cintaValores() {
-    const marco = document.querySelector<HTMLElement>("[data-valores]");
-    if (!marco || marco.classList.contains("con-js")) return;
-    const pista = marco.querySelector<HTMLElement>(".valores-pista")!;
-    const tanda = marco.querySelector<HTMLElement>(".valores-tanda")!;
-    const item = marco.querySelector<HTMLElement>(".valores-item")!;
-    const quieta = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    marco.classList.add("con-js");
-
-    const DURACION_VUELTA = 46; // s, como la animación sin JS
-    const DURACION_SALTO = 450; // ms
-    let pos = 0;
-    let salto: { desde: number; hasta: number; inicio: number } | null = null;
-    let antes = 0;
-
-    // Una tarjeta = su ancho más el hueco entre tarjetas.
-    const paso = () => item.offsetWidth + parseFloat(getComputedStyle(tanda).columnGap || "0");
-    const vuelta = () => tanda.offsetWidth;
-    const coloca = () => {
-      const v = vuelta();
-      pista.style.transform = `translateX(${-(((pos % v) + v) % v)}px)`;
-    };
-
-    const mueve = (signo: number) => {
-      // Si ya iba saltando, cuenta desde donde iba a acabar.
-      const base = salto ? salto.hasta : pos;
-      salto = { desde: pos, hasta: base + signo * paso(), inicio: performance.now() };
-    };
-    marco.querySelector("[data-valores-ant]")!.addEventListener("click", () => mueve(-1));
-    marco.querySelector("[data-valores-sig]")!.addEventListener("click", () => mueve(1));
-    marco.querySelectorAll<HTMLElement>(".valores-flecha").forEach((b) => (b.hidden = false));
-
-    const marca = (t: number) => {
-      if (!marco.isConnected) return;
-      const dt = antes ? Math.min(t - antes, 100) : 0;
-      antes = t;
-      if (salto) {
-        const p = Math.min((t - salto.inicio) / DURACION_SALTO, 1);
-        const suave = 1 - Math.pow(1 - p, 3);
-        pos = salto.desde + (salto.hasta - salto.desde) * suave;
-        if (p === 1) salto = null;
-      } else if (!quieta) {
-        pos += (vuelta() / DURACION_VUELTA) * (dt / 1000);
-      }
-      coloca();
-      requestAnimationFrame(marca);
-    };
-    requestAnimationFrame(marca);
-  }
-  document.addEventListener("astro:page-load", cintaValores);
 </script>
 
