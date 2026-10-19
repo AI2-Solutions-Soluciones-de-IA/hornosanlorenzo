@@ -21,10 +21,11 @@ export type NavItem = {
 };
 
 export const mainNav: readonly NavItem[] = [
-  // Orden del 16-10-2026: las tres primeras a la izquierda del sello y las
-  // otras tres a su derecha. «Nuestras tiendas» sale del menú (sigue en el pie).
+  // Orden del 16-10-2026: las cuatro primeras a la izquierda del sello y las
+  // otras tres a su derecha. «Nuestras tiendas» vuelve al menú el 19-10-2026.
   { href: "/", label: "Inicio" },
   { href: "/tradicion-y-calidad", label: "Tradición y Calidad" },
+  { href: "/tiendas", label: "Nuestras tiendas" },
   {
     href: "/carta",
     label: "Carta",

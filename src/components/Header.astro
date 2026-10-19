@@ -58,8 +58,9 @@ const isActive = (href: string) => {
   return path === "/" ? here === "/" : here.startsWith(path);
 };
 // El menú se parte en dos alrededor del sello: estas entradas a la izquierda
-// y el resto a la derecha (con este reparto las dos mitades miden parecido).
-const MITAD_MENU = 3;
+// y el resto a la derecha (con este reparto las dos mitades miden parecido;
+// la izquierda tiene una más porque sus nombres son más cortos).
+const MITAD_MENU = 4;
 ---
 <header
   class="sticky top-0 z-50 bg-[color:var(--color-teja)]/95 backdrop-blur md:border-b border-[color:var(--color-avellana)]"
@@ -223,7 +224,9 @@ const MITAD_MENU = 3;
 
         if (!item.children) {
           return (
-            <li>
+            // En tableta (768–1023 px) no caben las siete: sale «Inicio»,
+            // que ya es el sello (19-10-2026).
+            <li class:list={[item.href === "/" && "md:max-lg:hidden"]}>
               <a
                 href={item.href}
                 download={item.download}
