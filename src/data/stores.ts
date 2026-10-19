@@ -13,6 +13,12 @@ export type Store = {
   mobiles: readonly { number: string; display: string }[];
   email: string;
   hoursText: string;
+  /** El horario por filas, para la tabla de /tiendas (19-10-2026). */
+  horario: readonly { dias: string; horas: readonly string[] }[];
+  /** Debajo de la tabla del horario, si hace falta. */
+  horarioNota?: string;
+  /** Etiqueta sobre la foto en /tiendas. */
+  etiqueta: string;
   /** Hora tope para pasar a recoger un pedido. */
   pickupUntil: string;
   /**
@@ -55,6 +61,12 @@ export const stores: readonly Store[] = [
     email: "info@hornosanlorenzo.com",
     hoursText:
       "Recogida de lunes a viernes de 09:30 a 19:30 ininterrumpida · Sábados, domingos y festivos de 09:30 a 14:30",
+    horario: [
+      { dias: "Lunes a viernes", horas: ["9:30 – 19:30"] },
+      { dias: "Sábados, domingos y festivos", horas: ["9:30 – 14:30"] },
+    ],
+    horarioNota: "Horario ininterrumpido.",
+    etiqueta: "Obrador central · Horno propio",
     pickupUntil: "19:30",
     pickupUntilReducido: "14:30",
     openDays: [0, 1, 2, 3, 4, 5, 6],
@@ -64,8 +76,9 @@ export const stores: readonly Store[] = [
       "https://www.google.com/maps?q=C%2FValgrande+21+Alcobendas&output=embed",
     mapsLink: "https://www.google.com/maps?q=C%2FValgrande+21+Alcobendas",
     coords: { lat: 40.5468, lng: -3.6394 },
-    image: "/images/tiendas/alcobendas.jpg",
-    imageAlt: "Fachada del obrador central en Alcobendas",
+    // Sin foto de la tienda todavía (19-10-2026): una del obrador.
+    image: "/images/valores/generosidad.jpg",
+    imageAlt: "Bandejas de cruasanes recién horneados en el obrador",
   },
   {
     id: "pozuelo",
@@ -80,6 +93,12 @@ export const stores: readonly Store[] = [
     email: "pasteleriapozuelo@hornosanlorenzo.com",
     hoursText:
       "Lunes a viernes de 09:30 a 20:30 ininterrumpido · Sábados de 10:00 a 15:00 y de 17:00 a 20:30 · Domingos y festivos de 10:00 a 15:00",
+    horario: [
+      { dias: "Lunes a viernes", horas: ["9:30 – 20:30"] },
+      { dias: "Sábados", horas: ["10:00 – 15:00", "17:00 – 20:30"] },
+      { dias: "Domingos y festivos", horas: ["10:00 – 15:00"] },
+    ],
+    etiqueta: "Pastelería · Abierto tardes",
     pickupUntil: "20:30",
     cierreFestivo: "15:00",
     openDays: [0, 1, 2, 3, 4, 5, 6],
@@ -91,8 +110,9 @@ export const stores: readonly Store[] = [
     mapsLink:
       "https://www.google.com/maps?q=Avenida+Europa+28+Pozuelo+de+Alarcon",
     coords: { lat: 40.4378, lng: -3.809 },
-    image: "/images/tiendas/pozuelo.jpg",
-    imageAlt: "Tienda de Pozuelo, escaparate con bollería y tartas",
+    // Sin foto de la tienda todavía (19-10-2026): una del obrador.
+    image: "/images/valores/cercania.jpg",
+    imageAlt: "Una caja de Horno San Lorenzo pasando de unas manos a otras",
   },
 ] as const;
 

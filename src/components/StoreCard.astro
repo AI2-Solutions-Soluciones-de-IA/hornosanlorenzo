@@ -1,58 +1,104 @@
 ---
 import MapEmbed from "~/components/MapEmbed.astro";
 import type { Store } from "~/data/stores";
-import { MODE_COPY } from "~/lib/entrega";
 
-interface Props { store: Store; }
-const { store } = Astro.props;
+interface Props {
+  store: Store;
+  /** 1, 2…: va encima del nombre, como «01». */
+  numero: number;
+  /** La foto a la derecha (la segunda tienda, para alternar). */
+  fotoDerecha?: boolean;
+}
+const { store, numero, fotoDerecha = false } = Astro.props;
+const lugar = `${store.address.split(",")[0]}, ${store.shortName}`;
 ---
-<!-- Sin caja (16-10-2026): el texto y el mapa usan todo el ancho; la raya de
-     arriba separa una tienda de la siguiente. -->
-<article class="grid gap-6 md:grid-cols-2 items-start border-t border-[color:var(--color-line)] pt-8">
-  <div>
-    <p class="numeracion">{store.shortName}</p>
-    <h2 class="text-2xl sm:text-3xl mt-1">{store.name}</h2>
-    <p class="text-[color:var(--color-ink-muted)] mt-3">{store.address}</p>
-    <p class="text-[color:var(--color-ink-muted)]">{store.postal} {store.city}</p>
+<!-- Diseño de la imagen «nuestras tiendas» del cliente (19-10-2026): caja
+     blanca con sombra, la foto a un lado con su etiqueta, los datos al otro
+     y la franja del mapa abajo. Las tiendas alternan el lado de la foto. -->
+<article id={store.id} class="tienda-tarjeta bg-white scroll-mt-36 md:scroll-mt-56">
+  <div class:list={["grid", fotoDerecha ? "md:grid-cols-[7fr_5fr]" : "md:grid-cols-[5fr_7fr]"]}>
+    <div class:list={["relative aspect-[4/3] md:aspect-auto", fotoDerecha && "md:order-last"]}>
+      <img
+        src={store.image}
+        alt={store.imageAlt}
+        width="1200"
+        height="900"
+        loading="lazy"
+        decoding="async"
+        class="absolute inset-0 h-full w-full object-cover"
+      />
+      <span class="tienda-etiqueta absolute top-4 left-4">{store.etiqueta}</span>
+    </div>
 
-    <dl class="mt-5 grid gap-3 text-sm">
-      <div>
-        <dt class="numeracion">Horario</dt>
-        <dd>{store.hoursText}</dd>
-      </div>
-      {/* Solo en la tienda de la que sale el reparto (Alcobendas); su texto
-          ya dice que también se entrega en Pozuelo. Mismo texto que el
-          checkout (`MODE_COPY`): si cambian las condiciones, cambian en los
-          dos sitios a la vez. */}
-      {store.reparto && (
+    <div class="p-6 sm:p-8 lg:p-10">
+      <p class="numeracion" style="color:var(--color-teja)">{String(numero).padStart(2, "0")}</p>
+      <h2 class="text-3xl sm:text-4xl mt-2">{store.city}</h2>
+      <p class="mt-2 text-sm text-[color:var(--color-ink-muted)]">{store.address}</p>
+      <p class="text-sm text-[color:var(--color-ink-muted)]">{store.postal} {store.city} (Madrid)</p>
+
+      <div class="mt-7 grid gap-8 sm:grid-cols-2">
         <div>
-          <dt class="numeracion">{MODE_COPY.domicilio.label}</dt>
-          <dd>{MODE_COPY.domicilio.body}</dd>
-        </div>
-      )}
-      <div>
-        <dt class="numeracion">Teléfono</dt>
-        <dd><a href={`tel:${store.phone}`}>{store.phoneDisplay}</a></dd>
-      </div>
-      {store.mobiles.length > 0 && (
-        <div>
-          <dt class="numeracion">{store.mobiles.length > 1 ? "Móviles" : "Móvil"}</dt>
-          <dd class="flex flex-wrap gap-x-4 gap-y-1">
-            {store.mobiles.map((m) => (
-              <a href={`tel:${m.number}`}>{m.display}</a>
+          <p class="numeracion tienda-rotulo" style="color:var(--color-teja)">Horario de tienda y recogida</p>
+          <dl class="text-sm">
+            {store.horario.map((h) => (
+              <div class="flex justify-between gap-4 py-3 border-b border-[color:var(--color-line)]">
+                <dt>{h.dias}</dt>
+                <dd class="text-right font-semibold whitespace-nowrap">
+                  {h.horas.map((hora) => <span class="block">{hora}</span>)}
+                </dd>
+              </div>
             ))}
-          </dd>
+          </dl>
+          {store.horarioNota && <p class="mt-3 text-xs text-[color:var(--color-ink-muted)]">{store.horarioNota}</p>}
         </div>
-      )}
-      <div>
-        <dt class="numeracion">Email</dt>
-        <dd><a href={`mailto:${store.email}`}>{store.email}</a></dd>
-      </div>
-    </dl>
 
-    <a href={store.mapsLink} rel="noopener" target="_blank" class="btn btn-primario mt-6">
-      Cómo llegar →
-    </a>
+        <div>
+          <p class="numeracion tienda-rotulo" style="color:var(--color-teja)">Contacto</p>
+          <p class="py-3 border-b border-[color:var(--color-line)]">
+            <a href={`tel:${store.phone}`} class="font-[family-name:var(--font-display)] text-2xl hover:text-[color:var(--color-teja)]">{store.phoneDisplay}</a>
+          </p>
+          {store.mobiles.length > 0 && (
+            <p class="flex flex-wrap gap-x-5 gap-y-1 py-3 border-b border-[color:var(--color-line)] text-sm text-[color:var(--color-ink-muted)]">
+              {store.mobiles.map((m) => (
+                <a href={`tel:${m.number}`} class="hover:text-[color:var(--color-teja)]">{m.display}</a>
+              ))}
+            </p>
+          )}
+          <p class="py-3 text-xs">
+            <a href={`mailto:${store.email}`} class="text-[color:var(--color-teja)] [overflow-wrap:anywhere] hover:underline">{store.email}</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a href={store.mapsLink} rel="noopener" target="_blank" class="btn btn-rojo">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          Cómo llegar
+        </a>
+        <a href={`tel:${store.phone}`} class="btn btn-secundario">Llamar</a>
+        <a href="/catalogo" class="ml-1 text-sm font-semibold text-[color:var(--color-teja)] hover:underline">Encargar para recoger →</a>
+      </div>
+    </div>
   </div>
-  <MapEmbed embedUrl={store.mapsEmbed} externalUrl={store.mapsLink} title={store.shortName} />
+  <MapEmbed embedUrl={store.mapsEmbed} externalUrl={store.mapsLink} title={store.shortName} lugar={lugar} />
 </article>
+
+<style>
+  .tienda-tarjeta {
+    box-shadow: 0 18px 40px -18px rgb(50 40 32 / 0.28);
+  }
+  .tienda-etiqueta {
+    background: var(--color-leche);
+    color: var(--color-teja);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+  }
+  .tienda-rotulo {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-moka);
+  }
+</style>

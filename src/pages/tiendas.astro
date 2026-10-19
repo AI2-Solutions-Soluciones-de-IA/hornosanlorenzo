@@ -2,6 +2,7 @@
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import StoreCard from "~/components/StoreCard.astro";
 import { stores } from "~/data/stores";
+import { REPARTO_RESUMEN } from "~/lib/entrega";
 
 const jsonLd = stores.map((s) => ({
   "@context": "https://schema.org",
@@ -25,12 +26,79 @@ const jsonLd = stores.map((s) => ({
   description="Dos obradores con horno propio en Madrid: Alcobendas (sede) y Pozuelo de Alarcón. Reparto propio de lunes a sábado."
   jsonLd={jsonLd}
 >
-  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12">
-    <p class="numeracion">Nuestras tiendas</p>
-    <h1 class="text-4xl sm:text-5xl mt-2">Dos obradores en Madrid.</h1>
-    <p class="text-[color:var(--color-ink-muted)] mt-3 max-w-xl">Alcobendas y Pozuelo de Alarcón.</p>
-    <div class="mt-10 grid gap-8">
-      {stores.map((s) => <StoreCard store={s} />)}
+  <!-- Diseño de la imagen «nuestras tiendas» del cliente (19-10-2026):
+       cabecera roja, las dos tiendas en cajas blancas montadas sobre su
+       borde, el reparto a domicilio y las formas de pago al final. -->
+  <section class="bg-[color:var(--color-teja)] text-[color:var(--color-leche)]">
+    <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-12 sm:pt-16 pb-20 md:pb-36 grid gap-8 md:grid-cols-[1fr_auto] md:items-end">
+      <div>
+        <p class="numeracion antetitulo" style="color:var(--color-avellana)">Nuestras tiendas</p>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl mt-5 leading-[1.05]">
+          <span class="block">Dos obradores en Madrid.</span>
+          <span class="block">Una misma casa.</span>
+        </h1>
+        <p class="mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[color:var(--color-leche)]/85">
+          En Alcobendas está el horno de siempre y en Pozuelo la pastelería. Pasa a vernos, encarga por teléfono o pide online y te lo llevamos a casa.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        {stores.map((s) => (
+          <a href={`#${s.id}`} class="btn btn-contorno-claro">{s.shortName}</a>
+        ))}
+        <a href="/catalogo" class="btn btn-claro-teja">Haz tu pedido</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="relative z-10 mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 -mt-10 md:-mt-24">
+    <div class="grid gap-10 lg:px-8">
+      {stores.map((s, i) => <StoreCard store={s} numero={i + 1} fotoDerecha={i % 2 === 1} />)}
+    </div>
+  </section>
+
+  <!-- Reparto a domicilio: el texto a la izquierda y tres cajas con el
+       horario, el pedido mínimo y las zonas. -->
+  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-16 sm:py-20 grid gap-10 md:grid-cols-[5fr_7fr] lg:px-14 md:items-start">
+    <div>
+      <p class="numeracion antetitulo" style="color:var(--color-teja)">Reparto a domicilio</p>
+      <h2 class="text-3xl sm:text-4xl mt-4 leading-[1.1]">Y si no puedes venir, vamos nosotros.</h2>
+      <p class="mt-5 text-sm sm:text-base leading-relaxed text-[color:var(--color-ink-muted)] max-w-md">
+        Furgoneta y repartidor de la casa, de lunes a sábado. Pide online antes de las 18:00 del día anterior o llámanos y te decimos la franja de tu zona.
+      </p>
+      <a href="/catalogo" class="btn btn-rojo mt-7">Pedir a domicilio</a>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-3">
+      {REPARTO_RESUMEN.map((r) => (
+        <div class="bg-white border border-[color:var(--color-line)] p-5">
+          <p class="numeracion" style="color:var(--color-teja)">{r.titulo}</p>
+          <p class="font-[family-name:var(--font-display)] text-2xl mt-3">{r.dato}</p>
+          <p class="mt-2 text-xs leading-relaxed text-[color:var(--color-ink-muted)]">{r.texto}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 lg:px-14">
+    <div class="border-t border-[color:var(--color-line)] py-8 flex flex-wrap items-end justify-between gap-6">
+      <div>
+        <p class="numeracion" style="color:var(--color-teja)">Formas de pago</p>
+        <p class="mt-2 text-sm">Tarjeta, Bizum y efectivo en tienda · Tarjeta, Apple Pay y Google Pay online</p>
+      </div>
+      <p class="font-[family-name:var(--font-display)] italic text-xl">Te esperamos. Como siempre, desde 1986.</p>
     </div>
   </section>
 </MarketingLayout>
+
+<style>
+  .antetitulo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .antetitulo::before {
+    content: "";
+    width: 2rem;
+    height: 1px;
+    background: currentColor;
+  }
+</style>
