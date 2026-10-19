@@ -3,7 +3,7 @@ import { site } from "~/data/site";
 import { stores } from "~/data/stores";
 import SocialLinks from "~/components/SocialLinks.astro";
 import { Image } from "astro:assets";
-import sello from "../../public/images/sello-hsl.png";
+import sello from "../../public/images/sello-hsl-512.png";
 import { footerNav, paymentLabels } from "~/data/navigation";
 import { paymentMarks } from "~/data/payment-marks";
 const year = new Date().getFullYear();
@@ -18,7 +18,7 @@ const legal = [
 <footer class="bg-[color:var(--color-leche)] border-t border-[color:var(--color-avellana)] mt-24" transition:persist>
   <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 grid gap-8 md:grid-cols-4 text-sm">
     <div>
-      <!-- Sello aprobado por el cliente (30-9-2026), en vez del dibujado a mano. -->
+      <!-- El sello de 512 px del cliente (19-10-2026), el mismo de la cabecera. -->
       <Image
         src={sello}
         alt={`${site.name} — obrador artesano, Madrid, desde 1986`}
