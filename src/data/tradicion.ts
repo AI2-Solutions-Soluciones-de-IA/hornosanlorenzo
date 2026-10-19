@@ -10,21 +10,18 @@ export const tradicion = {
   /** Las tres tarjetas de agradecimiento, una por canal. */
   gracias: [
     {
-      number: "01",
       canal: "Particulares",
       title: "Gracias a quien vuelve",
       body: "A quien compra el pan de cada día y la tarta de cada domingo. A quien era niño cuando entraba de la mano y ahora entra con los suyos. A quien pide «lo de siempre» y no necesita explicar más.",
       cita: "La receta no ha cambiado porque no nos atrevemos a tocar lo que es vuestro.",
     },
     {
-      number: "02",
       canal: "Hostelería y eventos",
       title: "Gracias a quien confía",
       body: "A los bares, restaurantes, cafeterías y salones que ponen nuestro nombre en su carta sin que nadie lo vea. Cada mañana sale la furgoneta con vuestro pedido y vuelve con la confianza de que mañana volveréis a contar con nosotros.",
       cita: "Hace años que ya no sois clientes. Sois compañeros de oficio.",
     },
     {
-      number: "03",
       canal: "Empresas",
       title: "Gracias a quien nos recomienda",
       body: "A las empresas que nos llevan a sus desayunos y a sus celebraciones. A quien nos ha traído a su oficina, a su boda, a su familia. Todo lo que somos hoy ha crecido de boca en boca.",
