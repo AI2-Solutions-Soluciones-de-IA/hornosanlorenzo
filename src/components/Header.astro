@@ -178,20 +178,9 @@ const MITAD_MENU = 4;
     </div>
   </div>
 
-  <!-- Móvil: el pedido tiene su propia puerta. Bajo la franja roja, sobre fondo claro: un
-       botón rojo con filete avellana y la letra del sello (12-10-2026). -->
-  <!-- `pt-14`: deja sitio al sello, que asoma desde la franja roja. -->
-  <div class="md:hidden bg-[color:var(--color-leche)] px-4 pt-14 pb-2.5 flex justify-center">
-    <a
-      href="/catalogo"
-      class="inline-flex items-center gap-2 min-h-9 px-5 rounded-[var(--radius-boton)] border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-sm uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
-    >
-      Haz tu pedido
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
-    </a>
-  </div>
+  <!-- Móvil: el hueco claro donde asoma el sello, que cuelga de la franja
+       roja. Debajo, las secciones y luego el pedido (21-10-2026). -->
+  <div class="md:hidden h-14 bg-[color:var(--color-leche)]" aria-hidden="true"></div>
 
   <!-- Móvil: las secciones a la vista, como la barra del escritorio: blanca
        con letra teja, sin desplegables (cada entrada lleva a su página) y sin
@@ -214,6 +203,20 @@ const MITAD_MENU = 4;
       ))}
     </ul>
   </nav>
+
+  <!-- Móvil: el pedido tiene su propia puerta, bajo las secciones: un
+       botón rojo con filete avellana y la letra del sello (12-10-2026). -->
+  <div class="md:hidden bg-[color:var(--color-leche)] px-4 py-2.5 flex justify-center">
+    <a
+      href="/catalogo"
+      class="inline-flex items-center gap-2 min-h-9 px-5 rounded-[var(--radius-boton)] border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-sm uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
+    >
+      Haz tu pedido
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </a>
+  </div>
 
   <!-- Banda de navegación: las cuatro secciones -->
   <nav
