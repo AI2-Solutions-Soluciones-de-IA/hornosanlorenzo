@@ -162,23 +162,23 @@ const MITAD_MENU = 4;
 
       <CartBadge client:only="react" />
 
-      <button
+      <!-- En el móvil no hay menú desplegable (al cliente no le gusta,
+           21-10-2026): la cuenta va con su icono y las secciones, en la
+           barra de abajo. Sin sesión, /cuenta manda a /acceso. -->
+      <a
+        href="/cuenta"
         class="md:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
-        aria-label="Abrir menú"
-        aria-expanded="false"
-        aria-controls="mobile-nav"
-        data-mobile-nav-toggle
-        type="button"
+        aria-label="Mi cuenta"
       >
-        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-          <path d="M4 6.5h16M4 12h16M4 17.5h16" />
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" />
         </svg>
-      </button>
+      </a>
     </div>
   </div>
 
-  <!-- Móvil: la barra de secciones se pliega tras el menú, así que el pedido
-       necesita una puerta propia. Bajo la franja roja, sobre fondo claro: un
+  <!-- Móvil: el pedido tiene su propia puerta. Bajo la franja roja, sobre fondo claro: un
        botón rojo con filete avellana y la letra del sello (12-10-2026). -->
   <!-- `pt-14`: deja sitio al sello, que asoma desde la franja roja. -->
   <div class="md:hidden bg-[color:var(--color-leche)] px-4 pt-14 pb-2.5 flex justify-center">
@@ -192,6 +192,28 @@ const MITAD_MENU = 4;
       </svg>
     </a>
   </div>
+
+  <!-- Móvil: las secciones a la vista, como la barra del escritorio: blanca
+       con letra teja, sin desplegables (cada entrada lleva a su página) y sin
+       «Inicio», que ya es el sello. Dos líneas centradas. Se esconde al bajar
+       por la página y vuelve al subir (script de abajo, 21-10-2026). -->
+  <nav aria-label="Secciones" class="secciones-movil md:hidden bg-white border-y border-[color:var(--color-avellana)]" data-secciones-movil>
+    <ul class="flex flex-wrap justify-center gap-x-3 min-[380px]:gap-x-4 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.04em] min-[380px]:tracking-[0.08em]">
+      {mainNav.filter((item) => item.href !== "/").map((item) => (
+        <li>
+          <a
+            href={item.href}
+            download={item.download}
+            aria-current={isActive(item.href) ? "page" : undefined}
+            data-nav-principal
+            class="flex items-center min-h-8 border-b-2 border-transparent whitespace-nowrap text-[color:var(--color-teja)]/85 aria-[current=page]:text-[color:var(--color-teja)] aria-[current=page]:border-[color:var(--color-teja)]"
+          >
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
 
   <!-- Banda de navegación: las cuatro secciones -->
   <nav
@@ -294,85 +316,9 @@ const MITAD_MENU = 4;
     </div>
   </nav>
 
-  <!-- Menú móvil (plegado) -->
-  <nav
-    id="mobile-nav"
-    aria-label="Móvil"
-    class="md:hidden hidden bg-[color:var(--color-latte)] border-t border-[color:var(--color-avellana)] max-h-[75dvh] overflow-y-auto overscroll-contain"
-  >
-    <!-- La cabecera es `sticky`: si el menú abierto mide más que la pantalla,
-         su parte de abajo no se alcanza nunca haciendo scroll en la página.
-         Por eso el menú hace scroll por dentro, con la altura que queda
-         debajo de la cabecera (el script la ajusta al abrir; 75dvh es el
-         respaldo sin JS). -->
-    <div class="mx-auto max-w-6xl px-4 py-3 flex flex-col">
-      <form action="/catalogo" method="get" role="search" class="flex items-center border border-[color:var(--color-avellana)] mb-3 bg-[color:var(--color-leche)]">
-        <label for="buscar-movil" class="sr-only">Buscar en el catálogo</label>
-        <input
-          id="buscar-movil"
-          type="search"
-          name="q"
-          placeholder="Buscar"
-          class="flex-1 bg-transparent px-3 py-3 text-sm text-[color:var(--color-moka)] placeholder:text-[color:var(--color-ink-muted)] focus:outline-none"
-        />
-        <button type="submit" class="px-3 py-3 text-[color:var(--color-moka)]" aria-label="Buscar">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-        </button>
-      </form>
-
-      <!-- Entrar / Regístrate arriba, a la vista nada más abrir el menú. -->
-      <div class="mb-3">
-        <AccesoSesion tono="moka" client:load />
-      </div>
-
-      <ul class="flex flex-col text-[11px] font-medium uppercase tracking-[0.16em]">
-        {mainNav.map((item) => (
-          <li class="border-b border-[color:var(--color-avellana)]">
-            <a
-              href={item.href}
-              download={item.download}
-              data-mobile-nav-link
-              class="block py-3 text-[color:var(--color-moka)]"
-            >
-              {item.label}
-            </a>
-            {item.children && (
-              <ul class="pb-2 pl-4 flex flex-col">
-                {item.children.map((child) => (
-                  <li>
-                    <a
-                      href={child.href}
-                      data-mobile-nav-link
-                      class="block py-2 text-[color:var(--color-ink-muted)] normal-case tracking-normal text-xs"
-                    >
-                      {child.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      <SocialLinks tono="moka" class="mt-4" />
-    </div>
-  </nav>
 </header>
 
 <script>
-  const nav = () => document.getElementById("mobile-nav");
-  const toggle = () =>
-    document.querySelector<HTMLButtonElement>("[data-mobile-nav-toggle]");
-
-  const closeMobileNav = () => {
-    nav()?.classList.add("hidden");
-    toggle()?.setAttribute("aria-expanded", "false");
-  };
-
   // Buscador de la cabecera: la lupa abre y cierra el campo. Por delegación
   // en `document`, como el menú móvil: sobrevive a la navegación sin recarga.
   const panelBuscador = () => document.getElementById("buscador-panel");
@@ -402,24 +348,8 @@ const MITAD_MENU = 4;
       return;
     }
     if (!target?.closest("[data-buscador]")) cierraBuscador();
-
-    if (target?.closest("[data-mobile-nav-toggle]")) {
-      const el = nav();
-      const open = el?.classList.toggle("hidden") === false;
-      // Alto disponible bajo la cabecera, para que el menú haga scroll por
-      // dentro en vez de quedarse cortado por abajo.
-      if (open && el) {
-        el.style.maxHeight = `${Math.max(200, window.innerHeight - el.getBoundingClientRect().top)}px`;
-      }
-      toggle()?.setAttribute("aria-expanded", String(open));
-      return;
-    }
-
-    // Close immediately on tap (before navigation finishes)
-    if (target?.closest("[data-mobile-nav-link]")) closeMobileNav();
   });
 
-  // Also close after every view-transition page swap (covers back/forward)
   /**
    * Marca la entrada del menú de la página actual. La cabecera persiste entre
    * páginas, así que lo que pintó el servidor se queda con la primera; misma
@@ -434,7 +364,59 @@ const MITAD_MENU = 4;
       else a.removeAttribute("aria-current");
     });
   }
+  /**
+   * Móvil: la barra de secciones se esconde al bajar y vuelve al subir. Al
+   * plegarse, la cabecera encoge y el navegador recoloca el scroll; sin la
+   * pausa (`hasta`), ese salto se leía como «subir» y la barra parpadeaba.
+   */
+  const secciones = () => document.querySelector<HTMLElement>("[data-secciones-movil]");
+  const esMovil = window.matchMedia("(max-width: 767px)");
+  let ultimaY = window.scrollY;
+  let hasta = 0;
+  const muestraSecciones = (ver: boolean) => {
+    const el = secciones();
+    if (!el || el.hasAttribute("data-oculta") === !ver) return;
+    el.toggleAttribute("data-oculta", !ver);
+    hasta = performance.now() + 400;
+  };
+  window.addEventListener(
+    "scroll",
+    () => {
+      const y = window.scrollY;
+      if (!esMovil.matches || performance.now() < hasta) {
+        ultimaY = y;
+        return;
+      }
+      if (y < 80) muestraSecciones(true);
+      else if (Math.abs(y - ultimaY) < 10) return;
+      else muestraSecciones(y < ultimaY);
+      ultimaY = y;
+    },
+    { passive: true },
+  );
+  document.addEventListener("astro:page-load", () => {
+    ultimaY = window.scrollY;
+    muestraSecciones(true);
+  });
   document.addEventListener("astro:page-load", marcaMenu);
-  document.addEventListener("astro:page-load", closeMobileNav);
   document.addEventListener("astro:page-load", cierraBuscador);
 </script>
+
+<style>
+  .secciones-movil {
+    max-height: 6rem;
+    overflow: hidden;
+    transition:
+      max-height 0.25s ease,
+      border-color 0.25s ease;
+  }
+  .secciones-movil[data-oculta] {
+    max-height: 0;
+    border-color: transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .secciones-movil {
+      transition: none;
+    }
+  }
+</style>
