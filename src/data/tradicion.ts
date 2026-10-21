@@ -126,7 +126,7 @@ export const tradicion = {
   pruebas: [
     "40 años creciendo solo por recomendación, sin pagar publicidad.",
     "Reparto propio de lunes a sábado, con furgoneta y repartidor de la casa.",
-    "El mismo producto para la mesa de casa y la de la empresa.",
+    "Obradores abiertos de lunes a domingo.",
   ],
 
   especialidad: {
