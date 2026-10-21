@@ -4,75 +4,68 @@ import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
 import { stores } from "~/data/stores";
 
 /**
- * Calco de la maqueta del cliente («a quien servimos.png», 16-10-2026):
- * cabecera con teléfono, Particulares a lo ancho con sus servicios en dos
- * columnas, y Hostelería (en teja) y Empresas lado a lado. Las anclas
- * `#particulares`, `#hosteleria` y `#empresas` son las del submenú.
+ * Calco del artifact «HSL · A quién servimos» del cliente (21-10-2026),
+ * versiones desktop y móvil: portada moka con la foto del obrador, tres
+ * tarjetas blancas montadas sobre su borde y un cierre con los teléfonos.
+ * Las anclas `#particulares`, `#hosteleria` y `#empresas` son las del submenú.
  */
-const sede = stores[0];
+const [alcobendas, pozuelo] = stores;
 
-const iconos = {
-  bolsa: "M6 8h12l-1 12H7L6 8Zm3 0V6a3 3 0 0 1 6 0v2",
-  tienda: "M4 10 12 4l8 6M6 9v11h12V9M10 20v-5h4v5",
-  tarta: "M5 20h14M6 20v-6h12v6M6 14c2 1.5 4 1.5 6 0s4-1.5 6 0M12 14v-3M12 8.5v.5",
-  croissant: "M3 13c2-4 6-6 9-6s7 2 9 6c-2 1-4 1-5 0-1 1.5-2.5 2-4 2s-3-.5-4-2c-1 1-3 1-5 0Z",
-  furgoneta: "M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm10 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z",
-};
+// El melocotón de los círculos y antetítulos del diseño; no hay token propio.
+const melocoton = "#f3d9c4";
 
-// Dos columnas, como en la maqueta: se leen de arriba abajo.
-const particulares = [
-  [
-    { icono: iconos.bolsa, titulo: "El catálogo completo", texto: "Dulce, salado, packs y temporada." },
-    { icono: iconos.tienda, titulo: "Encargo online con recogida", texto: "En Alcobendas o Pozuelo de Alarcón." },
-    { icono: iconos.tarta, titulo: "Tartas y encargos especiales", texto: "Avisando con antelación." },
-  ],
-  [
-    // Los minis son cosa de particulares, no de hostelería (14-10-2026).
-    { icono: iconos.croissant, titulo: "Mini croissants dulces y salados", texto: "En bandejas de 6, 12 y 24 unidades." },
-    {
-      icono: iconos.furgoneta,
-      titulo: "Reparto propio de lunes a sábado",
-      texto: "Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón.",
-    },
-  ],
-];
-
-// Textos del cliente (14-10-2026).
-const negocios = [
+const tarjetas = [
+  {
+    id: "particulares",
+    etiqueta: "Particulares",
+    // El subtítulo solo sale en el diseño móvil.
+    subtitulo: "Para tu mesa de cada día",
+    icono: ["M3 10l9-6 9 6v10H3z", "M9 20v-6h6v6"],
+    entrada: "La compra del día en cualquiera de nuestras dos tiendas y el encargo de la semana desde la tienda online.",
+    puntos: [
+      "Catálogo completo: dulce, salado, packs y temporada.",
+      // Los minis son cosa de particulares, no de hostelería (14-10-2026).
+      "Mini croissants dulces y salados en bandejas de 6, 12 y 24.",
+      "Encargo online con recogida en Alcobendas o Pozuelo.",
+      "Reparto propio de lunes a sábado en Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo.",
+      "Tartas y encargos especiales, avisando con antelación.",
+    ],
+    ctas: [
+      { href: "/catalogo", label: "Haz tu pedido" },
+      { href: "/acceso?modo=registro&perfil=particular", label: "Registrarme" },
+    ],
+  },
   {
     id: "hosteleria",
-    num: "02",
-    sello: "Base B2B consolidada",
-    titulo: "Hostelería y eventos",
+    etiqueta: "Hostelería, catering y eventos",
+    subtitulo: "Para tu carta y tus celebraciones",
+    icono: ["M4 15a8 8 0 0 1 16 0", "M2 18h20", "M12 7V5", "M10 5h4"],
     entrada: "Trabajamos con restaurantes, bares, cafeterías, pastelerías, salones de bodas y banquetes, eventos y catering.",
     puntos: [
-      "Cada cliente cuenta con una atención comercial personalizada.",
-      "Una amplia variedad de dulce y salado para menú, carta, raciones, celebraciones, desayunos y tapas para tu negocio.",
+      "Atención comercial personalizada para cada cliente.",
+      "Amplia variedad de dulce y salado para menú, carta, raciones, celebraciones, desayunos y tapas.",
+      "Entrega diaria de lunes a sábado en formato mayorista.",
     ],
-    pie: "Entrega diaria L–S · formato mayorista",
     ctas: [
-      { href: "/contacto", label: "Pedir condiciones", clase: "btn-claro-teja" },
-      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme", clase: "btn-contorno-claro" },
+      { href: "/contacto", label: "Pedir condiciones" },
+      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme" },
     ],
-    teja: true,
   },
   {
     id: "empresas",
-    num: "03",
-    sello: "Canal prioritario",
-    titulo: "Empresas",
-    entrada: "Cada empresa es distinta, y por eso te atendemos de forma personalizada.",
+    etiqueta: "Empresas",
+    subtitulo: "Para tu equipo y tus clientes",
+    icono: ["M3 7h18v13H3z", "M8 7V4h8v3", "M3 12h18"],
+    entrada: "Cada empresa es distinta, y por eso te atendemos de forma personalizada: desayunos, reuniones y celebraciones.",
     puntos: [
-      "Elige uno de nuestros packs en la web o cuéntanos qué necesitas y preparamos tu catering a medida.",
-      "Sin pedido mínimo en Alcobendas y alrededores (consúltanos). En el resto de zonas, el mismo pedido mínimo que en el servicio a domicilio.",
-      "¿Tienes dudas? Llámanos y cerramos la entrega contigo.",
+      "Elige uno de nuestros packs o cuéntanos qué necesitas y preparamos tu catering a medida.",
+      "Sin pedido mínimo en Alcobendas y alrededores (consúltanos). En el resto de zonas, el mismo que a domicilio.",
+      "¿Dudas? Llámanos y cerramos la entrega contigo.",
     ],
-    pie: "Propuesta B2B · reparto propio",
     ctas: [
-      { href: "/contacto", label: "Pedir condiciones", clase: "btn-primario" },
-      { href: "/catalogo/packs", label: "Ver packs", clase: "btn-secundario" },
+      { href: "/contacto", label: "Pedir condiciones" },
+      { href: "/acceso?modo=registro&perfil=empresa", label: "Registrarme" },
     ],
-    teja: false,
   },
 ];
 ---
@@ -83,132 +76,121 @@ const negocios = [
   <!-- Arriba del todo, la misma suscripción que en Promociones del mes. -->
   <SuscripcionBanda />
 
-  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10">
-    <!-- Cabecera: titular a la izquierda y, a la derecha, el teléfono. -->
-    <header class="pt-12 sm:pt-16 pb-10 sm:pb-12 grid gap-8 md:grid-cols-[1fr_auto] md:items-end border-b border-[color:var(--color-teja)]/40">
-      <div>
-        <p class="numeracion flex items-center gap-3" style="color:var(--color-teja)">
-          <span class="inline-block w-8 h-px bg-[color:var(--color-teja)]" aria-hidden="true"></span>
-          A quién servimos
-        </p>
-        <h1 class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.05]">
-          Un obrador,<br />tres formas de servirte.
-        </h1>
-        <p class="mt-5 max-w-lg text-[color:var(--color-ink-muted)] leading-relaxed">
-          Desde 1986 horneamos para la mesa de casa, para la carta de tu negocio y para el
-          desayuno de tu equipo. Mismo obrador, mismo pan, distinta manera de llegar.
-        </p>
-      </div>
-      <aside class="border border-[color:var(--color-avellana)] bg-white px-6 py-5 md:min-w-[17rem]">
-        <p class="numeracion" style="color:var(--color-teja)">¿No sabes cuál eres?</p>
-        <p class="mt-2 text-sm">Llámanos y te lo decimos en un minuto.</p>
-        <a href={`tel:${sede.phone}`} class="mt-2 inline-block font-[family-name:var(--font-display)] text-xl text-[color:var(--color-teja)] hover:underline">
-          {sede.phoneDisplay}
-        </a>
-      </aside>
-    </header>
-
-    <!-- 01 · Particulares -->
-    <section id="particulares" class="scroll-mt-40 py-12 sm:py-16 grid gap-10 lg:grid-cols-[1fr_2fr] border-b border-[color:var(--color-avellana)]/60">
-      <div>
-        <p class="numeracion">01</p>
-        <h2 class="mt-2 text-4xl sm:text-5xl font-semibold">Particulares</h2>
-        <p class="numeracion mt-3" style="color:var(--color-teja)">Mostrador y tienda online</p>
-        <p class="mt-4 max-w-sm text-[color:var(--color-ink-muted)] leading-relaxed">
-          La compra del día en cualquiera de las dos tiendas y el encargo de la semana desde la
-          tienda online.
-        </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a href="/catalogo" class="btn btn-primario">Haz tu pedido</a>
-          <a href="/acceso?modo=registro&perfil=particular" class="btn btn-secundario">Registrarme</a>
-        </div>
-      </div>
-      <div class="grid gap-8 sm:grid-cols-2 content-start">
-        {particulares.map((columna, c) => (
-          <ul class="flex flex-col gap-7">
-            {columna.map((s) => (
-              <li class="flex gap-4">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5 text-[color:var(--color-teja)]" aria-hidden="true">
-                  <path d={s.icono} />
-                </svg>
-                <div>
-                  <p class="text-sm font-semibold">{s.titulo}</p>
-                  <p class="mt-1 text-sm text-[color:var(--color-ink-muted)]">{s.texto}</p>
-                </div>
-              </li>
-            ))}
-            {c === 1 && (
-              <li>
-                <span class="numeracion inline-block rounded-full border border-[color:var(--color-teja)]/40 px-4 py-2" style="color:var(--color-teja)">
-                  Recogida en tienda · reparto propio
-                </span>
-              </li>
-            )}
-          </ul>
-        ))}
-      </div>
-    </section>
-
-    <!-- 02 · Hostelería (en teja) y 03 · Empresas, lado a lado. -->
-    <div class="py-12 sm:py-16 grid gap-6 lg:grid-cols-2 border-b border-[color:var(--color-avellana)]/60">
-      {negocios.map((n) => (
-        <section
-          id={n.id}
-          class:list={[
-            "scroll-mt-40 flex flex-col p-6 sm:p-8",
-            n.teja
-              ? "bg-[color:var(--color-teja)] text-[color:var(--color-leche)]"
-              : "bg-white border border-[color:var(--color-avellana)]",
-          ]}
-        >
-          <div class="flex items-start justify-between gap-4">
-            <p class="numeracion" style={n.teja ? "color:var(--color-latte)" : "color:var(--color-teja)"}>{n.num}</p>
-            <span
-              class:list={[
-                "numeracion rounded-full border px-3 py-1.5 text-right",
-                n.teja ? "border-[color:var(--color-leche)]/40" : "border-[color:var(--color-teja)]/40",
-              ]}
-              style={n.teja ? "color:var(--color-leche)" : "color:var(--color-teja)"}
-            >
-              {n.sello}
-            </span>
-          </div>
-          <h2 class="mt-3 text-3xl sm:text-4xl font-semibold">{n.titulo}</h2>
-          <p class:list={["mt-4 text-sm leading-relaxed", n.teja ? "text-[color:var(--color-leche)]/90" : "text-[color:var(--color-ink-muted)]"]}>
-            {n.entrada}
-          </p>
-          <ul class:list={["mt-5 pt-5 border-t space-y-3 text-sm", n.teja ? "border-white/25" : "border-[color:var(--color-avellana)]/60"]}>
-            {n.puntos.map((p) => (
-              <li class="flex gap-3">
-                <span class:list={["mt-2 h-1.5 w-1.5 shrink-0 rounded-full", n.teja ? "bg-[color:var(--color-leche)]" : "bg-[color:var(--color-moka)]"]} aria-hidden="true"></span>
-                <span>{p}</span>
-              </li>
-            ))}
-          </ul>
-          <!-- El pie y los botones, siempre abajo: las dos cajas igualan alto. -->
-          <div class="mt-auto pt-8">
-            <p class="numeracion" style={n.teja ? "color:var(--color-leche)" : "color:var(--color-teja)"}>{n.pie}</p>
-            <div class="mt-4 flex flex-wrap gap-3">
-              {n.ctas.map((c) => <a href={c.href} class:list={["btn", c.clase]}>{c.label}</a>)}
-            </div>
-          </div>
-        </section>
-      ))}
+  <!-- Portada: en móvil la foto va arriba; en escritorio, a sangre a la derecha. -->
+  <section class="flex flex-col lg:grid lg:grid-cols-2 lg:min-h-[640px] bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
+    <div class="relative order-first lg:order-last h-[260px] lg:h-auto">
+      <img
+        src="/images/obrador-tartas.jpg"
+        alt="Obrador de Horno San Lorenzo en Alcobendas: tartas recién terminadas"
+        width="1087"
+        height="1447"
+        decoding="async"
+        class="absolute inset-0 h-full w-full object-cover object-[center_35%]"
+      />
     </div>
-
-    <!-- Cierre: el lema y los teléfonos de las dos tiendas. -->
-    <div class="py-10 grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
-      <p class="font-[family-name:var(--font-display)] italic text-xl sm:text-2xl max-w-md">
-        El secreto de comer bien lleva más de 40 años en nuestra casa.
+    <div class="flex flex-col justify-center gap-[18px] lg:gap-7 px-6 pt-9 pb-24 lg:pt-24 lg:pr-14 lg:pb-[152px] lg:pl-10 lg:max-w-[680px] lg:ml-auto">
+      <p class="flex items-center gap-3 lg:gap-3.5 text-[11px] lg:text-xs font-medium uppercase tracking-[0.22em]" style={`color:${melocoton}`}>
+        <span class="block w-8 lg:w-10 h-0.5" style={`background:${melocoton}`} aria-hidden="true"></span>
+        A quién servimos<span class="hidden lg:inline">&nbsp;· desde 1986</span>
       </p>
-      <dl class="flex gap-10">
-        {stores.map((s) => (
-          <div>
-            <dt class="numeracion" style="color:var(--color-teja)">{s.shortName}</dt>
-            <dd class="mt-1 text-sm"><a href={`tel:${s.phone}`} class="hover:underline">{s.phoneDisplay}</a></dd>
-          </div>
-        ))}
-      </dl>
+      <h1 class="text-4xl lg:text-6xl font-bold leading-[1.1] lg:leading-[1.05]">
+        Un obrador.<br />Tres formas de servirte.
+      </h1>
+      <p class="lg:hidden text-base leading-relaxed text-[#f3e6db]">
+        Horneamos para la mesa de casa, para la carta de tu negocio y para el desayuno de tu equipo.
+      </p>
+      <div class="hidden lg:block max-w-[540px] text-lg leading-[1.65] text-[#f3e6db] space-y-4">
+        <p>Horneamos para tu mesa, para la carta de tu negocio, para tu evento o catering y para los desayunos de tu equipo.</p>
+        <p>Desde nuestro obrador, horneamos cada día, con la calidad y el sabor de siempre y una relación calidad-precio difícil de igualar.</p>
+        <p class="font-semibold">Te esperamos en nuestras tiendas, abiertas de lunes a domingo, o te lo llevamos directamente con nuestro reparto propio de lunes a sábado.</p>
+      </div>
+      <p class="hidden lg:flex items-center gap-4 pt-1">
+        <span class="text-sm" style={`color:${melocoton}`}>¿No sabes cuál eres? Llámanos:</span>
+        <a href={`tel:${alcobendas.phone}`} class="font-[family-name:var(--font-display)] text-[22px] text-[color:var(--color-leche)] no-underline border-b border-[color:var(--color-leche)]/40 hover:border-[color:var(--color-leche)]">
+          {alcobendas.phoneDisplay}
+        </a>
+      </p>
     </div>
+  </section>
+
+  <!-- Las tres tarjetas, montadas sobre el borde inferior de la portada. -->
+  <div class="relative z-10 mx-auto max-w-[1200px] px-4 lg:px-10 -mt-16 lg:-mt-20 grid gap-5 lg:grid-cols-3 lg:gap-8">
+    {tarjetas.map((t) => (
+      <article id={t.id} class="tarjeta-servimos scroll-mt-40 flex flex-col gap-4 lg:gap-5 bg-white px-6 pt-8 pb-7 lg:px-10 lg:pt-11 lg:pb-10">
+        <span class="flex items-center justify-center w-14 h-14 lg:w-16 lg:h-16 rounded-full" style={`background:${melocoton}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-[26px] h-[26px] lg:w-[30px] lg:h-[30px] text-[color:var(--color-teja)]" aria-hidden="true">
+            {t.icono.map((d) => <path d={d} />)}
+          </svg>
+        </span>
+        <h2 class="font-[family-name:var(--font-body)] text-[11px] lg:text-[26px] font-medium uppercase tracking-[0.2em] lg:tracking-[0.22em] leading-snug text-[color:var(--color-teja)]">
+          {t.etiqueta}
+        </h2>
+        <p class="lg:hidden font-[family-name:var(--font-display)] text-[26px] font-bold leading-[1.15]">{t.subtitulo}</p>
+        <p class="text-[15px] lg:text-base leading-[1.65] lg:leading-[1.7] text-[color:var(--color-ink-muted)]">{t.entrada}</p>
+        <ul class="flex flex-col gap-2.5 lg:gap-3 pt-3.5 lg:pt-[18px] border-t border-[#e6dccf] text-sm lg:text-[15px] leading-[1.55]">
+          {t.puntos.map((p) => (
+            <li class="flex gap-2.5 lg:gap-3">
+              <span class="mt-2 lg:mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--color-teja)]" aria-hidden="true"></span>
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+        <!-- Los botones, siempre abajo: las tres tarjetas igualan alto. -->
+        <div class="flex flex-col gap-3 mt-1 lg:mt-auto lg:pt-3">
+          {t.ctas.map((c, i) => (
+            <a href={c.href} class:list={["btn tarjeta-servimos-btn", i === 0 ? "btn-primario" : "tarjeta-servimos-contorno"]}>{c.label}</a>
+          ))}
+        </div>
+      </article>
+    ))}
   </div>
+
+  <!-- Cierre: la llamada y los teléfonos (en escritorio, solo Alcobendas). -->
+  <section class="mx-auto max-w-[1200px] px-4 lg:px-10 pt-12 pb-16 lg:pt-24 lg:pb-28">
+    <div class="flex flex-col lg:flex-row lg:flex-wrap lg:justify-between lg:items-center gap-3.5 lg:gap-8 px-6 py-8 lg:px-14 lg:py-12 rounded-md bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
+      <div class="flex flex-col gap-3 lg:max-w-[560px]">
+        <p class="text-[11px] font-medium uppercase tracking-[0.2em] lg:tracking-[0.22em]" style={`color:${melocoton}`}>
+          <span class="lg:hidden">¿No sabes cuál eres?</span><span class="hidden lg:inline">¿Tienes alguna consulta?</span>
+        </p>
+        <p class="font-[family-name:var(--font-display)] text-[22px] lg:text-[28px] leading-[1.3]">Llámanos y te lo decimos en un minuto.</p>
+        <p class="hidden lg:block font-[family-name:var(--font-display)] italic text-[17px] leading-normal text-[#e8d9cc]">
+          El secreto de comer bien lleva más de 40 años en nuestra casa.
+        </p>
+      </div>
+      <div class="hidden lg:flex flex-col gap-1.5">
+        <span class="text-[11px] font-medium uppercase tracking-[0.18em]" style={`color:${melocoton}`}>{alcobendas.shortName}</span>
+        <a href={`tel:${alcobendas.phone}`} class="font-[family-name:var(--font-display)] text-2xl text-[color:var(--color-leche)] no-underline hover:underline">{alcobendas.phoneDisplay}</a>
+      </div>
+      <div class="lg:hidden flex flex-col">
+        {[alcobendas, pozuelo].map((s) => (
+          <a href={`tel:${s.phone}`} class="flex justify-between items-center min-h-12 border-t border-[color:var(--color-leche)]/20 text-[15px] text-[color:var(--color-leche)] no-underline">
+            <span class="text-[11px] uppercase tracking-[0.16em]" style={`color:${melocoton}`}>{s.shortName}</span>
+            {s.phoneDisplay}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
 </MarketingLayout>
+
+<style>
+  .tarjeta-servimos {
+    border: 1px solid #e6dccf;
+    border-radius: 6px;
+    box-shadow: 0 24px 48px -24px rgb(50 40 32 / 0.35);
+  }
+  .tarjeta-servimos-btn {
+    min-height: 50px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border-radius: 2px;
+  }
+  .tarjeta-servimos-contorno {
+    color: var(--color-teja);
+    border-color: var(--color-teja);
+  }
+  .tarjeta-servimos-contorno:hover {
+    background: var(--color-teja);
+    color: var(--color-leche);
+  }
+</style>

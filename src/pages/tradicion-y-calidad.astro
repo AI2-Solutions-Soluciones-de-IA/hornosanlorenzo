@@ -99,8 +99,10 @@ import { tradicion } from "~/data/tradicion";
           <div class="cifra text-center" style={`--i:${i}`}>
             <!-- Una cifra con prefijo («+40») cuenta solo el número; el «+» se
                  queda quieto delante (16-10-2026). -->
-            <dt class="font-[family-name:var(--font-display)] text-4xl sm:text-5xl">
-              <span class="cifra-numero">
+            <!-- Un texto largo («De lunes a sábado») baja de cuerpo para caber en
+                 una línea; el alto fijo deja las rayas a la misma altura. -->
+            <dt class="font-[family-name:var(--font-display)] flex items-center justify-center h-10 sm:h-12 text-4xl sm:text-5xl">
+              <span class:list={["cifra-numero", c.figure.length > 4 && "text-2xl sm:text-[1.7rem] xl:text-3xl whitespace-nowrap"]}>
                 {(() => {
                   const m = /^(\D*)(\d+)$/.exec(c.figure);
                   return m ? <>{m[1]}<span data-cuenta={m[2]}>{m[2]}</span></> : c.figure;

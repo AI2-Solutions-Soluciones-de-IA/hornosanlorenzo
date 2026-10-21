@@ -65,17 +65,18 @@ export const tradicion = {
       body: "Fundado en 1986: mismo oficio, mismas recetas de base.",
     },
     {
-      figure: "2",
-      label: "obradores en Madrid",
-      body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón.",
-    },
-    {
       figure: "3",
       label: "canales de negocio",
       body: "Empresas y oficinas, hostelería y particulares.",
     },
     {
-      figure: "L–S",
+      figure: "2",
+      label: "obradores en Madrid",
+      // «Abiertos de lunes a domingo», a petición del cliente (21-10-2026).
+      body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón, abiertos de lunes a domingo.",
+    },
+    {
+      figure: "De lunes a sábado",
       label: "reparto propio",
       body: "Entrega diaria con furgoneta y repartidor de la casa.",
     },

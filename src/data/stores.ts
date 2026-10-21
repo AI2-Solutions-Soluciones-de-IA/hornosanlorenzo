@@ -42,6 +42,8 @@ export type Store = {
   coords: { lat: number; lng: number };
   image: string;
   imageAlt: string;
+  /** `object-position` de la foto, si el centro no es el buen encuadre. */
+  imageEncuadre?: string;
 };
 
 export const stores: readonly Store[] = [
@@ -76,9 +78,10 @@ export const stores: readonly Store[] = [
       "https://www.google.com/maps?q=C%2FValgrande+21+Alcobendas&output=embed",
     mapsLink: "https://www.google.com/maps?q=C%2FValgrande+21+Alcobendas",
     coords: { lat: 40.5468, lng: -3.6394 },
-    // Sin foto de la tienda todavía (19-10-2026): una del obrador.
-    image: "/images/valores/generosidad.jpg",
-    imageAlt: "Bandejas de cruasanes recién horneados en el obrador",
+    // Fotos del artifact «HSL · Nuestras tiendas» (21-10-2026).
+    image: "/images/obrador-tartas.jpg",
+    imageAlt: "Obrador central de Horno San Lorenzo en Alcobendas: tartas de fresa y maracuyá recién terminadas",
+    imageEncuadre: "center 35%",
   },
   {
     id: "pozuelo",
@@ -110,9 +113,8 @@ export const stores: readonly Store[] = [
     mapsLink:
       "https://www.google.com/maps?q=Avenida+Europa+28+Pozuelo+de+Alarcon",
     coords: { lat: 40.4378, lng: -3.809 },
-    // Sin foto de la tienda todavía (19-10-2026): una del obrador.
-    image: "/images/valores/cercania.jpg",
-    imageAlt: "Una caja de Horno San Lorenzo pasando de unas manos a otras",
+    image: "/images/tiendas/pozuelo-fachada.jpg",
+    imageAlt: "Fachada de la pastelería Horno San Lorenzo en Pozuelo de Alarcón",
   },
 ] as const;
 

@@ -45,16 +45,22 @@ export const MODE_COPY: Record<DeliveryMode, { label: string; body: string }> =
  * resumido: si cambian las condiciones, cambian en los dos sitios.
  */
 export const REPARTO_RESUMEN = [
-  { titulo: "Horario", dato: "L – S", texto: "De 9:00 a 14:30, días laborables." },
+  {
+    titulo: "Horario",
+    dato: "De lunes a sábado",
+    texto: "De 9:00 a 14:30, días laborables.",
+  },
   {
     titulo: "Pedido mínimo",
     dato: "25 € · 35 €",
-    texto: "25 € de lunes a jueves; 35 € viernes, sábados y vísperas de festivo.",
+    texto:
+      "25 € de lunes a jueves; 35 € viernes, sábados y vísperas de festivo.",
   },
   {
     titulo: "Zonas",
     dato: "5 zonas",
-    texto: "Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo. Otras zonas, consultarlo.",
+    texto:
+      "Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo. Otras zonas, consultarlo.",
   },
 ] as const;
 

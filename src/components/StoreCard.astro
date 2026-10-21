@@ -26,6 +26,7 @@ const lugar = `${store.address.split(",")[0]}, ${store.shortName}`;
         loading="lazy"
         decoding="async"
         class="absolute inset-0 h-full w-full object-cover"
+        style={"imageEncuadre" in store ? `object-position:${store.imageEncuadre}` : undefined}
       />
       <span class="tienda-etiqueta absolute top-4 left-4">{store.etiqueta}</span>
     </div>
