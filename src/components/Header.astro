@@ -61,23 +61,34 @@ const isActive = (href: string) => {
 // y el resto a la derecha (con este reparto las dos mitades miden parecido;
 // la izquierda tiene una más porque sus nombres son más cortos).
 const MITAD_MENU = 4;
+
+// Móvil: cada sección en dos líneas, como la imagen «movil header» del
+// cliente (21-10-2026).
+const lineasMovil: Record<string, readonly string[]> = {
+  "/tradicion-y-calidad": ["Tradición", "y calidad"],
+  "/tiendas": ["Nuestras", "tiendas"],
+  "/carta": ["Carta"],
+  "/catalogo": ["Tienda", "online"],
+  "/noticias": ["Promociones", "del mes"],
+  "/a-quien-servimos": ["A quién", "servimos"],
+};
 ---
 <header
   class="sticky top-0 z-50 bg-[color:var(--color-teja)]/95 backdrop-blur md:border-b border-[color:var(--color-avellana)]"
   transition:persist
 >
   <!-- Banda superior: La Firma · buscador y acceso -->
-  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-3 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] md:grid-cols-[1fr_7.5rem_1fr] lg:grid-cols-[1fr_11.5rem_1fr] xl:grid-cols-[1fr_13.5rem_1fr] items-center gap-4 max-md:border-b max-md:border-[color:var(--color-avellana)]">
+  <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-2.5 min-[380px]:px-3 sm:px-6 2xl:px-10 py-2 sm:py-6 lg:py-8 xl:py-10 grid grid-cols-[1fr_auto_1fr] md:grid-cols-[1fr_7.5rem_1fr] lg:grid-cols-[1fr_11.5rem_1fr] xl:grid-cols-[1fr_13.5rem_1fr] items-center gap-1 min-[400px]:gap-2 md:gap-4">
     <!-- Buscador: solo la lupa; al pulsarla se despliega el campo a su
          derecha, flotando, para no mover el logo (en el móvil lo tapa
          mientras se escribe). Lo abre y cierra el script de abajo. -->
     <!-- Izquierda: la lupa y, desde tableta, Instagram y Facebook. Sin las
          rayas blancas del móvil hasta el sello (16-10-2026). -->
-    <div class="justify-self-stretch md:justify-self-start flex items-center gap-3">
+    <div class="justify-self-stretch md:justify-self-start flex items-center gap-1 min-[400px]:gap-2 md:gap-3">
     <div class="relative" data-buscador>
       <button
         type="button"
-        class="inline-flex items-center justify-center w-10 h-10 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
+        class="inline-flex items-center justify-center w-6 min-[400px]:w-8 md:w-10 h-10 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
         aria-label="Buscar en el catálogo"
         aria-expanded="false"
         aria-controls="buscador-panel"
@@ -113,6 +124,18 @@ const MITAD_MENU = 4;
       </form>
     </div>
     <SocialLinks tono="leche" class="hidden md:flex" />
+    <!-- Móvil: «Haz tu pedido» en la franja roja, al lado de la lupa y
+         separado por una raya, como en la imagen «movil header» (21-10-2026). -->
+    <span class="md:hidden w-px h-7 bg-[color:var(--color-leche)]/40" aria-hidden="true"></span>
+    <a
+      href="/catalogo"
+      class="md:hidden shrink-0 inline-flex items-center gap-1 h-8 px-1.5 min-[400px]:px-2 rounded-[var(--radius-boton)] whitespace-nowrap bg-[color:var(--color-leche)] text-[color:var(--color-teja)] font-[family-name:var(--font-display)] font-semibold text-[9px] min-[400px]:text-[10px] uppercase hover:bg-[color:var(--color-latte)] transition-colors"
+    >
+      Haz tu pedido
+      <svg viewBox="0 0 24 24" width="12" height="12" class="shrink-0 max-[379px]:hidden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </a>
     </div>
 
     <!-- El sello, el mismo del pie, en vez de la firma (8-10-2026). Desde
@@ -124,15 +147,15 @@ const MITAD_MENU = 4;
     <a
       href="/"
       aria-label={`${site.name} — inicio`}
-      class="justify-self-center max-md:relative max-md:z-10 max-md:w-[108px] max-md:h-11 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-2 md:z-10"
+      class="justify-self-center max-md:relative max-md:z-10 max-md:w-[80px] max-md:h-10 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-2 md:z-10"
     >
       <Image quality={85}
         src={sello}
         alt=""
         loading="eager"
-        widths={[108, 216, 324]}
-        sizes="108px"
-        class="md:hidden absolute left-0 -top-1 w-[108px] h-[108px]"
+        widths={[80, 160, 240]}
+        sizes="80px"
+        class="md:hidden absolute left-0 -top-1 w-[80px] h-[80px]"
       />
       <Image quality={85}
         src={sello}
@@ -146,7 +169,7 @@ const MITAD_MENU = 4;
 
     <!-- `col-start-3`: desde 768 px el sello flota y deja la columna del
          centro vacía; sin esto, estos botones se metían debajo de él. -->
-    <div class="flex items-center justify-end gap-2 md:col-start-3">
+    <div class="flex items-center justify-end gap-1 min-[400px]:gap-2 md:col-start-3">
       <!-- La puerta del pedido en escritorio, al lado de «Regístrate»: mismo
            tamaño y letra, pero rellena, porque es la acción principal. En el
            móvil va en su propia barra, debajo. Entre 1024 y 1280 px no cabe
@@ -161,13 +184,14 @@ const MITAD_MENU = 4;
       <AccesoSesion tono="claro" client:load />
 
       <CartBadge client:only="react" />
+      <span class="md:hidden w-px h-7 bg-[color:var(--color-leche)]/40" aria-hidden="true"></span>
 
       <!-- En el móvil no hay menú desplegable (al cliente no le gusta,
            21-10-2026): la cuenta va con su icono y las secciones, en la
            barra de abajo. Sin sesión, /cuenta manda a /acceso. -->
       <a
         href="/cuenta"
-        class="md:hidden inline-flex items-center justify-center w-11 h-11 -mr-2 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
+        class="md:hidden inline-flex items-center justify-center w-10 h-10 -mr-1.5 text-[color:var(--color-leche)] hover:text-[color:var(--color-latte)]"
         aria-label="Mi cuenta"
       >
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -179,44 +203,29 @@ const MITAD_MENU = 4;
   </div>
 
   <!-- Móvil: el hueco claro donde asoma el sello, que cuelga de la franja
-       roja. Debajo, las secciones y luego el pedido (21-10-2026). -->
-  <div class="md:hidden h-14 bg-[color:var(--color-leche)]" aria-hidden="true"></div>
-
-  <!-- Móvil: las secciones a la vista, como la barra del escritorio: blanca
-       con letra teja, sin desplegables (cada entrada lleva a su página) y sin
-       «Inicio», que ya es el sello. Dos líneas centradas. Se esconde al bajar
-       por la página y vuelve al subir (script de abajo, 21-10-2026). -->
-  <nav aria-label="Secciones" class="secciones-movil md:hidden bg-white border-y border-[color:var(--color-avellana)]" data-secciones-movil>
-    <ul class="flex flex-wrap justify-center gap-x-3 min-[380px]:gap-x-4 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.04em] min-[380px]:tracking-[0.08em]">
-      {mainNav.filter((item) => item.href !== "/").map((item) => (
-        <li>
+       roja, y debajo las secciones en una fila, cada una en dos líneas con
+       la letra del sello y separadas por rayas, como en la imagen «movil
+       header» del cliente (21-10-2026). Sin desplegables (cada entrada lleva
+       a su página) y sin «Inicio», que ya es el sello. La fila se esconde al
+       bajar por la página y vuelve al subir (script de abajo). -->
+  <div class="md:hidden h-6 bg-[color:var(--color-leche)]" aria-hidden="true"></div>
+  <nav aria-label="Secciones" class="secciones-movil md:hidden bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]" data-secciones-movil>
+    <ul class="flex items-stretch justify-between px-1 min-[420px]:px-3 pb-1 font-[family-name:var(--font-display)] text-[9px] min-[420px]:text-[10px] leading-tight uppercase text-center">
+      {mainNav.filter((item) => item.href !== "/").map((item, i) => (
+        <li class:list={["relative flex items-center px-1 min-[420px]:px-1.5", i > 0 && "before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-px before:bg-[color:var(--color-avellana)]"]}>
           <a
             href={item.href}
             download={item.download}
             aria-current={isActive(item.href) ? "page" : undefined}
             data-nav-principal
-            class="flex items-center min-h-8 border-b-2 border-transparent whitespace-nowrap text-[color:var(--color-teja)]/85 aria-[current=page]:text-[color:var(--color-teja)] aria-[current=page]:border-[color:var(--color-teja)]"
+            class="flex flex-col justify-center min-h-11 border-b-2 border-transparent whitespace-nowrap text-[color:var(--color-moka)] aria-[current=page]:text-[color:var(--color-teja)] aria-[current=page]:border-[color:var(--color-teja)]"
           >
-            {item.label}
+            {(lineasMovil[item.href] ?? [item.label]).map((linea) => <span>{linea}</span>)}
           </a>
         </li>
       ))}
     </ul>
   </nav>
-
-  <!-- Móvil: el pedido tiene su propia puerta, bajo las secciones: un
-       botón rojo con filete avellana y la letra del sello (12-10-2026). -->
-  <div class="md:hidden bg-[color:var(--color-leche)] px-4 py-2.5 flex justify-center">
-    <a
-      href="/catalogo"
-      class="inline-flex items-center gap-2 min-h-9 px-5 rounded-[var(--radius-boton)] border border-[color:var(--color-avellana)] bg-[color:var(--color-teja)] text-[color:var(--color-leche)] shadow-sm font-[family-name:var(--font-display)] text-sm uppercase tracking-[0.08em] hover:bg-[color:var(--color-moka)] transition-colors"
-    >
-      Haz tu pedido
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M5 12h14M13 6l6 6-6 6" />
-      </svg>
-    </a>
-  </div>
 
   <!-- Banda de navegación: las cuatro secciones -->
   <nav
