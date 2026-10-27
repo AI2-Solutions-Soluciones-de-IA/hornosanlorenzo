@@ -72,12 +72,15 @@ export const tradicion = {
     {
       figure: "2",
       label: "obradores en Madrid",
-      // «Abiertos de lunes a domingo», a petición del cliente (21-10-2026).
-      body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón, abiertos de lunes a domingo.",
+      // «Abiertos de lunes a domingo» (21-10-2026), en grande y subrayado a
+      // petición del cliente (27-10-2026).
+      destacado: "Abiertos de lunes a domingo",
+      body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón.",
     },
     {
       figure: "De lunes a sábado",
-      label: "reparto propio",
+      // «Reparto propio», en grande y subrayado como el de los obradores.
+      destacado: "Reparto propio",
       body: "Entrega diaria con furgoneta y repartidor de la casa.",
     },
   ],

@@ -110,7 +110,14 @@ import { tradicion } from "~/data/tradicion";
               </span>
             </dt>
             <span class="cifra-raya" aria-hidden="true"></span>
-            <dd class="numeracion mt-2" style="color:var(--color-leche)">{c.label}</dd>
+            {"label" in c && <dd class="numeracion mt-2" style="color:var(--color-leche)">{c.label}</dd>}
+            <!-- Lo que el cliente quiere que se vea (27-10-2026): en grande y
+                 subrayado, entre la cifra y la explicación. -->
+            {"destacado" in c && (
+              <dd class="mt-3 font-[family-name:var(--font-display)] text-xl lg:text-lg xl:text-xl leading-snug text-balance underline decoration-[color:var(--color-latte)] decoration-2 underline-offset-[6px]">
+                {c.destacado}
+              </dd>
+            )}
             <dd class="mt-3 text-sm leading-relaxed text-[color:var(--color-leche)]/80">{c.body}</dd>
           </div>
         ))}
