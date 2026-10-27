@@ -371,6 +371,21 @@ Para más adelante, según cómo vaya:
 - [ ] **Empresas**: hoy pagan como un particular. Códigos de descuento o factura mensual de verdad, si se quieren (ver «Bloque E» en «Más adelante»)
 - [ ] **Estado del pedido para el cliente** («Preparado», «En reparto»), si lo piden
 
+## Correos de pedido: preguntar al obrador (27-10-2026)
+- [ ] **¿Quitamos el aviso por correo al obrador?** Hoy cada pedido pagado
+      manda 2 correos por Resend (aviso al obrador + confirmación al cliente);
+      con el plan gratuito (100 al día, 3.000 al mes, el 101 se rechaza y no se
+      reintenta) eso da ~50 pedidos/día. Con el panel abierto el aviso sobra y
+      se dobla a ~100 pedidos/día. Opciones: (a) quitarlo y que solo salga la
+      confirmación al cliente; (b) dejarlo como está; (c) un resumen diario al
+      obrador (1 correo al día). Si se quita: en `notify` de
+      `src/pages/api/webhook.ts` la confirmación al cliente hoy depende de que
+      salga el aviso al obrador; habría que desligarla (y retocar su texto
+      «anotado en el obrador» y las pruebas de `src/tests/api-webhook.test.ts`)
+- Resend ya tiene el dominio dado de alta (región Irlanda); faltan los 3
+  registros en las DNS (van en el mensaje a la empresa informática), la API
+  key y el buzón donde el obrador recibiría los avisos, si se mantienen
+
 ## Migración del dominio (27-10-2026)
 Estado: hornosanlorenzo.com (registro en Nicline, DNS en Route 53 de la
 empresa informática, correo en `balaitus.efor.es`) sigue apuntando a Wix. Ya
