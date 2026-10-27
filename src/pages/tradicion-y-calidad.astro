@@ -7,26 +7,17 @@ import { tradicion } from "~/data/tradicion";
   description="Más de 40 años de obrador propio, y todos se los debemos a nuestros clientes: particulares, hostelería y empresas."
 >
   <!-- Diseño de la imagen «tradicion y calidad» del cliente (17-10-2026):
-       cabecera roja con la foto del obrador a la derecha, a sangre; tres
-       tarjetas de agradecimiento montadas sobre su borde inferior. -->
-  <section class="relative flex flex-col md:block bg-[color:var(--color-teja)] text-[color:var(--color-leche)]">
-    <div class="relative md:absolute md:inset-y-0 md:right-0 md:w-1/2 order-last aspect-[4/3] md:aspect-auto bg-[color:var(--color-moka)]">
-      <img
-        src="/images/tradicion-principal.jpg"
-        alt="Una panadera coloca tartas de chocolate recién hechas junto al horno de leña del obrador"
-        width="900"
-        height="1600"
-        decoding="async"
-        class="absolute inset-0 h-full w-full object-cover object-[center_55%]"
-      />
-    </div>
+       cabecera roja con tres tarjetas de agradecimiento montadas sobre su
+       borde inferior. Sin la foto de la panadera y con el texto centrado, a
+       petición del cliente (27-10-2026). -->
+  <section class="bg-[color:var(--color-teja)] text-[color:var(--color-leche)]">
     <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-12 pb-14 sm:pt-20 md:pb-44">
-      <div class="md:w-1/2 md:pr-12">
-        <p class="numeracion antetitulo" style="color:var(--color-avellana)">{tradicion.cabecera.antetitulo}</p>
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="numeracion antetitulo antetitulo-centrado" style="color:var(--color-avellana)">{tradicion.cabecera.antetitulo}</p>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl mt-5 leading-[1.05]">
           {tradicion.cabecera.titulo.map((linea) => <span class="block">{linea}</span>)}
         </h1>
-        <p class="mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[color:var(--color-leche)]/85">{tradicion.cabecera.texto}</p>
+        <p class="mt-6 mx-auto max-w-xl text-sm sm:text-base leading-relaxed text-[color:var(--color-leche)]/85">{tradicion.cabecera.texto}</p>
       </div>
     </div>
   </section>
@@ -187,11 +178,16 @@ import { tradicion } from "~/data/tradicion";
     align-items: center;
     gap: 0.75rem;
   }
-  .antetitulo::before {
+  .antetitulo::before,
+  .antetitulo-centrado::after {
     content: "";
     width: 2rem;
     height: 1px;
     background: currentColor;
+  }
+  /* Centrado, con raya a los dos lados. */
+  .antetitulo-centrado {
+    justify-content: center;
   }
   .gracias-tarjeta {
     box-shadow: 0 18px 40px -18px rgb(50 40 32 / 0.28);
