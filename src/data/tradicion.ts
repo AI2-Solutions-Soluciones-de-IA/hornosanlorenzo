@@ -100,9 +100,11 @@ export const tradicion = {
     {
       number: "02",
       title: "Constancia",
+      // Manos de pastelero montando una tarta de frutas, en vez de las de
+      // la señora mayor (foto «foto constancia» del cliente, 27-10-2026).
       foto: "/images/valores/constancia.jpg",
-      /** Encuadre: la brocha y la taza quedan a la izquierda del centro. */
-      encuadre: "25% center",
+      /** Encuadre: la foto es vertical; así entran las manos y la fruta. */
+      encuadre: "center 35%",
       body: "Más de 40 años después la receta es la misma. Los ingredientes no se cambian por coste.",
     },
     {
