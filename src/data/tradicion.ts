@@ -75,7 +75,8 @@ export const tradicion = {
       // «Abiertos de lunes a domingo» (21-10-2026), en grande y subrayado a
       // petición del cliente (27-10-2026).
       destacado: "Abiertos de lunes a domingo",
-      body: "Alcobendas (sede, con horno propio) y Pozuelo de Alarcón.",
+      // Los dos hornean: Pozuelo, empanadas y salados (27-10-2026).
+      body: "Alcobendas (sede) y Pozuelo de Alarcón, los dos con horno propio.",
     },
     {
       figure: "De lunes a sábado",
