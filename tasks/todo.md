@@ -382,6 +382,14 @@ Para más adelante, según cómo vaya:
       `src/pages/api/webhook.ts` la confirmación al cliente hoy depende de que
       salga el aviso al obrador; habría que desligarla (y retocar su texto
       «anotado en el obrador» y las pruebas de `src/tests/api-webhook.test.ts`)
+- [ ] **Formulario de contacto enviado desde la web** (27-10-2026). Hoy
+      `src/islands/ContactForm.tsx` abre la app de correo del visitante
+      (`mailto:` a `site.email`): si no la tiene configurada o no le da a
+      enviar, el mensaje se pierde sin rastro. Igual en las altas de empresa y
+      de particular. Cuando haya Resend: un endpoint que lo mande con
+      `enviarCorreo` (con `replyTo` del visitante y límite contra abusos) y un
+      «Mensaje enviado» en la página. Confirmar con el cliente que
+      `info@hornosanlorenzo.com` es el correo de la oficina que leen
 - Resend ya tiene el dominio dado de alta (región Irlanda); faltan los 3
   registros en las DNS (van en el mensaje a la empresa informática), la API
   key y el buzón donde el obrador recibiría los avisos, si se mantienen
