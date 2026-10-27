@@ -34,8 +34,8 @@ export async function ofertasVigentes(
         and ${vigente("n")}
         ${filtro}
      union all
-     -- Las secciones de Este mes también rebajan (migración 019): el precio
-     -- va por producto y la fecha de fin, por sección.
+     -- Las secciones de Este mes con descuento también rebajan (migraciones
+     -- 019 y 026): el precio va por producto y la fecha de fin, por sección.
      select p.slug,
             sp.oferta_cents,
             sp.oferta_variantes,
@@ -44,6 +44,7 @@ export async function ofertasVigentes(
        join secciones_este_mes s on s.id = sp.seccion_id
        join productos p on p.id = sp.producto_id
       where s.publicada
+        and s.con_descuento
         and (sp.oferta_cents is not null or sp.oferta_variantes <> '{}'::jsonb)
         and ${vigente("s")}
         ${filtro}`,

@@ -15,6 +15,8 @@ export type Seccion = {
   descripcion: string;
   orden: number;
   publicada: boolean;
+  /** Lleva precios de oferta («10% de descuento»); si no, todo al precio de siempre. */
+  conDescuento: boolean;
   productoIds: string[];
   /** Precio de oferta por id de producto, como en una noticia. */
   ofertas: Record<string, { ofertaCents: number | null; ofertaVariantes: Record<string, number> }>;
@@ -39,6 +41,7 @@ function formularioDesde(s: Seccion): Formulario {
     descripcion: s.descripcion,
     orden: s.orden,
     publicada: s.publicada,
+    conDescuento: s.conDescuento,
     productoIds: s.productoIds,
     ofertaHasta: s.ofertaHasta ?? "",
     ofertas: Object.fromEntries(
@@ -55,13 +58,15 @@ function formularioDesde(s: Seccion): Formulario {
 
 /**
  * Pasa las ofertas del formulario a céntimos, solo las de productos que
- * siguen en la sección. Que rebajen de verdad lo comprueba el servidor.
+ * siguen en la sección y si la sección lleva descuento. Que rebajen de verdad
+ * lo comprueba el servidor.
  */
 function ofertasDelFormulario(
   f: Formulario,
   porId: Map<string, ProductoOpcion>,
 ): { error: string } | { ofertas: Seccion["ofertas"]; ofertaHasta: string | null } {
   const ofertas: Seccion["ofertas"] = {};
+  if (!f.conDescuento) return { ofertas, ofertaHasta: null };
   for (const id of f.productoIds) {
     const o = f.ofertas[id];
     const p = porId.get(id);
@@ -122,6 +127,7 @@ const VACIA: Formulario = {
   descripcion: "",
   orden: 0,
   publicada: true,
+  conDescuento: false,
   productoIds: [],
   ofertas: {},
   ofertaHasta: "",
@@ -247,7 +253,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
         Secciones con productos
       </h2>
       <p style={{ marginTop: 6, fontSize: 14, color: "var(--color-ink-muted)" }}>
-        Aparecen en Este mes debajo de las ofertas, en el orden que pongas. Por ejemplo, «Productos nuevos sin gluten». A cada producto le puedes poner precio de oferta.
+        Aparecen en Este mes debajo de las ofertas, en el orden que pongas. Por ejemplo, «Productos nuevos sin gluten». Solo las marcadas «Con descuento» llevan precio de oferta; el resto se vende al precio de siempre.
       </p>
 
       {mensaje && (
@@ -320,6 +326,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
                       <span style={{ color: "var(--color-teja)" }}>Oculta · no se ve en la web</span>
                     )}{" "}
                     · {s.productoIds.length} producto{s.productoIds.length === 1 ? "" : "s"}
+                    {s.conDescuento && " · Con descuento"}
                   </p>
                   <p style={{ marginTop: 4, fontWeight: 600 }}>{s.titulo}</p>
                 </button>
@@ -348,7 +355,16 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
               <input type="checkbox" checked={form.publicada} onChange={(e) => setForm({ ...form, publicada: e.target.checked })} />
               Publicada
             </label>
+            <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
+              <input type="checkbox" checked={form.conDescuento} onChange={(e) => setForm({ ...form, conDescuento: e.target.checked })} />
+              Con descuento
+            </label>
           </div>
+          <p style={{ marginTop: 6, fontSize: 12, color: "var(--color-ink-muted)" }}>
+            {form.conDescuento
+              ? "Pon el precio rebajado a cada producto. Se cobra así en toda la web."
+              : "Sin descuento: recomendaciones y novedades, al precio de siempre."}
+          </p>
 
           <div style={{ marginTop: 20 }}>
             <p style={label}>Productos</p>
@@ -375,7 +391,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
                     </div>
                     {/* Precio de oferta, como en «Escribir una noticia»: al lado,
                         el de siempre; vacío = se vende al precio normal. */}
-                    {p && (p.consultar || p.priceCents === null ? (
+                    {p && form.conDescuento && (p.consultar || p.priceCents === null ? (
                       <p style={{ marginTop: 4, fontSize: 12, color: "var(--color-ink-muted)" }}>
                         A consultar: no admite precio de oferta.
                       </p>
@@ -427,7 +443,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
             )}
           </div>
 
-          {form.productoIds.length > 0 && (
+          {form.conDescuento && form.productoIds.length > 0 && (
             <div style={{ marginTop: 16 }}>
               <label style={label} htmlFor="sm-oferta-hasta">
                 Ofertas válidas hasta (incluido; vacío = mientras esté publicada)

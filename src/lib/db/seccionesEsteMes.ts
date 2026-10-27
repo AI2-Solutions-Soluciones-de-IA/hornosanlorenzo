@@ -7,7 +7,8 @@ import { listarProductos, type Producto } from "~/lib/db/productos";
  *
  * Cada producto puede llevar un precio de oferta, como el de una noticia
  * (migración 019, `~/lib/ofertas.ts`): se aplica en toda la web mientras la
- * sección esté publicada y hasta `ofertaHasta`.
+ * sección esté publicada y hasta `ofertaHasta`. Solo en las secciones con
+ * `conDescuento` (migración 026); las demás son recomendaciones sin rebaja.
  */
 export type OfertaEnSeccion = {
   /** Precio de oferta si el producto no tiene tamaños. */
@@ -22,6 +23,8 @@ export type SeccionEsteMes = {
   descripcion: string;
   orden: number;
   publicada: boolean;
+  /** Lleva precios de oferta («10% de descuento»); si no, todo al precio de siempre. */
+  conDescuento: boolean;
   /** Ids de los productos, en el orden elegido. */
   productoIds: string[];
   /** Ofertas por id de producto; los que no salen aquí, al precio de siempre. */
@@ -30,8 +33,8 @@ export type SeccionEsteMes = {
   ofertaHasta: string | null;
 };
 
-export type DatosSeccion = Omit<SeccionEsteMes, "id" | "ofertas" | "ofertaHasta"> &
-  Partial<Pick<SeccionEsteMes, "ofertas" | "ofertaHasta">>;
+export type DatosSeccion = Omit<SeccionEsteMes, "id" | "ofertas" | "ofertaHasta" | "conDescuento"> &
+  Partial<Pick<SeccionEsteMes, "ofertas" | "ofertaHasta" | "conDescuento">>;
 
 /** Una sección pública, con sus productos ya leídos de la carta. */
 export type SeccionPublica = {
@@ -43,6 +46,7 @@ export type SeccionPublica = {
 
 const CAMPOS = `
   s.id, s.titulo, s.descripcion, s.orden, s.publicada,
+  s.con_descuento as "conDescuento",
   to_char(s.oferta_hasta, 'YYYY-MM-DD') as "ofertaHasta",
   coalesce(
     (select jsonb_object_agg(sp.producto_id::text, jsonb_build_object(
@@ -122,9 +126,9 @@ export async function crearSeccion(d: DatosSeccion): Promise<SeccionEsteMes> {
   try {
     await cliente.query("begin");
     const { rows } = await cliente.query<{ id: string }>(
-      `insert into secciones_este_mes (titulo, descripcion, orden, publicada, oferta_hasta)
-       values ($1, $2, $3, $4, $5) returning id`,
-      [d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null],
+      `insert into secciones_este_mes (titulo, descripcion, orden, publicada, oferta_hasta, con_descuento)
+       values ($1, $2, $3, $4, $5, $6) returning id`,
+      [d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false],
     );
     await guardaProductos(cliente, rows[0].id, d);
     await cliente.query("commit");
@@ -144,9 +148,9 @@ export async function actualizarSeccion(id: string, d: DatosSeccion): Promise<Se
     const { rowCount } = await cliente.query(
       `update secciones_este_mes
           set titulo = $2, descripcion = $3, orden = $4, publicada = $5,
-              oferta_hasta = $6, updated_at = now()
+              oferta_hasta = $6, con_descuento = $7, updated_at = now()
         where id = $1`,
-      [id, d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null],
+      [id, d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false],
     );
     if (!rowCount) {
       await cliente.query("rollback");

@@ -419,24 +419,29 @@ describeSiHayBD("repositorio de productos", () => {
       );
       const oculta = await crea(datos({ name: "Sección oculta con oferta" }));
       const caducada = await crea(datos({ name: "Sección caducada con oferta" }));
+      const recomendada = await crea(datos({ name: "Sección sin descuento con oferta" }));
       const s = await nueva({
         titulo: "Con ofertas",
+        conDescuento: true,
         productoIds: [a.id, b.id],
         ofertas: {
           [a.id]: { ofertaCents: 1500, ofertaVariantes: {} },
           [b.id]: { ofertaCents: null, ofertaVariantes: { m: 2000 } },
         },
       });
-      await nueva({ titulo: "Oculta", publicada: false, productoIds: [oculta.id], ofertas: { [oculta.id]: { ofertaCents: 900, ofertaVariantes: {} } } });
-      await nueva({ titulo: "Caducada", productoIds: [caducada.id], ofertaHasta: "2020-01-01", ofertas: { [caducada.id]: { ofertaCents: 900, ofertaVariantes: {} } } });
+      await nueva({ titulo: "Oculta", publicada: false, conDescuento: true, productoIds: [oculta.id], ofertas: { [oculta.id]: { ofertaCents: 900, ofertaVariantes: {} } } });
+      await nueva({ titulo: "Caducada", conDescuento: true, productoIds: [caducada.id], ofertaHasta: "2020-01-01", ofertas: { [caducada.id]: { ofertaCents: 900, ofertaVariantes: {} } } });
+      // Sin «Con descuento» (recomendaciones), una oferta guardada no rebaja.
+      await nueva({ titulo: "Recomendada", productoIds: [recomendada.id], ofertas: { [recomendada.id]: { ofertaCents: 900, ofertaVariantes: {} } } });
 
       expect(s.ofertas[a.id]).toEqual({ ofertaCents: 1500, ofertaVariantes: {} });
-      const cobro = await repo.productosParaPedido([a.slug, b.slug, oculta.slug, caducada.slug]);
+      const cobro = await repo.productosParaPedido([a.slug, b.slug, oculta.slug, caducada.slug, recomendada.slug]);
       expect(cobro.get(a.slug)?.priceCents).toBe(1500);
       expect(cobro.get(a.slug)?.precioAntesCents).toBe(1850);
       expect(cobro.get(b.slug)?.variantes.map((v) => v.priceCents)).toEqual([1800, 2000]);
       expect(cobro.get(oculta.slug)?.priceCents).toBe(1850);
       expect(cobro.get(caducada.slug)?.priceCents).toBe(1850);
+      expect(cobro.get(recomendada.slug)?.priceCents).toBe(1850);
 
       const publica = (await secciones.seccionesPublicas()).find((x) => x.id === s.id);
       expect(publica?.productos[0].priceCents).toBe(1500);

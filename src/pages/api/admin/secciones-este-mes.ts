@@ -28,6 +28,7 @@ const esquema = z.object({
   descripcion: z.string().trim().max(300).default(""),
   orden: z.number().int().min(-1000).max(1000).default(0),
   publicada: z.boolean().default(false),
+  conDescuento: z.boolean().default(false),
   productoIds: z.array(z.string().uuid()).max(48).default([]),
   // Precio de oferta por producto, como en las noticias (`~/lib/ofertas.ts`).
   // Que cuadre con la ficha lo comprueba `compruebaOfertas`.
@@ -54,13 +55,14 @@ type Datos = z.infer<typeof esquema>;
 
 /**
  * Solo se guardan las ofertas de productos que están en la sección, y cada
- * una tiene que rebajar de verdad su ficha. Devuelve los datos limpios o el
- * mensaje para el panel.
+ * una tiene que rebajar de verdad su ficha; en una sección sin descuento, ninguna.
+ * Devuelve los datos limpios o el mensaje para el panel.
  */
 async function compruebaOfertas(d: Datos): Promise<{ datos: Datos } | { error: string }> {
   const ofertas = Object.fromEntries(
     Object.entries(d.ofertas).filter(
       ([id, o]) =>
+        d.conDescuento &&
         d.productoIds.includes(id) && (o.ofertaCents !== null || Object.keys(o.ofertaVariantes).length > 0),
     ),
   );
