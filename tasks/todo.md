@@ -371,6 +371,34 @@ Para más adelante, según cómo vaya:
 - [ ] **Empresas**: hoy pagan como un particular. Códigos de descuento o factura mensual de verdad, si se quieren (ver «Bloque E» en «Más adelante»)
 - [ ] **Estado del pedido para el cliente** («Preparado», «En reparto»), si lo piden
 
+## Migración del dominio (27-10-2026)
+Estado: hornosanlorenzo.com (registro en Nicline, DNS en Route 53 de la
+empresa informática, correo en `balaitus.efor.es`) sigue apuntando a Wix. Ya
+hecho: el dominio y `www` añadidos al proyecto de Vercel (equipo AI2 SOLUTIONS)
+y las redirecciones 301 de las páginas de Wix en `astro.config.mjs`. Mensaje
+para la empresa: A del dominio → `76.76.21.21`, CNAME de `www` →
+`cname.vercel-dns.com`; MX, SPF y registros de Wix sin tocar; TTL a 300 s un
+día antes.
+
+- [ ] **Mandar el mensaje a la empresa informática** y cerrar fecha
+- [ ] **Día del cambio, dominio**: la empresa cambia los dos registros; `www`
+      como principal y el dominio sin `www` redirigiendo a él (Vercel);
+      `PUBLIC_SITE_URL` a `https://www.hornosanlorenzo.com` y desplegar;
+      comprobar HTTPS y las redirecciones de Wix en el dominio
+- [ ] **Día del cambio, Stripe** (solo cuando lo anterior funcione): webhook
+      real en `https://www.hornosanlorenzo.com/api/webhook` con
+      `checkout.session.completed` y `charge.refunded`; en Vercel, `sk_live` y
+      su secreto en lugar de los de prueba; desplegar; compra real pequeña y
+      devolverla. El webhook de prueba se queda en `hornosanlorenzo.vercel.app`,
+      y esa dirección **no** se redirige al dominio (Stripe no sigue
+      redirecciones)
+- [ ] **Días después**: el cliente da de baja el plan **Premium** de Wix
+      (cancelar la renovación) y **conserva Ascend** para el mailing. Antes,
+      confirmar en Wix que Ascend sigue sin el Premium, no borrar la web de
+      Wix (ahí viven los contactos) y mandar una campaña de prueba
+- Cobro al cliente: el hosting en Vercel, 20 €/mes, en lugar del Premium de
+  Wix. La empresa informática sigue con DNS, correo y dominio
+
 ## Más adelante
 - [ ] **Llevar el cómputo a Cloud Run** cuando el proyecto esté asentado. Del
       análisis de costes del 9 de septiembre de 2026: Vercel Pro son ~20 €/mes
