@@ -137,6 +137,17 @@ export default defineConfig({
   // estar compartida por ahí fuera, así que se redirige en vez de romperse.
   redirects: {
     "/hosteleria-y-empresas": "/a-quien-servimos",
+    // Páginas de la web antigua de Wix (su sitemap, 27-10-2026), para cuando
+    // hornosanlorenzo.com apunte aquí. /contacto, /servicios y /noticias ya
+    // existen con la misma dirección.
+    "/tradici-n-y-calidad": "/tradicion-y-calidad",
+    "/nuestros-productos": "/catalogo",
+    "/dulce": "/catalogo/dulce",
+    "/salado": "/catalogo/salado",
+    "/particulares": "/a-quien-servimos#particulares",
+    "/hosteleria": "/a-quien-servimos#hosteleria",
+    "/tiendapozuelo": "/tiendas",
+    "/aviso-pedidos": "/catalogo",
   },
   integrations: [react(), sitemap()],
   vite: {
