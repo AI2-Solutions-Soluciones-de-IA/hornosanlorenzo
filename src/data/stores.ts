@@ -68,7 +68,8 @@ export const stores: readonly Store[] = [
       { dias: "Sábados, domingos y festivos", horas: ["9:30 – 14:30"] },
     ],
     horarioNota: "Horario ininterrumpido.",
-    etiqueta: "Obrador central · Horno propio",
+    // Con el sitio en la etiqueta (27-10-2026): se ve claro cuál es cuál.
+    etiqueta: "Obrador central · Alcobendas",
     pickupUntil: "19:30",
     pickupUntilReducido: "14:30",
     openDays: [0, 1, 2, 3, 4, 5, 6],
@@ -101,7 +102,8 @@ export const stores: readonly Store[] = [
       { dias: "Sábados", horas: ["10:00 – 15:00", "17:00 – 20:30"] },
       { dias: "Domingos y festivos", horas: ["10:00 – 15:00"] },
     ],
-    etiqueta: "Pastelería · Abierto tardes",
+    // Sin «Abierto tardes» (27-10-2026): Pozuelo también hornea (empanadas y salados).
+    etiqueta: "Pastelería · Pozuelo",
     pickupUntil: "20:30",
     cierreFestivo: "15:00",
     openDays: [0, 1, 2, 3, 4, 5, 6],
