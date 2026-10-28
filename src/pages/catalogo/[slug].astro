@@ -11,6 +11,7 @@ import { seccionesDeHuecos, slugsFijos, type DefinicionPack } from "~/data/packs
 import { definicionesPorSlugs } from "~/lib/db/packs";
 import { fichaPack, type FichaPack } from "~/lib/pack-ficha";
 import { SIN_CACHE } from "~/lib/lectura-publica";
+import { empiezaPorElMayor } from "~/lib/tamanos";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
 // (`astro.config.mjs`) y el panel invalidándola al guardar.
@@ -253,6 +254,7 @@ const breadcrumbs = {
               unitPriceAntesCents={product.precioAntesCents}
               unit={product.unit ?? undefined}
               variants={product.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents }))}
+              empiezaPorElMayor={empiezaPorElMayor(product)}
             />
             </>
           )}

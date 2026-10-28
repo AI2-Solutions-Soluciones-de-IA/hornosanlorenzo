@@ -21,6 +21,8 @@ interface Props {
   agotado?: boolean;
   unit?: string;
   variants?: { id: string; label: string; priceCents: number; precioAntesCents?: number }[];
+  /** El selector arranca en el tamaño más grande (`~/lib/tamanos.ts`). */
+  empiezaPorElMayor?: boolean;
 }
 
 const {
@@ -32,6 +34,7 @@ const {
   agotado = false,
   unit,
   variants,
+  empiezaPorElMayor = false,
 } = Astro.props;
 
 /** Con varios tamaños la tarjeta lleva selector y el precio lo pone la isla. */
@@ -101,6 +104,7 @@ const precioAntes =
       unitPriceAntesCents={precioAntes}
       variants={variants}
       compact={true}
+      empiezaPorElMayor={empiezaPorElMayor}
     />
   ) : (
     <div class="linea-compra">

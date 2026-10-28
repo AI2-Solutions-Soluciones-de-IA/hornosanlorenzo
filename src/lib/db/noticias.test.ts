@@ -178,6 +178,7 @@ describeSiHayBD("repositorio de noticias", () => {
         slug: roscon.slug,
         name: "Roscón de Reyes (noticias.test)",
         category: "tartas",
+        seccion: null,
         priceCents: 2400,
         consultar: false,
         activo: true,

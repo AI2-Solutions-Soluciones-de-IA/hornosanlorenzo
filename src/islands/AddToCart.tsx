@@ -16,6 +16,8 @@ type Props = {
   unit?: string;
   variants?: Variant[];
   compact?: boolean;
+  /** Arranca en el último tamaño, el más grande (`~/lib/tamanos.ts`). */
+  empiezaPorElMayor?: boolean;
 };
 
 export default function AddToCart({
@@ -26,12 +28,15 @@ export default function AddToCart({
   unit,
   variants,
   compact,
+  empiezaPorElMayor = false,
 }: Props) {
   // Si solo algún tamaño está de oferta, se abre en ese: si no, la oferta
-  // de Este mes queda escondida detrás del desplegable.
-  const [variantId, setVariantId] = useState<string | undefined>(
-    (variants?.find((v) => v.precioAntesCents !== undefined) ?? variants?.[0])?.id,
-  );
+  // de Este mes queda escondida detrás del desplegable. Con varios de oferta,
+  // el primero en el orden de partida (el más grande, si empieza por él).
+  const [variantId, setVariantId] = useState<string | undefined>(() => {
+    const orden = empiezaPorElMayor ? [...(variants ?? [])].reverse() : variants ?? [];
+    return (orden.find((v) => v.precioAntesCents !== undefined) ?? orden[0])?.id;
+  });
   const [qty, setQty] = useState(1);
 
   const variant = variants?.find((v) => v.id === variantId);

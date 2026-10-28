@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import CompraRapida from "~/components/CompraRapida.astro";
 import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
+import { empiezaPorElMayor } from "~/lib/tamanos";
 import { formatDate } from "~/lib/format";
 import type { ProductoEnNoticia } from "~/lib/db/noticias";
 
@@ -72,6 +73,7 @@ const comprable = producto && producto.activo ? producto : null;
           agotado={comprable.agotado}
           unit={comprable.unit ?? undefined}
           variants={comprable.variantes}
+          empiezaPorElMayor={empiezaPorElMayor(comprable)}
         />
         )}
       </div>

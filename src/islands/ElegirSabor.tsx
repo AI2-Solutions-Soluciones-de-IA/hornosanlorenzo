@@ -18,6 +18,8 @@ export type Sabor = {
   variants: Variant[];
   /** Etiqueta de la carta del sabor, si la tiene. */
   especialidad?: string | null;
+  /** Arranca en el último tamaño, el más grande (`~/lib/tamanos.ts`). */
+  empiezaPorElMayor?: boolean;
 };
 
 type Props = {
@@ -46,6 +48,10 @@ const selectStyle: React.CSSProperties = {
 const comprable = (s: Sabor) =>
   !s.agotado && !s.consultar && s.priceCents !== null;
 
+function tamanoInicial(s: Sabor): string | undefined {
+  return (s.empiezaPorElMayor ? s.variants.at(-1) : s.variants[0])?.id;
+}
+
 /**
  * Selector de sabor de una tarjeta agrupada (`ProductoSaboresCard`). Cada
  * sabor es su propio producto: lo que entra al carrito es el slug y el
@@ -63,14 +69,14 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
   );
   const sabor = sabores.find((s) => s.slug === slug) ?? sabores[0];
   const [variantId, setVariantId] = useState<string | undefined>(
-    sabor.variants[0]?.id,
+    tamanoInicial(sabor),
   );
 
-  // Cada sabor trae sus tamaños: al cambiar de sabor se vuelve al primero.
+  // Cada sabor trae sus tamaños: al cambiar de sabor se vuelve al de partida.
   function elegirSabor(nuevo: string) {
     setSlug(nuevo);
     const s = sabores.find((x) => x.slug === nuevo);
-    setVariantId(s?.variants[0]?.id);
+    setVariantId(s && tamanoInicial(s));
   }
 
   const variant = sabor.variants.find((v) => v.id === variantId);

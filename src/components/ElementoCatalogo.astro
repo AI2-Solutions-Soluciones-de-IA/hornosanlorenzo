@@ -12,6 +12,7 @@ import ProductoSaboresCard from "~/components/ProductoSaboresCard.astro";
 import { grupoOfCategory, type CategoryId } from "~/data/categories";
 import type { DefinicionPack } from "~/data/packs";
 import { seCompraDesdeLaFicha } from "~/lib/pack-ficha";
+import { empiezaPorElMayor } from "~/lib/tamanos";
 import type { Producto } from "~/lib/db/productos";
 import type { ElementoCatalogo } from "~/lib/sabores";
 import { bloqueDe, isSeccionId } from "~/data/secciones";
@@ -80,6 +81,7 @@ const datos = sinFiltro
       unit={primero.unit ?? undefined}
       variants={primero.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents }))}
       especialidad={primero.especialidad}
+      empiezaPorElMayor={empiezaPorElMayor(primero)}
     />
   ) : (
     <ProductoSaboresCard

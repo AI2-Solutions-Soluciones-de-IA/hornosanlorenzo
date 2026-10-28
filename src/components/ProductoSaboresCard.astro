@@ -8,6 +8,7 @@ import { Image } from "astro:assets";
 import ElegirSabor from "~/islands/ElegirSabor.tsx";
 import type { Producto } from "~/lib/db/productos";
 import { categoryById, isCategoryId } from "~/data/categories";
+import { empiezaPorElMayor } from "~/lib/tamanos";
 
 interface Props {
   titulo: string;
@@ -75,6 +76,7 @@ const imagen = conFoto
         agotado: p.agotado,
         unit: p.unit ?? undefined,
         especialidad: p.especialidad,
+        empiezaPorElMayor: empiezaPorElMayor(p),
         variants: p.variantes.map((v) => ({ id: v.variantId, label: v.label, priceCents: v.priceCents, precioAntesCents: v.precioAntesCents })),
       }))}
     />

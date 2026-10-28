@@ -26,6 +26,7 @@ export type ProductoEnNoticia = {
   name: string;
   /** Un pack no se añade desde la noticia: hay que elegir en su ficha. */
   category: string;
+  seccion: string | null;
   priceCents: number | null;
   consultar: boolean;
   activo: boolean;
@@ -97,7 +98,7 @@ const CAMPOS = `
   to_char(oferta_hasta, 'YYYY-MM-DD') as "ofertaHasta",
   enviada_en as "enviadaEn",
   (select json_build_object(
-            'slug', p.slug, 'name', p.name, 'category', p.category,
+            'slug', p.slug, 'name', p.name, 'category', p.category, 'seccion', p.seccion,
             'priceCents', p.price_cents, 'consultar', p.consultar,
             'activo', p.activo, 'agotado', p.agotado, 'unit', p.unit,
             'variantes', coalesce(
