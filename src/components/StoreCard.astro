@@ -4,12 +4,10 @@ import type { Store } from "~/data/stores";
 
 interface Props {
   store: Store;
-  /** 1, 2…: va encima del nombre, como «01». */
-  numero: number;
   /** La foto a la derecha (la segunda tienda, para alternar). */
   fotoDerecha?: boolean;
 }
-const { store, numero, fotoDerecha = false } = Astro.props;
+const { store, fotoDerecha = false } = Astro.props;
 const lugar = `${store.address.split(",")[0]}, ${store.shortName}`;
 ---
 <!-- Diseño de la imagen «nuestras tiendas» del cliente (19-10-2026): caja
@@ -32,8 +30,7 @@ const lugar = `${store.address.split(",")[0]}, ${store.shortName}`;
     </div>
 
     <div class="p-6 sm:p-8 lg:p-10">
-      <p class="numeracion" style="color:var(--color-teja)">{String(numero).padStart(2, "0")}</p>
-      <h2 class="text-3xl sm:text-4xl mt-2">{store.city}</h2>
+      <h2 class="text-3xl sm:text-4xl">{store.city}</h2>
       <p class="mt-2 text-sm text-[color:var(--color-ink-muted)]">{store.address}</p>
       <p class="text-sm text-[color:var(--color-ink-muted)]">{store.postal} {store.city} (Madrid)</p>
 

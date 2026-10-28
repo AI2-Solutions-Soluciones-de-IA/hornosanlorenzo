@@ -23,7 +23,7 @@ const jsonLd = stores.map((s) => ({
 ---
 <MarketingLayout
   title="Tiendas"
-  description="Dos obradores con horno propio en Madrid: Alcobendas (sede) y Pozuelo de Alarcón. Reparto propio de lunes a sábado."
+  description="Dos establecimientos con horno propio en Madrid: Alcobendas (sede) y Pozuelo de Alarcón. Reparto propio de lunes a sábado."
   jsonLd={jsonLd}
 >
   <!-- Diseño de la imagen «nuestras tiendas» del cliente (19-10-2026):
@@ -34,7 +34,7 @@ const jsonLd = stores.map((s) => ({
       <div>
         <p class="numeracion antetitulo" style="color:var(--color-avellana)">Nuestras tiendas</p>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl mt-5 leading-[1.05]">
-          <span class="block">Dos obradores en Madrid.</span>
+          <span class="block">Dos establecimientos en Madrid.</span>
           <span class="block">Una misma casa.</span>
         </h1>
         <p class="mt-6 max-w-md text-sm sm:text-base leading-relaxed text-[color:var(--color-leche)]/85">
@@ -52,7 +52,7 @@ const jsonLd = stores.map((s) => ({
 
   <section class="relative z-10 mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 -mt-10 md:-mt-24">
     <div class="grid gap-10 lg:px-8">
-      {stores.map((s, i) => <StoreCard store={s} numero={i + 1} fotoDerecha={i % 2 === 1} />)}
+      {stores.map((s, i) => <StoreCard store={s} fotoDerecha={i % 2 === 1} />)}
     </div>
   </section>
 
@@ -82,7 +82,7 @@ const jsonLd = stores.map((s) => ({
     <div class="border-t border-[color:var(--color-line)] py-8 flex flex-wrap items-end justify-between gap-6">
       <div>
         <p class="numeracion" style="color:var(--color-teja)">Formas de pago</p>
-        <p class="mt-2 text-sm">Tarjeta, efectivo, cheques gourmet y tarjetas de empresa en tienda · Transferencia · Tarjeta, Apple Pay y Google Pay online</p>
+        <p class="mt-2 text-sm">Tarjeta, efectivo y tarjetas de empresa en tienda · Transferencia · Tarjeta, Apple Pay y Google Pay online</p>
       </div>
       <p class="font-[family-name:var(--font-display)] italic text-xl">Te esperamos. Como siempre, desde 1986.</p>
     </div>

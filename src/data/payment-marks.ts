@@ -7,8 +7,8 @@
  * Las marcas pertenecen a sus titulares y solo se usan para indicar qué formas
  * de pago se aceptan.
  *
- * Las formas de pago sin marca (transferencia, cheques gourmet, tarjetas de
- * empresa, efectivo) van como etiqueta de texto: `paymentLabels`.
+ * Las formas de pago sin marca (transferencia, tarjetas de empresa,
+ * efectivo) van como etiqueta de texto: `paymentLabels`.
  */
 export type PaymentMark = { id: string; label: string; path: string };
 

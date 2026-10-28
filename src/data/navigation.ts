@@ -105,9 +105,9 @@ export const footerNav: readonly { href: string; label: string }[] = [
 
 /** Formas de pago sin marca gráfica disponible: se muestran como etiqueta. */
 export const paymentLabels: readonly { id: string; label: string }[] = [
-  // Bizum no lo tienen: transferencia, cheques gourmet y tarjetas de empresa (21-10-2026).
+  // Bizum no lo tienen: transferencia y tarjetas de empresa (21-10-2026). Sin
+  // cheques gourmet, y las tarjetas de empresa solo en tienda (28-10-2026).
   { id: "transferencia", label: "Transferencia" },
-  { id: "cheques-gourmet", label: "Cheques gourmet" },
-  { id: "tarjetas-empresa", label: "Tarjetas de empresa" },
+  { id: "tarjetas-empresa", label: "Tarjetas de empresa (en tienda)" },
   { id: "efectivo", label: "Efectivo en tienda" },
 ] as const;
