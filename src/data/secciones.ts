@@ -105,9 +105,12 @@ export const secciones: readonly Seccion[] = [
     order: 1000,
   },
   {
+    // Desde el 28-10-2026 la de las tartas sin gluten; las sin alérgenos
+    // (y veganas) van todas en `salado-para-todos`. El id no cambia: lo
+    // guardan los productos.
     id: "dulce-para-todos",
-    label: "Dulce sin alérgenos",
-    eyebrow: "Sin alérgenos · Dulce",
+    label: "Sin gluten",
+    eyebrow: "Sin gluten · Dulce",
     order: 1050,
   },
   {
@@ -149,8 +152,8 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "salado-para-todos",
-    label: "Salado sin alérgenos",
-    eyebrow: "Sin alérgenos · Salado",
+    label: "Sin alérgenos y especial para veganos",
+    eyebrow: "Sin alérgenos · Veganos",
     order: 1750,
   },
   {
