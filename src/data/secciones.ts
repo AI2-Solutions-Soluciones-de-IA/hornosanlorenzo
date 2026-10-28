@@ -50,7 +50,7 @@ export type Seccion = {
 export const secciones: readonly Seccion[] = [
   {
     id: "tartas-obrador",
-    label: "Las Tartas del Obrador",
+    label: "Tartas de bizcocho",
     eyebrow: "Dulce · Tartas",
     aviso:
       "¿Una tarta personalizada con foto? No se encarga por la web: llama directamente a la tienda y te la preparamos.",
