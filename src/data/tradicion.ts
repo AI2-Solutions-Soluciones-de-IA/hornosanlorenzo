@@ -79,9 +79,9 @@ export const tradicion = {
       body: "Alcobendas (sede) y Pozuelo de Alarcón, los dos con horno propio.",
     },
     {
-      figure: "De lunes a sábado",
-      // «Reparto propio», en grande y subrayado como el de los obradores.
-      destacado: "Reparto propio",
+      // «L–S» como cifra y debajo, remarcado, el reparto (28-10-2026).
+      figure: "L–S",
+      destacado: "Reparto propio de lunes a sábado",
       body: "Entrega diaria con furgoneta y repartidor de la casa.",
     },
   ],
