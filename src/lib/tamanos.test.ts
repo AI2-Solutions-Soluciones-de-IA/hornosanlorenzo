@@ -12,9 +12,12 @@ describe("empiezaPorElMayor", () => {
     expect(empiezaPorElMayor({ slug: "plancha-red-velvet", seccion: "coleccion-especial" })).toBe(true);
   });
 
+  it("la tarta con foto personalizada también", () => {
+    expect(empiezaPorElMayor({ slug: "tarta-retrato", seccion: "detalles-celebracion" })).toBe(true);
+  });
+
   it("el resto arranca en el primero", () => {
     expect(empiezaPorElMayor({ slug: "mini-croissants-cebra", seccion: "las-lorenzas" })).toBe(false);
-    expect(empiezaPorElMayor({ slug: "tarta-retrato", seccion: "detalles-celebracion" })).toBe(false);
     expect(empiezaPorElMayor({ slug: "sin-seccion", seccion: null })).toBe(false);
   });
 });
