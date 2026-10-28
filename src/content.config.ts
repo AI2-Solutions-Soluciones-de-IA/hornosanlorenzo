@@ -2,16 +2,9 @@ import { defineCollection, z } from "astro:content";
 import { glob } from "astro/loaders";
 import { categoryIds } from "~/data/categories";
 import { seccionIds } from "~/data/secciones";
+import { alergenoIds } from "~/data/alergenos";
 
-const allergens = z.enum([
-  "gluten",
-  "huevo",
-  "leche",
-  "frutos-secos",
-  "soja",
-  "sesamo",
-  "sulfitos",
-]);
+const allergens = z.enum(alergenoIds);
 
 const variant = z.object({
   id: z.string(),

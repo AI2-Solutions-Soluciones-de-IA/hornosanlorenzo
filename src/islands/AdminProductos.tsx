@@ -5,6 +5,7 @@ import { formatPriceCents } from "~/lib/format";
 import { eurosACentimos } from "~/lib/euros";
 import { AVISO_DESACTIVAR } from "~/lib/panel-textos";
 import { paginar } from "~/lib/paginacion";
+import { alergenos } from "~/data/alergenos";
 import Paginacion from "~/islands/Paginacion";
 
 /** Fichas por página: con más, la lista ya obliga a un scroll muy largo. */
@@ -59,19 +60,8 @@ type Props = {
   productosIniciales: Producto[];
 };
 
-// Mismas 7 opciones que valida `src/pages/api/admin/productos.ts`: si se
-// desincroniza esta lista con la del servidor, el peor caso es una casilla
-// que el servidor rechaza, no una que se guarde sin que el servidor la
-// conozca.
-const ALERGENOS: { id: string; label: string }[] = [
-  { id: "gluten", label: "Gluten" },
-  { id: "huevo", label: "Huevo" },
-  { id: "leche", label: "Leche" },
-  { id: "frutos-secos", label: "Frutos secos" },
-  { id: "soja", label: "Soja" },
-  { id: "sesamo", label: "Sésamo" },
-  { id: "sulfitos", label: "Sulfitos" },
-];
+// Los 14 de la ley, la misma lista que valida `src/pages/api/admin/productos.ts`.
+const ALERGENOS: readonly { id: string; label: string }[] = alergenos;
 
 // Mismo criterio de búsqueda que `CategoryFilter.tsx`: sin acentos, para que
 // «roscon» encuentre «Roscón».

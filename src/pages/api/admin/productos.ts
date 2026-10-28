@@ -10,6 +10,7 @@ import { invalidar, rutasTrasGuardarProducto } from "~/lib/cache";
 import { rutasDePacks } from "~/lib/db/packs";
 import { esAdmin } from "~/lib/auth/guardia";
 import { categoryIds } from "~/data/categories";
+import { alergenoIds } from "~/data/alergenos";
 import { seccionIds } from "~/data/secciones";
 
 export const prerender = false;
@@ -27,15 +28,7 @@ const MAX_FOTOS_EXTRA = 4;
 
 const noEncontrado = () => new Response("No encontrado", { status: 404 });
 
-const ALERGENOS = [
-  "gluten",
-  "huevo",
-  "leche",
-  "frutos-secos",
-  "soja",
-  "sesamo",
-  "sulfitos",
-] as const;
+const ALERGENOS = alergenoIds;
 
 /**
  * Las categorías, las secciones y los alérgenos salen de las listas que ya

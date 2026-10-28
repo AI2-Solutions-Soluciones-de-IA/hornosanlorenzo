@@ -11,6 +11,7 @@ import { seccionesDeHuecos, slugsFijos, type DefinicionPack } from "~/data/packs
 import { definicionesPorSlugs } from "~/lib/db/packs";
 import { fichaPack, type FichaPack } from "~/lib/pack-ficha";
 import { SIN_CACHE } from "~/lib/lectura-publica";
+import { nombreAlergeno } from "~/data/alergenos";
 import { empiezaPorElMayor } from "~/lib/tamanos";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
@@ -103,15 +104,6 @@ const seccion =
   product.seccion && isSeccionId(product.seccion) ? seccionById(product.seccion) : null;
 const eyebrow = seccion?.label ?? cat?.label ?? "";
 
-const allergensLabel: Record<string, string> = {
-  gluten: "gluten",
-  huevo: "huevo",
-  leche: "leche",
-  "frutos-secos": "frutos secos",
-  soja: "soja",
-  sesamo: "sésamo",
-  sulfitos: "sulfitos",
-};
 
 // Solo se arma el objeto de imagen cuando los tres datos están presentes:
 // sin `!`, y sin arriesgarse a pintar un `<Image>` a medio completar.
@@ -263,7 +255,7 @@ const breadcrumbs = {
         {product.allergens.length > 0 && (
           <div class="mt-8">
             <p class="numeracion">Alérgenos</p>
-            <p class="mt-1 text-sm">Contiene: {product.allergens.map((a) => allergensLabel[a] ?? a).join(", ")}.</p>
+            <p class="mt-1 text-sm">Contiene: {product.allergens.map((a) => nombreAlergeno(a).toLowerCase()).join(", ")}.</p>
           </div>
         )}
         {/* Sin el cuerpo en Markdown: con la descripción basta (7-10-2026).

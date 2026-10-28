@@ -216,6 +216,42 @@ describe("guardia y validación de /api/admin/productos", () => {
     expect(cuerpo.error).toMatch(/identificador/i);
   });
 
+  it("admite los 14 alérgenos de la ley, también los que llegaron el 28-10-2026", async () => {
+    const { POST } = await import("~/pages/api/admin/productos");
+    const { crearProducto } = await import("~/lib/db/productos");
+    vi.mocked(crearProducto).mockResolvedValueOnce({ slug: "tarta-salada" } as never);
+    const r = await POST({
+      request: peticionProducto({
+        name: "Tarta salada",
+        category: "tartas",
+        shortDescription: "Una tarta.",
+        priceCents: 1000,
+        consultar: false,
+        allergens: ["pescado", "crustaceos", "moluscos", "apio", "mostaza", "cacahuetes", "altramuces"],
+        variantes: [],
+      }),
+      locals: { usuario: admin },
+    } as never);
+    expect(r.status).toBe(201);
+  });
+
+  it("un alérgeno inventado no entra", async () => {
+    const { POST } = await import("~/pages/api/admin/productos");
+    const r = await POST({
+      request: peticionProducto({
+        name: "Tarta",
+        category: "tartas",
+        shortDescription: "Una tarta.",
+        priceCents: 1000,
+        consultar: false,
+        allergens: ["cacao"],
+        variantes: [],
+      }),
+      locals: { usuario: admin },
+    } as never);
+    expect(r.status).toBe(400);
+  });
+
   describe("fotos del carrusel", () => {
     const foto = { url: "https://blob.test/productos/b.webp", ancho: 1600, alto: 1067 };
     const conFotos = (extra: Record<string, unknown>) => ({
