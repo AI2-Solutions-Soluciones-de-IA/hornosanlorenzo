@@ -990,7 +990,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
 
           <div style={{ marginTop: 16 }}>
             <label style={label} htmlFor="ap-especialidad">
-              Etiqueta de especialidad
+              Etiqueta (especialidad, apta para veganos…)
             </label>
             <input
               id="ap-especialidad"
@@ -1005,6 +1005,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
               <option value="Especialidad desde 1986" />
               <option value="Especialidad" />
               <option value="Especialidad niños" />
+              <option value="Apta para veganos" />
             </datalist>
           </div>
 
