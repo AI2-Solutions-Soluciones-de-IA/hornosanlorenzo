@@ -88,10 +88,12 @@ const tarjetas = [
         class="absolute inset-0 h-full w-full object-cover object-[60%_40%]"
       />
     </div>
-    <div class="flex flex-col justify-center gap-[18px] lg:gap-7 px-6 pt-9 pb-24 lg:pt-24 lg:pr-14 lg:pb-[152px] lg:pl-10 lg:max-w-[680px] lg:ml-auto">
+    <!-- Texto centrado, a petición del cliente (28-10-2026). -->
+    <div class="flex flex-col items-center justify-center text-center gap-[18px] lg:gap-7 px-6 pt-9 pb-24 lg:pt-24 lg:pr-14 lg:pb-[152px] lg:pl-10 lg:max-w-[680px] lg:ml-auto">
       <p class="flex items-center gap-3 lg:gap-3.5 text-[11px] lg:text-xs font-medium uppercase tracking-[0.22em]" style={`color:${melocoton}`}>
         <span class="block w-8 lg:w-10 h-0.5" style={`background:${melocoton}`} aria-hidden="true"></span>
-        A quién servimos<span class="hidden lg:inline">&nbsp;· desde 1986</span>
+        <span>A quién servimos<span class="hidden lg:inline">&nbsp;· desde 1986</span></span>
+        <span class="block w-8 lg:w-10 h-0.5" style={`background:${melocoton}`} aria-hidden="true"></span>
       </p>
       <h1 class="text-4xl lg:text-6xl font-bold leading-[1.1] lg:leading-[1.05]">
         Un obrador.<br />Tres formas de servirte.
@@ -104,7 +106,7 @@ const tarjetas = [
         <p>Desde nuestro obrador, horneamos cada día, con la calidad y el sabor de siempre y una relación calidad-precio difícil de igualar.</p>
         <p class="font-semibold">Te esperamos en nuestras tiendas, abiertas de lunes a domingo, o te lo llevamos directamente con nuestro reparto propio de lunes a sábado.</p>
       </div>
-      <p class="hidden lg:flex items-center gap-4 pt-1">
+      <p class="hidden lg:flex items-center justify-center gap-4 pt-1">
         <span class="text-sm" style={`color:${melocoton}`}>¿No sabes cuál eres? Llámanos:</span>
         <a href={`tel:${alcobendas.phone}`} class="font-[family-name:var(--font-display)] text-[22px] text-[color:var(--color-leche)] no-underline border-b border-[color:var(--color-leche)]/40 hover:border-[color:var(--color-leche)]">
           {alcobendas.phoneDisplay}
