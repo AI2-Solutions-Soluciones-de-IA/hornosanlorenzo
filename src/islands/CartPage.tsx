@@ -17,6 +17,7 @@ import {
   type CheckoutAparcado,
 } from "~/lib/reanudar-checkout";
 import { VENTA_PAUSADA_COPY } from "~/lib/venta-online";
+import { stores } from "~/data/stores";
 
 type Props = {
   /** Sin sesión llega `undefined` y el checkout se abre como siempre. */
@@ -290,15 +291,33 @@ export default function CartPage({ prefill, ventaPausada = false }: Props) {
           )}
           {sobreImporte && <p>{LIMITE_IMPORTE_COPY}</p>}
           {sobreUnidades && <p>{LIMITE_UNIDADES_COPY}</p>}
-          <p style={{ marginTop: 8, fontWeight: 600 }}>
-            <a href={`tel:${OFICINA_CONTACTO.phone}`} style={{ textDecoration: "underline" }}>
-              Llamar a la oficina
-            </a>
-            {" · "}
-            <a href={`mailto:${OFICINA_CONTACTO.email}`} style={{ textDecoration: "underline" }}>
-              Escribir un correo
-            </a>
-          </p>
+          {/* En pausa se encarga por teléfono en las tiendas; los límites
+              de pedido grande, en cambio, se hablan con la oficina. */}
+          {ventaPausada ? (
+            <p style={{ marginTop: 8, fontWeight: 600 }}>
+              {stores.map((s, i) => (
+                <span key={s.id}>
+                  {i > 0 && " · "}
+                  <span style={{ whiteSpace: "nowrap" }}>
+                    {s.shortName}{" "}
+                    <a href={`tel:${s.phone}`} style={{ textDecoration: "underline" }}>
+                      {s.phoneDisplay}
+                    </a>
+                  </span>
+                </span>
+              ))}
+            </p>
+          ) : (
+            <p style={{ marginTop: 8, fontWeight: 600 }}>
+              <a href={`tel:${OFICINA_CONTACTO.phone}`} style={{ textDecoration: "underline" }}>
+                Llamar a la oficina
+              </a>
+              {" · "}
+              <a href={`mailto:${OFICINA_CONTACTO.email}`} style={{ textDecoration: "underline" }}>
+                Escribir un correo
+              </a>
+            </p>
+          )}
         </div>
       )}
 
