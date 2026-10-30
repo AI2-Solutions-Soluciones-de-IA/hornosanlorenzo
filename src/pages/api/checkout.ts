@@ -16,6 +16,7 @@ import {
 import { crearPedidoIniciado, anotarSesionStripe, numeroDePedido } from "~/lib/db/pedidos";
 import { sesionesQueCerrar } from "~/lib/db/capacidad";
 import { dispositivoDe } from "~/lib/dispositivo";
+import { ventaOnlinePausada, VENTA_PAUSADA_COPY } from "~/lib/venta-online";
 
 // El cobro se calcula en servidor: esta ruta no puede prerenderizarse.
 export const prerender = false;
@@ -29,6 +30,10 @@ const json = (body: unknown, status = 200) =>
   });
 
 export const POST: APIRoute = async ({ request, url, locals }) => {
+  // Con la venta en pausa no se valora ni se anota nada: el carrito lo
+  // avisa antes, pero esta es la puerta que de verdad cierra.
+  if (ventaOnlinePausada()) return json({ error: VENTA_PAUSADA_COPY }, 503);
+
   const secret = import.meta.env.STRIPE_SECRET_KEY;
 
   let raw: unknown;

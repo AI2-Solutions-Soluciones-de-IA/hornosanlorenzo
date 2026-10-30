@@ -3,6 +3,7 @@ import BaseLayout from "~/layouts/BaseLayout.astro";
 import Header from "~/components/Header.astro";
 import Footer from "~/components/Footer.astro";
 import CookieBanner from "~/islands/CookieBanner.tsx";
+import { ventaOnlinePausada, VENTA_PAUSADA_COPY } from "~/lib/venta-online";
 
 interface Props {
   title: string;
@@ -15,6 +16,11 @@ interface Props {
 const props = Astro.props;
 ---
 <BaseLayout {...props}>
+  {ventaOnlinePausada() && (
+    <p role="status" class="bg-[color:var(--color-moka)] text-[color:var(--color-leche)] text-center text-sm px-4 py-2.5">
+      Estamos estrenando web. {VENTA_PAUSADA_COPY}
+    </p>
+  )}
   <Header />
   <main id="main">
     <slot />

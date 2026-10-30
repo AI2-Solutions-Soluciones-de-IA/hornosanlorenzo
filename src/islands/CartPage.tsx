@@ -16,13 +16,16 @@ import {
   recogerCheckout,
   type CheckoutAparcado,
 } from "~/lib/reanudar-checkout";
+import { VENTA_PAUSADA_COPY } from "~/lib/venta-online";
 
 type Props = {
   /** Sin sesión llega `undefined` y el checkout se abre como siempre. */
   prefill?: Prefill;
+  /** Venta online cerrada (`~/lib/venta-online.ts`): el carrito se ve, pero no se paga. */
+  ventaPausada?: boolean;
 };
 
-export default function CartPage({ prefill }: Props) {
+export default function CartPage({ prefill, ventaPausada = false }: Props) {
   const { cart, totalCents, totalQty, updateQty, removeItem, clearCart } =
     useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -88,7 +91,7 @@ export default function CartPage({ prefill }: Props) {
   // deja seguir, que el servidor lo rechazaría igual.
   const sobreUnidades = productoSobreLimite(cart.items) !== null;
   const sobreImporte = superaImporte(totalCents);
-  const bloqueado = sobreUnidades || sobreImporte;
+  const bloqueado = sobreUnidades || sobreImporte || ventaPausada;
 
   return (
     <section style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1rem" }}>
@@ -282,6 +285,9 @@ export default function CartPage({ prefill }: Props) {
             lineHeight: 1.5,
           }}
         >
+          {ventaPausada && (
+            <p>{VENTA_PAUSADA_COPY} Mientras tanto, puedes hacer tu encargo por teléfono.</p>
+          )}
           {sobreImporte && <p>{LIMITE_IMPORTE_COPY}</p>}
           {sobreUnidades && <p>{LIMITE_UNIDADES_COPY}</p>}
           <p style={{ marginTop: 8, fontWeight: 600 }}>

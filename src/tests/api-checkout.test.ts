@@ -139,6 +139,17 @@ describe("POST /api/checkout", () => {
     errorSpy.mockRestore();
   });
 
+  it("con la venta online en pausa, 503 y ni se valora ni se anota el pedido", async () => {
+    vi.stubEnv("VENTA_ONLINE_PAUSADA", "1");
+    const { POST } = await import("~/pages/api/checkout");
+    const respuesta = await POST(contexto() as never);
+
+    expect(respuesta.status).toBe(503);
+    expect(priceOrder).not.toHaveBeenCalled();
+    expect(crearPedidoIniciado).not.toHaveBeenCalled();
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+
   describe("sin STRIPE_SECRET_KEY (modo sin pago, mientras no haya claves)", () => {
     beforeEach(() => vi.stubEnv("STRIPE_SECRET_KEY", ""));
 

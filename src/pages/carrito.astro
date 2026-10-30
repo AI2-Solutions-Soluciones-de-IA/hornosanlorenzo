@@ -2,6 +2,7 @@
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import CartPage from "~/islands/CartPage.tsx";
 import { listarDirecciones } from "~/lib/db/direcciones";
+import { ventaOnlinePausada } from "~/lib/venta-online";
 
 // Necesita leer la sesión de la petición para precargar los datos de quien
 // tiene cuenta: sin esta línea Astro serviría la página como estática,
@@ -51,5 +52,5 @@ const prefill = usuario
   title="Tu pedido"
   description="Revisa tu pedido y termínalo online."
 >
-  <CartPage client:only="react" prefill={prefill} />
+  <CartPage client:only="react" prefill={prefill} ventaPausada={ventaOnlinePausada()} />
 </MarketingLayout>
