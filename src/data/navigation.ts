@@ -64,7 +64,7 @@ export const mainNav: readonly NavItem[] = [
       },
     ],
   },
-  { href: "/noticias", label: "Promociones del mes" },
+  { href: "/noticias", label: "Este mes" },
   {
     href: "/a-quien-servimos",
     label: "A quién servimos",
@@ -99,7 +99,7 @@ export const footerNav: readonly { href: string; label: string }[] = [
   { href: "/servicios", label: "Servicios" },
   { href: "/tradicion-y-calidad", label: "Tradición y calidad" },
   { href: "/tiendas", label: "Nuestras tiendas" },
-  { href: "/noticias", label: "Promociones del mes" },
+  { href: "/noticias", label: "Este mes" },
   { href: "/contacto", label: "Contacto" },
 ] as const;
 
