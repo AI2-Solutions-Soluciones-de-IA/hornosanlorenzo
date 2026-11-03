@@ -1,13 +1,18 @@
 ---
 import LegalLayout from "~/layouts/LegalLayout.astro";
 import { site } from "~/data/site";
+import { stores } from "~/data/stores";
 ---
 <LegalLayout title="Política de privacidad" description="Cómo tratamos tus datos cuando contactas con nosotros o te suscribes a las ofertas.">
   <p>
     Esta política regula el tratamiento de datos personales que se realiza a través del formulario de contacto y de la suscripción a las ofertas del sitio.
   </p>
   <h2>Responsable del tratamiento</h2>
-  <p>Horno San Lorenzo (datos completos en el <a href="/legal/aviso-legal">aviso legal</a>).</p>
+  <p>
+    {site.titular.nombre}, con NIF {site.titular.nif} ({site.name}), con domicilio en {stores[0].address},
+    {stores[0].postal} {stores[0].city} (Madrid) y correo <a href={`mailto:${site.email}`}>{site.email}</a>.
+    Más datos en el <a href="/legal/aviso-legal">aviso legal</a>.
+  </p>
   <h2>Datos que recogemos</h2>
   <ul>
     <li>Nombre y apellidos.</li>

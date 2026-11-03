@@ -99,7 +99,7 @@
 - [ ] **Falta el correo de aviso al obrador de los pedidos `sin_pago`**: el
       webhook de Stripe avisa por Resend al cobrar, pero esta rama no pasa por
       ahí. Hoy solo se ven entrando en `/admin/pedidos`
-- [ ] Condiciones de compra: razón social, CIF y revisión legal
+- [x] Condiciones de compra: titular y NIF (3-11-2026, autónomo: Julio Francisco Rodríguez Alonso). Falta la revisión legal
 - [ ] Confirmar con el obrador gastos de envío (constante en
       `src/lib/entrega.ts`, hoy a cero). El pedido mínimo ya está: 25 € de
       lunes a jueves, 35 € viernes, sábados y vísperas de festivo

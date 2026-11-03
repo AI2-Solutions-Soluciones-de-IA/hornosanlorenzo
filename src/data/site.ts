@@ -18,6 +18,15 @@ export const site = {
     facebook: "https://facebook.com/hornosanlorenzo",
   },
   email: "info@hornosanlorenzo.com",
+  /**
+   * Titular de la web y del negocio, para los textos legales (3-11-2026):
+   * persona física (autónomo), así que no hay registro mercantil.
+   * «Horno San Lorenzo» es el nombre comercial.
+   */
+  titular: {
+    nombre: "Julio Francisco Rodríguez Alonso",
+    nif: "10826584R",
+  },
   ogImage: "/og-image.jpg",
   noteForDemo:
     "Demo en presentación — fotos representativas. Los productos, tiendas y datos de contacto son reales.",
