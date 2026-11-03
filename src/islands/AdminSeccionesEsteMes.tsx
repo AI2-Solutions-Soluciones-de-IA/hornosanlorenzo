@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { formatPriceCents } from "~/lib/format";
 import { eurosACentimos } from "~/lib/euros";
 import type { ProductoOpcion } from "~/islands/AdminNoticias.tsx";
+import { tiposSeccion, porTipoYOrden, type TipoSeccion } from "~/data/tipos-este-mes";
 
 /**
  * Secciones de Este mes («Productos nuevos sin gluten»…): título, frase,
@@ -15,6 +16,8 @@ export type Seccion = {
   descripcion: string;
   orden: number;
   publicada: boolean;
+  /** Bloque de Este mes: promociones, sugerencias o novedades, en ese orden. */
+  tipo: TipoSeccion;
   /** Lleva precios de oferta («10% de descuento»); si no, todo al precio de siempre. */
   conDescuento: boolean;
   productoIds: string[];
@@ -41,6 +44,7 @@ function formularioDesde(s: Seccion): Formulario {
     descripcion: s.descripcion,
     orden: s.orden,
     publicada: s.publicada,
+    tipo: s.tipo,
     conDescuento: s.conDescuento,
     productoIds: s.productoIds,
     ofertaHasta: s.ofertaHasta ?? "",
@@ -127,6 +131,7 @@ const VACIA: Formulario = {
   descripcion: "",
   orden: 0,
   publicada: true,
+  tipo: "sugerencia",
   conDescuento: false,
   productoIds: [],
   ofertas: {},
@@ -172,7 +177,9 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
   async function reordenar(nuevas: Seccion[]) {
     const antes = secciones;
     // `orden` = posición, igual que lo guarda el servidor (empieza en 1).
-    setSecciones(nuevas.map((x, i) => ({ ...x, orden: i + 1 })));
+    // Y por tipo: una sección arrastrada a otro bloque vuelve al suyo, como
+    // en la web, donde el tipo manda sobre el orden.
+    setSecciones(nuevas.map((x, i) => ({ ...x, orden: i + 1 })).sort(porTipoYOrden));
     setError(null);
     setMensaje(null);
     const r = await llamar("PATCH", { orden: nuevas.map((x) => x.id) });
@@ -231,9 +238,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
     if (!r.ok) return setError(r.error);
     const s: Seccion = r.datos.seccion;
     setSecciones((xs) =>
-      (xs.some((x) => x.id === s.id) ? xs.map((x) => (x.id === s.id ? s : x)) : [...xs, s]).sort(
-        (a, b) => a.orden - b.orden,
-      ),
+      (xs.some((x) => x.id === s.id) ? xs.map((x) => (x.id === s.id ? s : x)) : [...xs, s]).sort(porTipoYOrden),
     );
     setAbierto(false);
     setMensaje("Guardado. En la web se ve en unos segundos.");
@@ -253,7 +258,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
         Secciones con productos
       </h2>
       <p style={{ marginTop: 6, fontSize: 14, color: "var(--color-ink-muted)" }}>
-        Aparecen en Este mes debajo de las ofertas, en el orden que pongas. Por ejemplo, «Productos nuevos sin gluten». Solo las marcadas «Con descuento» llevan precio de oferta; el resto se vende al precio de siempre.
+        Aparecen en Este mes agrupadas en promociones, sugerencias y novedades, por ese orden; dentro de cada grupo, en el orden que pongas. Por ejemplo, «Productos nuevos sin gluten». Solo las marcadas «Con descuento» llevan precio de oferta; el resto se vende al precio de siempre.
       </p>
 
       {mensaje && (
@@ -274,13 +279,18 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
           </button>
           {secciones.length > 1 && (
             <p style={{ marginTop: 16, fontSize: 13, color: "var(--color-ink-muted)" }}>
-              En la web salen en este orden. Arrástralas por ⠿ o usa las flechas para cambiarlo.
+              En la web salen en este orden. Arrástralas por ⠿ o usa las flechas para cambiarlo dentro de su grupo; para pasar una a otro grupo, cambia su tipo.
             </p>
           )}
           <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0" }}>
             {secciones.map((s, i) => (
+              <Fragment key={s.id}>
+              {s.tipo !== secciones[i - 1]?.tipo && (
+                <li className="numeracion" style={{ marginTop: i === 0 ? 12 : 24, color: "var(--color-teja)" }}>
+                  {tiposSeccion.find((t) => t.id === s.tipo)?.label}
+                </li>
+              )}
               <li
-                key={s.id}
                 draggable
                 onDragStart={(e) => {
                   setArrastrando(s.id);
@@ -334,6 +344,7 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
                   Borrar
                 </button>
               </li>
+              </Fragment>
             ))}
           </ul>
         </>
@@ -347,6 +358,15 @@ export default function AdminSeccionesEsteMes({ seccionesIniciales, productos }:
           <div style={{ marginTop: 16 }}>
             <label style={label} htmlFor="sm-desc">Frase (opcional)</label>
             <input id="sm-desc" maxLength={300} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Recién salidos del obrador, para todos." style={field} />
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <label style={label} htmlFor="sm-tipo">Tipo</label>
+            <select id="sm-tipo" value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoSeccion })} style={field}>
+              {tiposSeccion.map((t) => (
+                <option key={t.id} value={t.id}>{t.singular}</option>
+              ))}
+            </select>
           </div>
 
           {/* Sin casilla de orden: se ordena arrastrando en la lista. */}

@@ -7,6 +7,7 @@ import ElementoCatalogo from "~/components/ElementoCatalogo.astro";
 import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
 import FiltroBloques from "~/islands/FiltroBloques.tsx";
 import { slugify } from "~/lib/slug";
+import { tiposSeccion } from "~/data/tipos-este-mes";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
 // (`astro.config.mjs`) y el panel invalidándola al publicar.
@@ -18,7 +19,7 @@ export const prerender = false;
 const [items, secciones, defsPacks] = await Promise.all([
   noticiasPublicas(Astro.response) as Promise<Noticia[]>,
   // Secciones que escribe el obrador en el panel («Productos nuevos sin
-  // gluten»…), debajo de las ofertas.
+  // gluten»…), ya en el orden de la página: por tipo y, dentro, por orden.
   seccionesEsteMesPublicas(Astro.response),
   definicionesPublicas(Astro.response),
 ]);
@@ -33,13 +34,19 @@ const anclas = secciones.map((s, i) => {
   return { ancla, titulo: s.titulo };
 });
 
-// Etiquetas del filtro, como las de la Tienda Online (16-10-2026): primero
-// las ofertas del mes y luego cada sección, en el orden de la página.
-const OFERTAS = "ofertas-del-mes";
-const chips = [
-  ...(items.length > 0 ? [{ id: OFERTAS, label: "Ofertas del mes" }] : []),
-  ...anclas.map((a) => ({ id: a.ancla, label: a.titulo })),
-];
+// Tres bloques (3-11-2026): promociones, sugerencias y novedades, en ese
+// orden. Las ofertas del mes abren las promociones. Un bloque sin nada no
+// sale, ni en la página ni en el filtro.
+const bloques = tiposSeccion
+  .map((t) => ({
+    ...t,
+    conOfertas: t.id === "promocion" && items.length > 0,
+    secciones: secciones.flatMap((s, i) => (s.tipo === t.id ? [{ ...s, ancla: anclas[i].ancla }] : [])),
+  }))
+  .filter((b) => b.conOfertas || b.secciones.length > 0);
+
+// Etiquetas del filtro, como las de la Tienda Online: una por bloque.
+const chips = bloques.map((b) => ({ id: b.id, label: b.label }));
 ---
 <MarketingLayout
   title="Noticias y promociones"
@@ -57,29 +64,40 @@ const chips = [
     )}
   </div>
 
-  <section data-bloque={OFERTAS} class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-8 pb-12">
-    <h2 class="text-3xl sm:text-4xl">Ofertas del mes.</h2>
-    <div class="mt-5">
-      {items.length > 0 ? (
-        <NewsCarousel items={items} />
-      ) : (
-        <p class="text-[color:var(--color-ink-muted)]">
-          Ahora mismo no hay nada publicado. Vuelve en unos días.
-        </p>
-      )}
-    </div>
-  </section>
+  {bloques.length === 0 && (
+    <p class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 text-[color:var(--color-ink-muted)]">
+      Ahora mismo no hay nada publicado. Vuelve en unos días.
+    </p>
+  )}
 
-  {secciones.map((s, i) => (
-    <section id={anclas[i].ancla} data-bloque={anclas[i].ancla} class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 border-t border-[color:var(--color-avellana)] scroll-mt-36 md:scroll-mt-56">
-      <h2 class="text-3xl sm:text-4xl">{s.titulo}</h2>
-      {s.descripcion && <p class="mt-3 max-w-2xl text-[color:var(--color-ink-muted)]">{s.descripcion}</p>}
-      <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {s.productos.map((producto) => (
-          <ElementoCatalogo elemento={{ tipo: "producto", producto }} sinFiltro defsPacks={defsPacks} />
-        ))}
+  {bloques.map((b, n) => (
+    <div id={b.id} data-bloque={b.id} class:list={["scroll-mt-36 md:scroll-mt-56", n > 0 && "border-t-2 border-[color:var(--color-teja)]"]}>
+      <div class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-10">
+        <h2 class="text-4xl sm:text-5xl">{b.label}.</h2>
       </div>
-    </section>
+
+      {b.conOfertas && (
+        <section class="mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 pt-8 pb-12">
+          <h3 class="text-2xl sm:text-3xl">Ofertas del mes.</h3>
+          <div class="mt-5">
+            <NewsCarousel items={items} />
+          </div>
+        </section>
+      )}
+
+      {b.secciones.map((s, i) => (
+        <section id={s.ancla} class:list={["mx-auto max-w-6xl 2xl:max-w-[110rem] px-4 sm:px-6 2xl:px-10 py-12 scroll-mt-36 md:scroll-mt-56", (i > 0 || b.conOfertas) && "border-t border-[color:var(--color-avellana)]"]}>
+          {/* «Novedades» dentro de Novedades: el título del bloque ya lo dice. */}
+          {slugify(s.titulo) !== slugify(b.label) && <h3 class="text-2xl sm:text-3xl">{s.titulo}</h3>}
+          {s.descripcion && <p class="first:mt-0 mt-3 max-w-2xl text-[color:var(--color-ink-muted)]">{s.descripcion}</p>}
+          <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {s.productos.map((producto) => (
+              <ElementoCatalogo elemento={{ tipo: "producto", producto }} sinFiltro defsPacks={defsPacks} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
   ))}
 
 </MarketingLayout>

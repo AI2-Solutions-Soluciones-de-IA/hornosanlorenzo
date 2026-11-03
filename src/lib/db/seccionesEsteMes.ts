@@ -1,5 +1,6 @@
 import { pool } from "~/lib/db/pool";
 import { listarProductos, type Producto } from "~/lib/db/productos";
+import { porTipoYOrden, type TipoSeccion } from "~/data/tipos-este-mes";
 
 /**
  * Secciones de «Este mes» (migración 018): título, frase y productos de la
@@ -23,6 +24,8 @@ export type SeccionEsteMes = {
   descripcion: string;
   orden: number;
   publicada: boolean;
+  /** Bloque de la página: promociones, sugerencias o novedades (migración 027). */
+  tipo: TipoSeccion;
   /** Lleva precios de oferta («10% de descuento»); si no, todo al precio de siempre. */
   conDescuento: boolean;
   /** Ids de los productos, en el orden elegido. */
@@ -33,19 +36,20 @@ export type SeccionEsteMes = {
   ofertaHasta: string | null;
 };
 
-export type DatosSeccion = Omit<SeccionEsteMes, "id" | "ofertas" | "ofertaHasta" | "conDescuento"> &
-  Partial<Pick<SeccionEsteMes, "ofertas" | "ofertaHasta" | "conDescuento">>;
+export type DatosSeccion = Omit<SeccionEsteMes, "id" | "ofertas" | "ofertaHasta" | "conDescuento" | "tipo"> &
+  Partial<Pick<SeccionEsteMes, "ofertas" | "ofertaHasta" | "conDescuento" | "tipo">>;
 
 /** Una sección pública, con sus productos ya leídos de la carta. */
 export type SeccionPublica = {
   id: string;
   titulo: string;
   descripcion: string;
+  tipo: TipoSeccion;
   productos: Producto[];
 };
 
 const CAMPOS = `
-  s.id, s.titulo, s.descripcion, s.orden, s.publicada,
+  s.id, s.titulo, s.descripcion, s.orden, s.publicada, s.tipo,
   s.con_descuento as "conDescuento",
   to_char(s.oferta_hasta, 'YYYY-MM-DD') as "ofertaHasta",
   coalesce(
@@ -62,12 +66,12 @@ const CAMPOS = `
     '{}'
   ) as "productoIds"`;
 
-/** Para el panel: todas, publicadas o no, en su orden. */
+/** Para el panel: todas, publicadas o no, como salen en la web (por tipo y orden). */
 export async function listarSecciones(): Promise<SeccionEsteMes[]> {
   const { rows } = await pool.query<SeccionEsteMes>(
     `select ${CAMPOS} from secciones_este_mes s order by s.orden, s.created_at`,
   );
-  return rows;
+  return rows.sort(porTipoYOrden);
 }
 
 /**
@@ -85,10 +89,12 @@ export async function seccionesPublicas(): Promise<SeccionPublica[]> {
     (await listarProductos({ soloActivos: true, conOfertas: true })).map((p) => [p.id, p]),
   );
   return rows
+    .sort(porTipoYOrden)
     .map((s) => ({
       id: s.id,
       titulo: s.titulo,
       descripcion: s.descripcion,
+      tipo: s.tipo,
       productos: s.productoIds.flatMap((id) => porId.get(id) ?? []),
     }))
     .filter((s) => s.productos.length > 0);
@@ -126,9 +132,9 @@ export async function crearSeccion(d: DatosSeccion): Promise<SeccionEsteMes> {
   try {
     await cliente.query("begin");
     const { rows } = await cliente.query<{ id: string }>(
-      `insert into secciones_este_mes (titulo, descripcion, orden, publicada, oferta_hasta, con_descuento)
-       values ($1, $2, $3, $4, $5, $6) returning id`,
-      [d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false],
+      `insert into secciones_este_mes (titulo, descripcion, orden, publicada, oferta_hasta, con_descuento, tipo)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false, d.tipo ?? "sugerencia"],
     );
     await guardaProductos(cliente, rows[0].id, d);
     await cliente.query("commit");
@@ -148,9 +154,9 @@ export async function actualizarSeccion(id: string, d: DatosSeccion): Promise<Se
     const { rowCount } = await cliente.query(
       `update secciones_este_mes
           set titulo = $2, descripcion = $3, orden = $4, publicada = $5,
-              oferta_hasta = $6, con_descuento = $7, updated_at = now()
+              oferta_hasta = $6, con_descuento = $7, tipo = $8, updated_at = now()
         where id = $1`,
-      [id, d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false],
+      [id, d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false, d.tipo ?? "sugerencia"],
     );
     if (!rowCount) {
       await cliente.query("rollback");

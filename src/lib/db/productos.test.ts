@@ -406,6 +406,19 @@ describeSiHayBD("repositorio de productos", () => {
       expect(publicas.some((s) => s.id === vacia.id)).toBe(false);
     });
 
+    it("guarda el tipo y la web enseña promociones, sugerencias y novedades en ese orden", async () => {
+      const p = await crea(datos({ name: "Producto de los tres tipos" }));
+      const novedad = await nueva({ titulo: "Tipo novedad", tipo: "novedad", orden: -300, productoIds: [p.id] });
+      const promo = await nueva({ titulo: "Tipo promoción", tipo: "promocion", orden: 300, productoIds: [p.id] });
+      const sugerencia = await nueva({ titulo: "Tipo sugerencia", orden: -200, productoIds: [p.id] });
+      expect(sugerencia.tipo).toBe("sugerencia");
+
+      const mias = (await secciones.seccionesPublicas())
+        .filter((s) => [novedad.id, promo.id, sugerencia.id].includes(s.id))
+        .map((s) => s.tipo);
+      expect(mias).toEqual(["promocion", "sugerencia", "novedad"]);
+    });
+
     it("una sección publicada rebaja sus productos en el cobro; oculta o caducada, no", async () => {
       const a = await crea(datos({ name: "Rebajado por sección" }));
       const b = await crea(

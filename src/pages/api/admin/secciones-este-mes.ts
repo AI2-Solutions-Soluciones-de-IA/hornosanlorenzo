@@ -11,6 +11,7 @@ import { invalidar, RUTAS_CATALOGO } from "~/lib/cache";
 import { listarProductos } from "~/lib/db/productos";
 import { compruebaPrecioOferta } from "~/lib/ofertas";
 import { esAdmin } from "~/lib/auth/guardia";
+import { tipoSeccionIds } from "~/data/tipos-este-mes";
 
 export const prerender = false;
 
@@ -28,6 +29,7 @@ const esquema = z.object({
   descripcion: z.string().trim().max(300).default(""),
   orden: z.number().int().min(-1000).max(1000).default(0),
   publicada: z.boolean().default(false),
+  tipo: z.enum(tipoSeccionIds).default("sugerencia"),
   conDescuento: z.boolean().default(false),
   productoIds: z.array(z.string().uuid()).max(48).default([]),
   // Precio de oferta por producto, como en las noticias (`~/lib/ofertas.ts`).
