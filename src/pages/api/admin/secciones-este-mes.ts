@@ -29,7 +29,9 @@ const esquema = z.object({
   descripcion: z.string().trim().max(300).default(""),
   orden: z.number().int().min(-1000).max(1000).default(0),
   publicada: z.boolean().default(false),
-  tipo: z.enum(tipoSeccionIds).default("sugerencia"),
+  // Sin valor por defecto: un panel abierto desde antes de que existiera el
+  // tipo no lo manda, y al editar se conserva el que tenía (3-11-2026).
+  tipo: z.enum(tipoSeccionIds).optional(),
   conDescuento: z.boolean().default(false),
   productoIds: z.array(z.string().uuid()).max(48).default([]),
   // Precio de oferta por producto, como en las noticias (`~/lib/ofertas.ts`).

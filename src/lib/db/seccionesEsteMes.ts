@@ -154,9 +154,9 @@ export async function actualizarSeccion(id: string, d: DatosSeccion): Promise<Se
     const { rowCount } = await cliente.query(
       `update secciones_este_mes
           set titulo = $2, descripcion = $3, orden = $4, publicada = $5,
-              oferta_hasta = $6, con_descuento = $7, tipo = $8, updated_at = now()
+              oferta_hasta = $6, con_descuento = $7, tipo = coalesce($8, tipo), updated_at = now()
         where id = $1`,
-      [id, d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false, d.tipo ?? "sugerencia"],
+      [id, d.titulo, d.descripcion, d.orden, d.publicada, d.ofertaHasta ?? null, d.conDescuento ?? false, d.tipo ?? null],
     );
     if (!rowCount) {
       await cliente.query("rollback");

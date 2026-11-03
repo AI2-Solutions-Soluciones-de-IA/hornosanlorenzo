@@ -412,6 +412,11 @@ describeSiHayBD("repositorio de productos", () => {
       const promo = await nueva({ titulo: "Tipo promoción", tipo: "promocion", orden: 300, productoIds: [p.id] });
       const sugerencia = await nueva({ titulo: "Tipo sugerencia", orden: -200, productoIds: [p.id] });
       expect(sugerencia.tipo).toBe("sugerencia");
+      // Editada sin tipo (un panel de antes del tipo), conserva el suyo.
+      const sinTipo = await secciones.actualizarSeccion(promo.id, {
+        titulo: "Tipo promoción", descripcion: "", orden: 300, publicada: true, productoIds: [p.id],
+      });
+      expect(sinTipo?.tipo).toBe("promocion");
 
       const mias = (await secciones.seccionesPublicas())
         .filter((s) => [novedad.id, promo.id, sugerencia.id].includes(s.id))
