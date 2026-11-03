@@ -10,7 +10,7 @@ import {
 } from "~/lib/db/noticias";
 import { invalidar, RUTAS_NOTICIAS, RUTAS_CATALOGO } from "~/lib/cache";
 import { listarProductos } from "~/lib/db/productos";
-import { compruebaPrecioOferta } from "~/lib/ofertas";
+import { compruebaPrecioOferta, compruebaFechaOferta } from "~/lib/ofertas";
 import { esAdmin } from "~/lib/auth/guardia";
 
 export const prerender = false;
@@ -84,7 +84,10 @@ async function compruebaOferta(datos: z.infer<typeof esquema>): Promise<string |
 
   const producto = (await listarProductos({ soloActivos: false })).find((p) => p.id === datos.productoId);
   if (!producto) return "Ese producto ya no está en la carta. Elige otro o quita la oferta.";
-  return compruebaPrecioOferta(producto, datos.ofertaCents, datos.ofertaVariantes);
+  return (
+    compruebaPrecioOferta(producto, datos.ofertaCents, datos.ofertaVariantes) ??
+    compruebaFechaOferta(datos.publicada, hayOferta, datos.ofertaHasta)
+  );
 }
 
 /**

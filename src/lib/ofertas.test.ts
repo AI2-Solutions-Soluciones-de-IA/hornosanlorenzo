@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aplicaOferta, compruebaPrecioOferta, juntaOfertas, type OfertaProducto } from "~/lib/ofertas";
+import { aplicaOferta, compruebaFechaOferta, compruebaPrecioOferta, hoyEnMadrid, juntaOfertas, type OfertaProducto } from "~/lib/ofertas";
 
 const conTamanos = {
   slug: "bombon-noir",
@@ -131,5 +131,22 @@ describe("compruebaPrecioOferta", () => {
 
   it("un producto a consultar no admite oferta", () => {
     expect(compruebaPrecioOferta({ ...simple, consultar: true }, 1000, {})).toMatch(/consultar|precio de venta/);
+  });
+});
+
+describe("fecha de fin de la oferta al guardar", () => {
+  it("para una oferta publicada que ya ha caducado, con la fecha en el mensaje", () => {
+    expect(compruebaFechaOferta(true, true, "2026-10-31", "2026-11-03")).toContain("31/10/2026");
+  });
+  it("deja pasar la de hoy, una futura, una sin fecha, una oculta o sin precio de oferta", () => {
+    expect(compruebaFechaOferta(true, true, "2026-11-03", "2026-11-03")).toBeNull();
+    expect(compruebaFechaOferta(true, true, "2026-11-30", "2026-11-03")).toBeNull();
+    expect(compruebaFechaOferta(true, true, null, "2026-11-03")).toBeNull();
+    expect(compruebaFechaOferta(false, true, "2026-10-31", "2026-11-03")).toBeNull();
+    expect(compruebaFechaOferta(true, false, "2026-10-31", "2026-11-03")).toBeNull();
+  });
+  it("hoy es el día de Madrid, no el de UTC", () => {
+    // 23:30 UTC del 31 de octubre ya es 1 de noviembre en Madrid.
+    expect(hoyEnMadrid(new Date("2026-10-31T23:30:00Z"))).toBe("2026-11-01");
   });
 });

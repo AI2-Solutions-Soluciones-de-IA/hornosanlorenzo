@@ -150,3 +150,25 @@ export function compruebaPrecioOferta(
   }
   return null;
 }
+
+/** Hoy en Madrid (`YYYY-MM-DD`), el mismo día con el que caduca una oferta (`~/lib/db/ofertas.ts`). */
+export function hoyEnMadrid(ahora = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(ahora);
+}
+
+/**
+ * Una oferta publicada con la fecha de fin ya pasada no rebaja nada: la web
+ * la da por terminada y cobra el precio normal, aunque el texto diga otra
+ * cosa (3-11-2026, las de noviembre se quedaron con el 31 de octubre). Se
+ * para al guardar. Devuelve el mensaje para el panel, o `null` si vale.
+ */
+export function compruebaFechaOferta(
+  publicada: boolean,
+  hayOferta: boolean,
+  hasta: string | null,
+  hoy = hoyEnMadrid(),
+): string | null {
+  if (!publicada || !hayOferta || hasta === null || hasta >= hoy) return null;
+  const [a, m, d] = hasta.split("-");
+  return `La fecha de fin de la oferta (${d}/${m}/${a}) ya ha pasado: así la web cobraría el precio normal. Cambia la fecha o déjala vacía.`;
+}

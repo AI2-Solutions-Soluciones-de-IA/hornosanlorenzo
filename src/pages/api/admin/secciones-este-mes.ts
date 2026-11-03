@@ -9,7 +9,7 @@ import {
 } from "~/lib/db/seccionesEsteMes";
 import { invalidar, RUTAS_CATALOGO } from "~/lib/cache";
 import { listarProductos } from "~/lib/db/productos";
-import { compruebaPrecioOferta } from "~/lib/ofertas";
+import { compruebaPrecioOferta, compruebaFechaOferta } from "~/lib/ofertas";
 import { esAdmin } from "~/lib/auth/guardia";
 import { tipoSeccionIds } from "~/data/tipos-este-mes";
 
@@ -78,6 +78,8 @@ async function compruebaOfertas(d: Datos): Promise<{ datos: Datos } | { error: s
     const error = compruebaPrecioOferta(ficha, o.ofertaCents, o.ofertaVariantes);
     if (error) return { error };
   }
+  const caducada = compruebaFechaOferta(d.publicada, true, d.ofertaHasta);
+  if (caducada) return { error: caducada };
   return { datos: { ...d, ofertas } };
 }
 
