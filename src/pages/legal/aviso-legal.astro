@@ -1,6 +1,7 @@
 ---
 import LegalLayout from "~/layouts/LegalLayout.astro";
 import { site } from "~/data/site";
+import { stores } from "~/data/stores";
 ---
 <LegalLayout title="Aviso legal" description="Información legal del sitio web de Horno San Lorenzo.">
   <p>
@@ -14,6 +15,7 @@ import { site } from "~/data/site";
     <li><strong>Nombre comercial:</strong> {site.name}.</li>
     <li><strong>Domicilio:</strong> C/ Valgrande 21, Nave 2-k, 28108 Alcobendas (Madrid).</li>
     <li><strong>Email:</strong> <a href={`mailto:${site.email}`}>{site.email}</a></li>
+    <li><strong>Teléfono:</strong> <a href={`tel:${stores[0].phone}`}>{stores[0].phoneDisplay}</a></li>
     <li><strong>Sitio web:</strong> {site.url}</li>
   </ul>
   <h2>Condiciones de uso</h2>

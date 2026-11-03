@@ -10,7 +10,8 @@ import { stores } from "~/data/stores";
   <h2>Responsable del tratamiento</h2>
   <p>
     {site.titular.nombre}, con NIF {site.titular.nif} ({site.name}), con domicilio en {stores[0].address},
-    {stores[0].postal} {stores[0].city} (Madrid) y correo <a href={`mailto:${site.email}`}>{site.email}</a>.
+    {stores[0].postal} {stores[0].city} (Madrid), correo <a href={`mailto:${site.email}`}>{site.email}</a> y teléfono
+    <a href={`tel:${stores[0].phone}`}>{stores[0].phoneDisplay}</a>.
     Más datos en el <a href="/legal/aviso-legal">aviso legal</a>.
   </p>
   <h2>Datos que recogemos</h2>
