@@ -34,9 +34,16 @@ const imagen = conFoto
     }
   : null;
 
+// La foto y el título llevan a la ficha del sabor elegido, como en
+// `ProductCard` (5-11-2026): al cambiar de sabor, `ElegirSabor` cambia el
+// enlace. De partida, el mismo sabor con el que arranca el selector.
+const deInicio =
+  sabores.find((p) => !p.agotado && !p.consultar && p.priceCents !== null) ?? sabores[0];
+const ficha = `/catalogo/${deInicio?.slug ?? ""}`;
+
 ---
 <article class="group h-full flex flex-col bg-[color:var(--color-moka)] rounded-[var(--radius-card)] overflow-hidden shadow-[var(--shadow-card)] hover:scale-[1.02] transition-transform duration-200">
-  <div class="aspect-[4/3] overflow-hidden">
+  <a href={ficha} data-ficha-sabor class="block aspect-[4/3] overflow-hidden">
     {imagen ? (
       <Image quality={80}
         src={imagen.url}
@@ -55,10 +62,12 @@ const imagen = conFoto
         <span class="numeracion">Foto pendiente</span>
       </div>
     )}
-  </div>
+  </a>
   <div class="tarjeta-cuerpo flex-1 flex flex-col">
     <p class="numeracion">{eyebrow}</p>
-    <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">{titulo}</h3>
+    <h3 class="font-[family-name:var(--font-display)] text-xl mt-1">
+      <a href={ficha} data-ficha-sabor class="hover:text-[color:var(--color-accent-dark)]">{titulo}</a>
+    </h3>
     <p class="text-sm text-[color:var(--color-ink-muted)] mt-1 line-clamp-2">
       {sabores.length} sabores.
     </p>

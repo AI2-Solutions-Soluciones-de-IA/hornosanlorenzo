@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { anadirConAviso } from "~/lib/cart";
 import { emitToast } from "~/islands/ToastHost";
 import { formatPriceCents } from "~/lib/format";
@@ -79,6 +79,16 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
     setVariantId(s && tamanoInicial(s));
   }
 
+  // La foto y el título de la tarjeta (`data-ficha-sabor`) siguen al sabor.
+  const raiz = useRef<HTMLDivElement>(null);
+  const ficha = `/catalogo/${sabor.slug}`;
+  useEffect(() => {
+    raiz.current
+      ?.closest("article")
+      ?.querySelectorAll<HTMLAnchorElement>("a[data-ficha-sabor]")
+      .forEach((a) => a.setAttribute("href", ficha));
+  }, [ficha]);
+
   const variant = sabor.variants.find((v) => v.id === variantId);
   const precio = variant?.priceCents ?? sabor.priceCents;
   const precioAntes = variant ? variant.precioAntesCents : sabor.precioAntesCents;
@@ -102,6 +112,7 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
 
   return (
     <div
+      ref={raiz}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -123,6 +134,13 @@ export default function ElegirSabor({ singular, titulo, sabores }: Props) {
           </option>
         ))}
       </select>
+
+      <a
+        href={ficha}
+        style={{ fontSize: 12, color: "inherit", textDecoration: "underline", textUnderlineOffset: 3, opacity: 0.85 }}
+      >
+        Ver ficha y alérgenos
+      </a>
 
       {sabor.especialidad && (
         <p className="especialidad" style={{ margin: 0 }}>
