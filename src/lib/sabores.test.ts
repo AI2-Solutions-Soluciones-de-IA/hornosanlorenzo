@@ -14,6 +14,7 @@ const p = (slug: string, seccion: string | null): Producto => ({
   shortDescription: "",
   cuerpo: "",
   allergens: [],
+  trazas: [],
   destacado: false,
   temporada: false,
   orden: 0,

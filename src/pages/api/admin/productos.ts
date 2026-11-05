@@ -47,6 +47,8 @@ const esquema = z
     shortDescription: z.string().trim().min(3).max(180),
     cuerpo: z.string().max(20_000).default(""),
     allergens: z.array(z.enum(ALERGENOS)).default([]),
+    // Opcional: un panel abierto de antes no la manda, y así no las borra.
+    trazas: z.array(z.enum(ALERGENOS)).optional(),
     destacado: z.boolean().default(false),
     temporada: z.boolean().default(false),
     orden: z.number().int().min(0).max(9999).default(100),

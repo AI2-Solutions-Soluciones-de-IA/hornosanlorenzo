@@ -30,3 +30,11 @@ export const alergenoIds = alergenos.map((a) => a.id) as [AlergenoId, ...Alergen
 export function nombreAlergeno(id: string): string {
   return alergenos.find((a) => a.id === id)?.label ?? id;
 }
+
+/** «gluten, huevo, leche y soja», para la ficha. */
+export function enumeraAlergenos(ids: readonly string[]): string {
+  const nombres = ids.map((id) => nombreAlergeno(id).toLowerCase());
+  return nombres.length > 1
+    ? `${nombres.slice(0, -1).join(", ")} y ${nombres.at(-1)}`
+    : (nombres[0] ?? "");
+}

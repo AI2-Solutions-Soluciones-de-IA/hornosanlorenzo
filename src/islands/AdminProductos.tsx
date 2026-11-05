@@ -41,6 +41,7 @@ export type Producto = {
   shortDescription: string;
   cuerpo: string;
   allergens: string[];
+  trazas: string[];
   destacado: boolean;
   temporada: boolean;
   orden: number;
@@ -128,6 +129,7 @@ type FormularioProducto = {
   shortDescription: string;
   cuerpo: string;
   allergens: string[];
+  trazas: string[];
   destacado: boolean;
   temporada: boolean;
   orden: number;
@@ -153,6 +155,7 @@ const FORMULARIO_VACIO: FormularioProducto = {
   shortDescription: "",
   cuerpo: "",
   allergens: [],
+  trazas: [],
   destacado: false,
   temporada: false,
   orden: 100,
@@ -179,6 +182,7 @@ function formularioDesdeProducto(p: Producto): FormularioProducto {
     shortDescription: p.shortDescription,
     cuerpo: p.cuerpo,
     allergens: [...p.allergens],
+    trazas: [...(p.trazas ?? [])],
     destacado: p.destacado,
     temporada: p.temporada,
     orden: p.orden,
@@ -328,12 +332,15 @@ export default function AdminProductos({ productosIniciales }: Props) {
     setFormulario((actual) => ({ ...actual, [campo]: valor }));
   }
 
-  function alternarAlergeno(id: string) {
+  /** Marcar uno en una lista lo quita de la otra: o lo lleva o son trazas. */
+  function alternarAlergeno(campo: "allergens" | "trazas", id: string) {
+    const otra = campo === "allergens" ? "trazas" : "allergens";
     setFormulario((actual) => ({
       ...actual,
-      allergens: actual.allergens.includes(id)
-        ? actual.allergens.filter((a) => a !== id)
-        : [...actual.allergens, id],
+      [campo]: actual[campo].includes(id)
+        ? actual[campo].filter((a) => a !== id)
+        : [...actual[campo], id],
+      [otra]: actual[otra].filter((a) => a !== id),
     }));
   }
 
@@ -509,6 +516,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
       shortDescription: formulario.shortDescription.trim(),
       cuerpo: formulario.cuerpo,
       allergens: formulario.allergens,
+      trazas: formulario.trazas,
       destacado: formulario.destacado,
       temporada: formulario.temporada,
       orden: formulario.orden,
@@ -579,6 +587,7 @@ export default function AdminProductos({ productosIniciales }: Props) {
       shortDescription: p.shortDescription,
       cuerpo: p.cuerpo,
       allergens: p.allergens,
+      trazas: p.trazas,
       destacado: p.destacado,
       temporada: p.temporada,
       orden: p.orden,
@@ -1019,36 +1028,43 @@ export default function AdminProductos({ productosIniciales }: Props) {
 
           {/* Sin casilla de cuerpo: la ficha pública ya no lo enseña. Se
               sigue mandando el que tenga, para no borrarlo al guardar. */}
-          <div style={{ marginTop: 16 }}>
-            <p style={label}>Alérgenos</p>
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "8px 16px",
-                marginTop: 8,
-              }}
-            >
-              {ALERGENOS.map((a) => (
-                <label
-                  key={a.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: 14,
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={formulario.allergens.includes(a.id)}
-                    onChange={() => alternarAlergeno(a.id)}
-                  />
-                  {a.label}
-                </label>
-              ))}
+          {(
+            [
+              ["allergens", "Alérgenos (los lleva)"],
+              ["trazas", "Puede contener trazas de"],
+            ] as const
+          ).map(([campo, titulo]) => (
+            <div key={campo} style={{ marginTop: 16 }}>
+              <p style={label}>{titulo}</p>
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px 16px",
+                  marginTop: 8,
+                }}
+              >
+                {ALERGENOS.map((a) => (
+                  <label
+                    key={a.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 14,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formulario[campo].includes(a.id)}
+                      onChange={() => alternarAlergeno(campo, a.id)}
+                    />
+                    {a.label}
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
 
           <div style={{ marginTop: 16 }}>
             <label style={label} htmlFor="ap-orden">

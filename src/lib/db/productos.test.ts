@@ -150,6 +150,21 @@ describeSiHayBD("repositorio de productos", () => {
     expect((await repo.obtenerProducto(producto.slug))?.fotosExtra).toEqual([foto(3)]);
   });
 
+  it("guarda las trazas; editar sin ellas (panel antiguo) conserva las que había", async () => {
+    const producto = await crea(datos({ name: "Tarta con trazas", trazas: ["pescado", "sesamo"] }));
+    expect(producto.trazas).toEqual(["pescado", "sesamo"]);
+    expect((await crea(datos({ name: "Tarta sin trazas" }))).trazas).toEqual([]);
+
+    const sinCampo = await repo.actualizarProducto(producto.id, datos({ name: "Tarta con trazas" }));
+    expect(sinCampo?.trazas).toEqual(["pescado", "sesamo"]);
+
+    const vaciadas = await repo.actualizarProducto(producto.id, {
+      ...datos({ name: "Tarta con trazas" }),
+      trazas: [],
+    });
+    expect(vaciadas?.trazas).toEqual([]);
+  });
+
   it("guarda la marca de foto provisional y la quita al editar", async () => {
     const producto = await crea(
       datos({ name: "Tarta con foto prestada", fotoProvisional: true }),

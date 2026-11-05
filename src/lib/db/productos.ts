@@ -50,6 +50,8 @@ export type Producto = {
   shortDescription: string;
   cuerpo: string;
   allergens: string[];
+  /** «Puede contener trazas de»: los ids de `allergens` que no lleva pero pueden aparecer. */
+  trazas: string[];
   destacado: boolean;
   temporada: boolean;
   orden: number;
@@ -82,8 +84,13 @@ export type ProductoVendible = {
   variantes: { variantId: string; label: string; priceCents: number; precioAntesCents?: number }[];
 } & ConOferta;
 
-export type DatosProducto = Omit<Producto, "id" | "slug" | "variantes" | keyof ConOferta> & {
+export type DatosProducto = Omit<Producto, "id" | "slug" | "variantes" | "trazas" | keyof ConOferta> & {
   variantes: Variante[];
+  /**
+   * Sin ellas (un panel abierto desde antes del 5-11-2026), al editar se
+   * conservan las que hubiera; al crear, ninguna.
+   */
+  trazas?: string[];
   /** Solo lo usa el volcado inicial, para conservar las URLs de siempre. */
   slug?: string;
 };
@@ -93,7 +100,7 @@ const CAMPOS = `
   p.price_cents       as "priceCents",
   p.consultar, p.unit,
   p.short_description as "shortDescription",
-  p.cuerpo, p.allergens,
+  p.cuerpo, p.allergens, p.trazas,
   p.destacado, p.temporada, p.orden,
   p.image_url    as "imageUrl",
   p.image_alt    as "imageAlt",
@@ -286,6 +293,7 @@ const VALORES = (datos: DatosProducto) => [
   // `pg` pasaría un array de JS como array de Postgres, no como JSON.
   JSON.stringify(datos.fotosExtra),
   datos.fotoProvisional,
+  datos.trazas ?? null,
 ];
 
 export async function crearProducto(datos: DatosProducto): Promise<Producto> {
@@ -297,8 +305,9 @@ export async function crearProducto(datos: DatosProducto): Promise<Producto> {
          (name, category, seccion, price_cents, consultar, unit,
           short_description, cuerpo, allergens, destacado, temporada, orden,
           image_url, image_alt, image_width, image_height, activo, agotado,
-          especialidad, fotos_extra, foto_provisional, slug)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
+          especialidad, fotos_extra, foto_provisional, trazas, slug)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,
+               coalesce($22::text[], '{}'),$23)
        returning id, slug`,
       [...VALORES(datos), datos.slug ?? slugify(datos.name)],
     );
@@ -339,8 +348,9 @@ export async function actualizarProducto(
          allergens = $9, destacado = $10, temporada = $11, orden = $12,
          image_url = $13, image_alt = $14, image_width = $15, image_height = $16,
          activo = $17, agotado = $18, especialidad = $19, fotos_extra = $20,
-         foto_provisional = $21, updated_at = now()
-       where id = $22
+         foto_provisional = $21, trazas = coalesce($22::text[], trazas),
+         updated_at = now()
+       where id = $23
        returning slug`,
       [...VALORES(datos), id],
     );

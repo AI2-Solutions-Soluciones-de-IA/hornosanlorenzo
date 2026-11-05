@@ -11,7 +11,7 @@ import { seccionesDeHuecos, slugsFijos, type DefinicionPack } from "~/data/packs
 import { definicionesPorSlugs } from "~/lib/db/packs";
 import { fichaPack, type FichaPack } from "~/lib/pack-ficha";
 import { SIN_CACHE } from "~/lib/lectura-publica";
-import { nombreAlergeno } from "~/data/alergenos";
+import { enumeraAlergenos } from "~/data/alergenos";
 import { empiezaPorElMayor } from "~/lib/tamanos";
 
 // Lee de la base de datos: bajo demanda, con la caché ISR delante
@@ -252,10 +252,15 @@ const breadcrumbs = {
           )}
         </div>
 
-        {product.allergens.length > 0 && (
+        {(product.allergens.length > 0 || product.trazas.length > 0) && (
           <div class="mt-8">
             <p class="numeracion">Alérgenos</p>
-            <p class="mt-1 text-sm">Contiene: {product.allergens.map((a) => nombreAlergeno(a).toLowerCase()).join(", ")}.</p>
+            {product.allergens.length > 0 && (
+              <p class="mt-1 text-sm">Contiene: {enumeraAlergenos(product.allergens)}.</p>
+            )}
+            {product.trazas.length > 0 && (
+              <p class="mt-1 text-sm text-[color:var(--color-ink-muted)]">Puede contener trazas de: {enumeraAlergenos(product.trazas)}.</p>
+            )}
           </div>
         )}
         {/* Sin el cuerpo en Markdown: con la descripción basta (7-10-2026).
