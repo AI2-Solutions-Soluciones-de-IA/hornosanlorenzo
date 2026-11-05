@@ -1,4 +1,5 @@
 import {
+  alergenosDePack,
   ahorroPct,
   opcionesDeHueco,
   PackError,
@@ -30,6 +31,8 @@ export type FichaPack = {
    * decirlo en la ficha que dejar pedir algo que el checkout va a rechazar.
    */
   agotado: boolean;
+  /** Sumados de las piezas (`alergenosDePack`). */
+  alergenos: { contiene: string[]; trazas: string[] };
 };
 
 /**
@@ -80,6 +83,7 @@ export function fichaPack(
       (p) => p.tipo === "fija" && p.requiereFoto === true,
     ),
     agotado: sinPrecio || pack.agotado || !sePuedePedir(def, piezas, productos),
+    alergenos: alergenosDePack(def, productos),
   };
 }
 

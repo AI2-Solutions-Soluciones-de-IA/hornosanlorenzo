@@ -11,6 +11,8 @@
  * 30-9-2026) están en `scripts/packs-iniciales.json`.
  */
 
+import { alergenoIds } from "~/data/alergenos";
+
 /** Lo mínimo que estas cuentas necesitan saber de un producto de la carta. */
 export type ProductoPieza = {
   slug: string;
@@ -21,6 +23,9 @@ export type ProductoPieza = {
   activo: boolean;
   agotado: boolean;
   variantes: { variantId: string; label: string; priceCents: number }[];
+  /** Ids de `~/data/alergenos`; solo los usa `alergenosDePack`. */
+  allergens?: readonly string[];
+  trazas?: readonly string[];
 };
 
 export type PiezaFija = {
@@ -206,4 +211,34 @@ export function precioPorPersonaCents(precioPackCents: number, def: DefinicionPa
 /** Etiqueta legible de una pieza resuelta: «Empanada de carne · Entera 16–20 rac.» */
 export function etiquetaPieza(p: PiezaResuelta): string {
   return p.varianteLabel ? `${p.nombre} · ${p.varianteLabel}` : p.nombre;
+}
+
+/**
+ * Alérgenos de un pack, sumando los de lo que lleva (5-11-2026). Lo de una
+ * pieza fija cuenta tal cual. En un hueco a elegir, lo que llevan todas las
+ * opciones es «contiene»; lo que lleva solo alguna, o son sus trazas, pasa a
+ * «puede contener», porque depende de lo que elija el cliente.
+ */
+export function alergenosDePack(
+  def: DefinicionPack,
+  productos: readonly ProductoPieza[],
+): { contiene: string[]; trazas: string[] } {
+  const contiene = new Set<string>();
+  const trazas = new Set<string>();
+  const porSlug = new Map(productos.map((x) => [x.slug, x]));
+  for (const pieza of def.piezas) {
+    const opciones =
+      pieza.tipo === "fija"
+        ? [porSlug.get(pieza.slug)].filter((x): x is ProductoPieza => !!x)
+        : opcionesDeHueco(pieza, productos).map((o) => porSlug.get(o.slug)!);
+    if (opciones.length === 0) continue;
+    for (const id of opciones[0].allergens ?? []) {
+      if (opciones.every((x) => x.allergens?.includes(id))) contiene.add(id);
+    }
+    for (const x of opciones) {
+      for (const id of [...(x.allergens ?? []), ...(x.trazas ?? [])]) trazas.add(id);
+    }
+  }
+  const enOrden = (ids: Set<string>) => alergenoIds.filter((id) => ids.has(id));
+  return { contiene: enOrden(contiene), trazas: enOrden(trazas).filter((id) => !contiene.has(id)) };
 }

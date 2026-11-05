@@ -14,6 +14,7 @@ import type { DefinicionPack } from "~/data/packs";
 import type { Producto } from "~/lib/db/productos";
 import type { FichaPack } from "~/lib/pack-ficha";
 import { formatPriceCents } from "~/lib/format";
+import { enumeraAlergenos } from "~/data/alergenos";
 
 interface Props {
   pack: Producto;
@@ -103,6 +104,22 @@ const imagen =
       <ul class="mt-3 list-disc pl-5 space-y-2 marker:text-[color:var(--color-avellana)]">
         {def.paraQuien.map((linea) => <li>{linea}</li>)}
       </ul>
+
+      {(ficha.alergenos.contiene.length > 0 || ficha.alergenos.trazas.length > 0) && (
+        <div class="mt-8">
+          <p class="numeracion">Alérgenos</p>
+          {ficha.alergenos.contiene.length > 0 && (
+            <p class="mt-1 text-sm">Contiene: {enumeraAlergenos(ficha.alergenos.contiene)}.</p>
+          )}
+          {ficha.alergenos.trazas.length > 0 && (
+            <p class="mt-1 text-sm text-[color:var(--color-ink-muted)]">
+              {def.piezas.some((p) => p.tipo === "eleccion")
+                ? "Puede contener (según lo que elijas, o en trazas)"
+                : "Puede contener trazas de"}: {enumeraAlergenos(ficha.alergenos.trazas)}.
+            </p>
+          )}
+        </div>
+      )}
 
       {def.consejo && (
         <div class="mt-8 border border-[color:var(--color-avellana)] bg-[color:var(--color-latte)] p-5">

@@ -82,6 +82,9 @@ export type ProductoVendible = {
   activo: boolean;
   agotado: boolean;
   variantes: { variantId: string; label: string; priceCents: number; precioAntesCents?: number }[];
+  /** Para sumar los de un pack en su ficha. */
+  allergens?: string[];
+  trazas?: string[];
 } & ConOferta;
 
 export type DatosProducto = Omit<Producto, "id" | "slug" | "variantes" | "trazas" | keyof ConOferta> & {
@@ -183,7 +186,7 @@ export async function obtenerProducto(
 const SELECT_VENDIBLE = `
   select p.slug, p.name, p.category, p.seccion,
          p.price_cents as "priceCents",
-         p.consultar, p.activo, p.agotado,
+         p.consultar, p.activo, p.agotado, p.allergens, p.trazas,
          coalesce(
            (select json_agg(json_build_object(
                      'variantId', v.variant_id,
