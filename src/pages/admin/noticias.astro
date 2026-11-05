@@ -5,6 +5,7 @@ import AdminNoticias, { type ProductoOpcion } from "~/islands/AdminNoticias.tsx"
 import { listarNoticias, type Noticia } from "~/lib/db/noticias";
 import { listarProductos } from "~/lib/db/productos";
 import { nombreCompleto } from "~/lib/sabores";
+import { secciones as seccionesCarta, isSeccionId, seccionById } from "~/data/secciones";
 import AdminSeccionesEsteMes, { type Seccion } from "~/islands/AdminSeccionesEsteMes.tsx";
 import { listarSecciones } from "~/lib/db/seccionesEsteMes";
 
@@ -21,10 +22,21 @@ try {
   secciones = await listarSecciones();
   // Sin ofertas aplicadas (`conOfertas` por defecto es false): la casilla
   // de la oferta enseña al lado el precio DE SIEMPRE, no el rebajado.
-  productos = (await listarProductos({ soloActivos: true })).map((p) => ({
+  // En el orden de la carta, sección por sección: «San Marcos Trufa» hay
+  // plancha y brazo, y en el desplegable tiene que verse cuál es (5-11-2026).
+  const posicion = (s: string | null) => {
+    const i = seccionesCarta.findIndex((x) => x.id === s);
+    return i === -1 ? seccionesCarta.length : i;
+  };
+  const productosCarta = (await listarProductos({ soloActivos: true })).sort(
+    (a, b) => posicion(a.seccion) - posicion(b.seccion),
+  );
+  productos = productosCarta.map((p) => ({
     id: p.id,
-    // «Empanada · De Carne» y no «De Carne» a secas (7-10-2026).
-    name: nombreCompleto(p),
+    // «Empanada · De Carne» y no «De Carne» a secas (7-10-2026), y con la
+    // sección: «San Marcos Trufa (Brazos y Mini Brazos)».
+    name: `${nombreCompleto(p)}${isSeccionId(p.seccion) ? ` (${seccionById(p.seccion).label})` : ""}`,
+    grupo: isSeccionId(p.seccion) ? seccionById(p.seccion).label : "Otros",
     priceCents: p.priceCents,
     consultar: p.consultar,
     variantes: p.variantes.map((v) => ({ variantId: v.variantId, label: v.label, priceCents: v.priceCents })),

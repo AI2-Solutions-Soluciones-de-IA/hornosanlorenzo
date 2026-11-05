@@ -40,6 +40,8 @@ export type ProductoOpcion = {
   priceCents: number | null;
   consultar: boolean;
   variantes: { variantId: string; label: string; priceCents: number }[];
+  /** La sección de la carta, para agrupar el desplegable. */
+  grupo?: string;
   /** La foto de la ficha, para poder ponerla en la noticia con un clic. */
   foto?: { url: string; ancho: number; alto: number; alt: string } | null;
 };
@@ -661,10 +663,16 @@ export default function AdminNoticias({ noticiasIniciales, productos }: Props) {
               style={field}
             >
               <option value="">Ninguno: solo texto</option>
-              {productos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
+              {[...new Set(productos.map((p) => p.grupo ?? ""))].map((grupo) => (
+                <optgroup key={grupo} label={grupo || "Productos"}>
+                  {productos
+                    .filter((p) => (p.grupo ?? "") === grupo)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </optgroup>
               ))}
               {formulario.productoId &&
                 !productos.some((p) => p.id === formulario.productoId) && (
