@@ -159,15 +159,36 @@ describe("plazo: un día de antelación, hasta las 18:00 (14-10-2026)", () => {
     expect(isDateAllowed("recogida", "2026-09-29", manana, opts)).toBe(false);
   });
 
-  it("recogida: para mañana hasta las 17:59; desde las 18:00, pasado", () => {
-    for (const storeId of ["alcobendas", "pozuelo"]) {
-      expect(
-        earliestDate("recogida", new Date("2026-09-29T17:59:00"), { storeId }),
-      ).toBe("2026-09-30");
-      expect(
-        earliestDate("recogida", new Date("2026-09-29T18:00:00"), { storeId }),
-      ).toBe("2026-10-01");
-    }
+  it("Alcobendas: para mañana hasta las 17:59; desde las 18:00, pasado", () => {
+    const storeId = "alcobendas";
+    expect(
+      earliestDate("recogida", new Date("2026-09-29T17:59:00"), { storeId }),
+    ).toBe("2026-09-30");
+    expect(
+      earliestDate("recogida", new Date("2026-09-29T18:00:00"), { storeId }),
+    ).toBe("2026-10-01");
+  });
+
+  it("Alcobendas, sábados y domingos: hasta las 13:00", () => {
+    const storeId = "alcobendas";
+    // Sábado 3-10 y domingo 4-10.
+    expect(earliestDate("recogida", new Date("2026-10-03T12:59:00"), { storeId })).toBe("2026-10-04");
+    expect(earliestDate("recogida", new Date("2026-10-03T13:00:00"), { storeId })).toBe("2026-10-05");
+    expect(earliestDate("recogida", new Date("2026-10-04T12:59:00"), { storeId })).toBe("2026-10-05");
+    expect(earliestDate("recogida", new Date("2026-10-04T13:00:00"), { storeId })).toBe("2026-10-06");
+  });
+
+  it("Pozuelo: para mañana hasta las 16:59; desde las 17:00, pasado", () => {
+    const storeId = "pozuelo";
+    expect(earliestDate("recogida", new Date("2026-09-29T16:59:00"), { storeId })).toBe("2026-09-30");
+    expect(earliestDate("recogida", new Date("2026-09-29T17:00:00"), { storeId })).toBe("2026-10-01");
+    // El sábado también a las 17:00.
+    expect(earliestDate("recogida", new Date("2026-10-03T16:59:00"), { storeId })).toBe("2026-10-04");
+  });
+
+  it("cuenta la hora de Madrid aunque el reloj del servidor vaya en UTC", () => {
+    // 17:30 UTC del martes 29-9 son las 19:30 en Madrid: ya no vale el miércoles.
+    expect(earliestDate("domicilio", new Date("2026-09-29T17:30:00Z"))).toBe("2026-10-01");
   });
 
   it("domicilio: igual, hasta las 18:00", () => {

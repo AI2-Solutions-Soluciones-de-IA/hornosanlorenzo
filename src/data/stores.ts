@@ -32,6 +32,13 @@ export type Store = {
    * tarde). Esos días solo se recoge de mañana.
    */
   cierreFestivo?: string;
+  /**
+   * Hora (de Madrid) hasta la que un encargo para recoger aquí puede ser para
+   * el día siguiente; desde esa hora, para pasado mañana (5-11-2026).
+   */
+  horaLimitePedido: number;
+  /** La de los pedidos hechos en sábado o domingo, si es otra. */
+  horaLimitePedidoFinDeSemana?: number;
   openDays: number[]; // 0=Sun ... 6=Sat
   /** Días en que se puede elegir recoger aquí. 0=domingo ... 6=sábado. */
   diasRecogida: readonly number[];
@@ -72,6 +79,8 @@ export const stores: readonly Store[] = [
     etiqueta: "Obrador central · Alcobendas",
     pickupUntil: "19:30",
     pickupUntilReducido: "14:30",
+    horaLimitePedido: 18,
+    horaLimitePedidoFinDeSemana: 13,
     openDays: [0, 1, 2, 3, 4, 5, 6],
     diasRecogida: [0, 1, 2, 3, 4, 5, 6],
     reparto: true,
@@ -106,6 +115,7 @@ export const stores: readonly Store[] = [
     etiqueta: "Pastelería · Pozuelo",
     pickupUntil: "20:30",
     cierreFestivo: "15:00",
+    horaLimitePedido: 17,
     openDays: [0, 1, 2, 3, 4, 5, 6],
     // Recogida también el domingo, de mañana (14-10-2026).
     diasRecogida: [0, 1, 2, 3, 4, 5, 6],

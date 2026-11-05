@@ -2,7 +2,9 @@
  * Reglas de entrega.
  *
  *   Envío a domicilio y recogida en tienda — siempre con un día de
- *   antelación: para mañana, hasta las 18:00 de hoy; después, pasado mañana.
+ *   antelación: para mañana, hasta la hora límite de hoy; después, pasado
+ *   mañana. Domicilio, las 18:00; recogida, la de la tienda (5-11-2026):
+ *   Alcobendas, las 18:00 (sábados y domingos, las 13:00); Pozuelo, las 17:00.
  *   Nada para el mismo día por la web (14-10-2026): quien lo necesite llama.
  *   Alcobendas abre también los domingos; sábados, domingos y festivos
  *   cierra a las 14:30, así que ese día solo hay mañana.
@@ -14,7 +16,10 @@ import { stores } from "~/data/stores";
 
 export type DeliveryMode = "domicilio" | "recogida";
 
-/** Hora límite, en las dos modalidades, para que el pedido sea para mañana. */
+/**
+ * Hora límite para que el pedido sea para mañana: la del reparto, y la de la
+ * recogida mientras no hay tienda elegida (la más permisiva).
+ */
 export const CUTOFF_HOUR = 18;
 
 /** Desde este importe el obrador necesita dos días: no vale el día siguiente. */
@@ -66,7 +71,7 @@ export const REPARTO_RESUMEN = [
 
 /** Va debajo de las dos modalidades, antes de elegir. */
 export const ANTELACION_COPY =
-  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación, antes de las 18:00 del día anterior. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
+  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación: a domicilio, antes de las 18:00 del día anterior; para recoger en Alcobendas, antes de las 18:00 (sábados y domingos, antes de las 13:00); en Pozuelo, antes de las 17:00. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
 
 /**
  * El envío a domicilio no se elige por franja: el reparto propio sale por la
@@ -177,16 +182,50 @@ export type PlazoOpts = {
 };
 
 /**
- * Primer día que se puede elegir, igual en las dos modalidades: mañana si
- * aún no son las 18:00; si no, pasado. Un pedido de 250 € o más no baja de
- * dos días.
+ * La hora de Madrid como fecha local: el servidor corre en UTC y el plazo se
+ * cuenta con el reloj de las tiendas. En un navegador de España no cambia nada.
+ */
+export function horaDeMadrid(now: Date): Date {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Madrid",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+      .formatToParts(now)
+      .map((x) => [x.type, Number(x.value)]),
+  );
+  return new Date(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+}
+
+/** Hasta qué hora de `now` (ya en hora de Madrid) el pedido es para mañana. */
+export function horaLimite(
+  mode: DeliveryMode,
+  now: Date,
+  storeId?: string,
+): number {
+  const tienda = mode === "recogida" ? stores.find((s) => s.id === storeId) : undefined;
+  if (!tienda) return CUTOFF_HOUR;
+  const finDeSemana = now.getDay() === 0 || now.getDay() === 6;
+  return (finDeSemana ? tienda.horaLimitePedidoFinDeSemana : undefined) ?? tienda.horaLimitePedido;
+}
+
+/**
+ * Primer día que se puede elegir: mañana si aún no es la hora límite
+ * (`horaLimite`); si no, pasado. Un pedido de 250 € o más no baja de dos días.
  */
 export function earliestDate(
   mode: DeliveryMode,
-  now: Date = new Date(),
+  ahora: Date = new Date(),
   { subtotalCents = 0, storeId }: PlazoOpts = {},
 ): string {
-  let dias = now.getHours() < CUTOFF_HOUR ? 1 : 2;
+  const now = horaDeMadrid(ahora);
+  let dias = now.getHours() < horaLimite(mode, now, storeId) ? 1 : 2;
 
   if (subtotalCents >= DOS_DIAS_DESDE_CENTS) dias = Math.max(dias, 2);
 
