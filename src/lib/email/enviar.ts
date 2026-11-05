@@ -11,6 +11,10 @@ export type Correo = {
   para: string;
   asunto: string;
   texto: string;
+  /** Versión HTML; el texto va siempre, para quien no la lea. */
+  html?: string;
+  /** A quién va la respuesta si el destinatario contesta. */
+  responderA?: string;
   /** Cabeceras extra, p. ej. `List-Unsubscribe` en los envíos a suscritos. */
   cabeceras?: Record<string, string>;
 };
@@ -19,6 +23,8 @@ export async function enviarCorreo({
   para,
   asunto,
   texto,
+  html,
+  responderA,
 }: Correo): Promise<{ ok: boolean; error?: string }> {
   const clave = import.meta.env.RESEND_API_KEY ?? process.env.RESEND_API_KEY;
   const remitente =
@@ -34,6 +40,8 @@ export async function enviarCorreo({
     to: para,
     subject: asunto,
     text: texto,
+    ...(html ? { html } : {}),
+    ...(responderA ? { replyTo: responderA } : {}),
   });
 
   if (error) {

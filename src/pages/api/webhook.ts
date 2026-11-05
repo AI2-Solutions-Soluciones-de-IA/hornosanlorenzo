@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { enviarCorreo } from "~/lib/email/enviar";
+import { correoCliente, correoObrador, type DatosPedido } from "~/lib/email/pedido";
 import { site } from "~/data/site";
 import {
   marcarPagado,
@@ -231,40 +232,38 @@ export async function notify(
   /** Número de pedido (migración 023), para el asunto y el texto de los correos. */
   numero: number | null = null,
 ): Promise<boolean> {
-  const nPedido = numero ? `nº ${numero}` : "";
   const apiKey = import.meta.env.RESEND_API_KEY;
   const to = import.meta.env.ORDER_NOTIFICATION_EMAIL;
   const from = import.meta.env.ORDER_FROM_EMAIL;
 
   const m = session.metadata ?? {};
-  const total = ((session.amount_total ?? 0) / 100)
-    .toFixed(2)
-    .replace(".", ",");
   const cliente = session.customer_details?.email ?? "";
 
   const items = await stripe.checkout.sessions.listLineItems(session.id, {
     limit: 50,
   });
-  const detalle = items.data
-    .map((i) => `• ${i.quantity}× ${i.description}`)
-    .join("\n");
-
-  const resumen = [
-    `Pedido ${nPedido ? `${nPedido} ` : ""}pagado — ${total} €`,
-    "",
-    detalle,
-    "",
-    `Modalidad: ${m.modalidad ?? ""}`,
-    `Día: ${m.dia ?? ""} (${m.franja ?? ""})`,
-    `Destino: ${m.destino ?? ""}`,
-    m.nombre ? `Nombre: ${m.nombre}` : "",
-    m.notas ? `Notas: ${m.notas}` : "",
-    `Email: ${cliente}`,
-    "",
-    `Referencia Stripe: ${session.id}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const datos: DatosPedido = {
+    numero,
+    totalCents: session.amount_total ?? 0,
+    lineas: items.data.map((i) => ({
+      qty: i.quantity ?? 1,
+      nombre: i.description ?? "",
+      importeCents: i.amount_total ?? 0,
+    })),
+    modalidad: m.modalidad ?? "",
+    dia: m.dia ?? "",
+    franja: m.franja ?? "",
+    destino: m.destino ?? "",
+    aDomicilio: m.entregaModo === "domicilio",
+    tiendaId: m.entregaTienda || undefined,
+    nombre: m.nombre || undefined,
+    email: cliente,
+    telefono: m.telefono || undefined,
+    notas: m.notas || undefined,
+    referencia: session.id,
+  };
+  const aviso = correoObrador(datos);
+  const resumen = aviso.texto;
 
   // Todo o nada, a propósito: el correo al cliente dice «Ya está pagado y
   // anotado en el obrador», y esa frase solo puede ser cierta si ese aviso
@@ -284,8 +283,9 @@ export async function notify(
 
   const obrador = await enviarCorreo({
     para: to,
-    asunto: `Pedido web ${nPedido ? `${nPedido} ` : ""}— ${m.dia ?? ""} · ${total} €`,
-    texto: resumen,
+    ...aviso,
+    // Contestar al aviso es escribir al cliente.
+    responderA: cliente || undefined,
   });
 
   if (!obrador.ok) {
@@ -298,22 +298,8 @@ export async function notify(
   if (cliente) {
     const clienteEnviado = await enviarCorreo({
       para: cliente,
-      asunto: `Tu pedido ${nPedido ? `${nPedido} ` : ""}en ${site.name}`,
-      texto: [
-        `Gracias por tu pedido. Ya está pagado y anotado en el obrador.`,
-        nPedido ? `Tu número de pedido es el ${numero}. Tenlo a mano si nos llamas.` : "",
-        "",
-        detalle,
-        "",
-        `Total: ${total} €`,
-        `${m.modalidad ?? ""} · ${m.dia ?? ""} (${m.franja ?? ""})`,
-        `${m.destino ?? ""}`,
-        "",
-        `Si necesitas cambiar algo, escríbenos a ${site.email}.`,
-        "",
-        site.name,
-        site.legend,
-      ].join("\n"),
+      ...correoCliente(datos),
+      responderA: site.email,
     });
 
     if (!clienteEnviado.ok) {

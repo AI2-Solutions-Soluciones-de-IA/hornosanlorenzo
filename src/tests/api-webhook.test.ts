@@ -293,3 +293,28 @@ describe("anotarDevolucion", () => {
     expect(r.status).toBe(500);
   });
 });
+
+describe("notify — con todo configurado", () => {
+  it("manda el aviso al obrador y la confirmación al cliente, en HTML y con a quién responder", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("ORDER_NOTIFICATION_EMAIL", "info@hornosanlorenzo.com");
+    vi.stubEnv("ORDER_FROM_EMAIL", "Horno San Lorenzo <pedidos@hornosanlorenzo.com>");
+    enviarCorreoMock.mockResolvedValue({ ok: true });
+
+    const { notify } = await import("~/pages/api/webhook");
+    const avisado = await notify(
+      stripeConLineItems([{ quantity: 2, description: "Tarta", amount_total: 2500 }]),
+      sesionPagada(),
+      7,
+    );
+
+    expect(avisado).toBe(true);
+    expect(enviarCorreoMock).toHaveBeenCalledTimes(2);
+    const [obrador, cliente] = enviarCorreoMock.mock.calls.map((c) => c[0]);
+    expect(obrador).toMatchObject({ para: "info@hornosanlorenzo.com", responderA: "cliente@example.com" });
+    expect(obrador.asunto).toContain("nº 7");
+    expect(obrador.html).toContain("2 × Tarta");
+    expect(cliente).toMatchObject({ para: "cliente@example.com", responderA: "info@hornosanlorenzo.com" });
+    expect(cliente.html).toContain("<strong>7</strong>");
+  });
+});
