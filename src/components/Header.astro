@@ -21,7 +21,7 @@ import imgEmpresas from "../../public/images/productos/menu-empresas.jpg";
 const submenuImages: Record<string, { src: ImageMetadata; alt: string }> = {
   Dulce: { src: imgDulce, alt: "Tarta de nata coronada de fresas naturales" },
   Salado: { src: imgSalado, alt: "Empanada de hojaldre entera sobre tabla de madera" },
-  "Sin alérgenos": { src: imgSinAlergenos, alt: "Tarta de chocolate y trufa con cobertura brillante" },
+  "Sin alérgenos": { src: imgSinAlergenos, alt: "Tarta de chocolate sin alérgenos cubierta de fideos de chocolate, con una physalis" },
   Packs: {
     src: imgPacks,
     alt: "Mesa de celebración con empanada, quiche, bollos preñaos, croissants, canapés y pastelitos",
@@ -208,7 +208,10 @@ const lineasMovil: Record<string, readonly string[]> = {
        header» del cliente (21-10-2026). Sin desplegables (cada entrada lleva
        a su página) y sin «Inicio», que ya es el sello. La fila se esconde al
        bajar por la página y vuelve al subir (script de abajo). -->
-  <div class="md:hidden h-6 bg-[color:var(--color-leche)]" aria-hidden="true"></div>
+  <!-- En ese hueco, a la izquierda del sello, las redes (5-11-2026). -->
+  <div class="md:hidden h-6 flex items-center px-1.5 min-[420px]:px-3 bg-[color:var(--color-leche)]">
+    <SocialLinks compacto />
+  </div>
   <nav aria-label="Secciones" class="secciones-movil md:hidden bg-[color:var(--color-leche)] border-b border-[color:var(--color-avellana)]" data-secciones-movil>
     <ul class="flex items-stretch justify-between px-1 min-[420px]:px-3 pb-1 font-[family-name:var(--font-display)] text-[9px] min-[420px]:text-[10px] leading-tight uppercase text-center">
       {mainNav.filter((item) => item.href !== "/").map((item, i) => (
