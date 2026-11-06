@@ -41,9 +41,9 @@ describe("límites del pedido", () => {
     expect(superaImporte(MAX_IMPORTE_PEDIDO_CENTS + 1)).toBe(true);
   });
 
-  it("los avisos mandan a la oficina", () => {
-    expect(LIMITE_UNIDADES_COPY).toMatch(/oficina/);
-    expect(LIMITE_IMPORTE_COPY).toMatch(/oficina/);
+  it("los avisos invitan a llamar y comentar el caso", () => {
+    expect(LIMITE_UNIDADES_COPY).toMatch(/916 613 932 y comentarnos tu caso/);
+    expect(LIMITE_IMPORTE_COPY).toMatch(/916 613 932 y comentarnos tu caso/);
   });
 });
 

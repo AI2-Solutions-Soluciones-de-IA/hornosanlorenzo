@@ -29,7 +29,7 @@ import {
   type CheckoutAparcado,
 } from "~/lib/reanudar-checkout";
 import type { Cart } from "~/lib/cart";
-import { DIAS_TACHADOS_COPY, unidadesTotales } from "~/lib/limites-pedido";
+import { DIAS_TACHADOS_COPY, llamanosCopy, unidadesTotales } from "~/lib/limites-pedido";
 
 type Step = "dia" | "opcion" | "direccion" | "tienda" | "resumen";
 
@@ -187,6 +187,20 @@ export default function CheckoutFlow({
         : earliestSelectableDate(today),
     [mode, today, plazoOpts],
   );
+  /**
+   * Mañana ya no se puede (pasó la hora límite, pedido grande o la tienda
+   * cierra): se dice cuál es el primer día y que por teléfono a lo mejor sí
+   * (6-11-2026). Con el teléfono de la tienda de recogida, si hay una.
+   */
+  const manana = useMemo(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + 1);
+    return toISO(d);
+  }, [today]);
+  const tiendaDeRecogida =
+    mode === "recogida" ? stores.find((s) => s.id === storeId) : undefined;
+  const mananaNoSePuede = mode !== null && minISO > manana;
+
   const [cursor, setCursor] = useState(() => {
     const d = fromISO(earliestSelectableDate(today));
     return { year: d.getFullYear(), month: d.getMonth() };
@@ -610,6 +624,18 @@ export default function CheckoutFlow({
                   );
                 })}
               </div>
+
+              {mananaNoSePuede && (
+                <p
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: "var(--color-ink-muted)",
+                  }}
+                >
+                  {`Por la web, el primer día disponible es el ${formatDateISO(minISO)}. ¿Lo necesitas antes? ${llamanosCopy(tiendaDeRecogida?.phoneDisplay)}`}
+                </p>
+              )}
 
               {cells.some((d) => d && completos.has(toISO(d))) && (
                 <p

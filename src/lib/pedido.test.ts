@@ -331,7 +331,7 @@ describe("priceOrder — límites del pedido online", () => {
       ],
     };
     await expect(priceOrder(payload, { now: AHORA })).rejects.toThrow(
-      /«Tarta de queso».*oficina/,
+      /«Tarta de queso».*comentarnos tu caso/,
     );
   });
 
@@ -346,7 +346,7 @@ describe("priceOrder — límites del pedido online", () => {
     productosParaPedido.mockResolvedValue(catalogo(CARA));
     const payload = { ...pedidoBase(), items: [{ slug: CARA.slug, qty: 10 }] };
     await expect(priceOrder(payload, { now: AHORA })).rejects.toThrow(
-      /hasta 400 €.*oficina/,
+      /hasta 400 €.*comentarnos tu caso/,
     );
   });
 });
@@ -365,7 +365,7 @@ describe("priceOrder — capacidad del día", () => {
   it("lo rechaza si con él se pasa de la capacidad del día", async () => {
     conEncargadas(49);
     await expect(priceOrder(pedidoBase(), { now: AHORA })).rejects.toThrow(
-      /no nos caben tantos encargos.*oficina/,
+      /no nos caben más encargos.*comentarnos tu caso/,
     );
   });
 });
@@ -551,7 +551,7 @@ describe("priceOrder con packs", () => {
     const { maxUnidadesDelDia } = await import("~/lib/limites-pedido");
     unidadesEncargadas.mockResolvedValue(new Map([[dia, maxUnidadesDelDia(dia) - 7]]));
     await expect(priceOrder(cumple({ qty: 2 }), { now: AHORA })).rejects.toThrow(
-      /no nos caben tantos encargos/,
+      /no nos caben más encargos/,
     );
     unidadesEncargadas.mockResolvedValue(new Map([[dia, maxUnidadesDelDia(dia) - 8]]));
     await expect(priceOrder(cumple({ qty: 2 }), { now: AHORA })).resolves.toBeDefined();

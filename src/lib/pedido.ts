@@ -27,7 +27,7 @@ import {
   superaImporte,
   LIMITE_IMPORTE_COPY,
   MAX_UNIDADES_POR_PRODUCTO,
-  OFICINA_CONTACTO,
+  LLAMANOS_COPY,
   cabeEnElDia,
   unidadesTotales,
   DIA_COMPLETO_COPY,
@@ -303,7 +303,7 @@ export async function priceOrder(
   if (sobreLimite) {
     const nombre = lines.find((l) => l.slug === sobreLimite)?.name ?? sobreLimite;
     throw new OrderError(
-      `De «${nombre}» se pueden pedir online hasta ${MAX_UNIDADES_POR_PRODUCTO} unidades. Para más, consulta directamente con nuestra oficina: ${OFICINA_CONTACTO.phoneDisplay} · ${OFICINA_CONTACTO.email}.`,
+      `De «${nombre}» se pueden pedir online hasta ${MAX_UNIDADES_POR_PRODUCTO} unidades. ${LLAMANOS_COPY}`,
     );
   }
 
@@ -322,7 +322,7 @@ export async function priceOrder(
     })
   ) {
     throw new OrderError(
-      "La fecha elegida no está disponible para este pedido. Revisa el día de entrega.",
+      `La fecha elegida no está disponible para este pedido por la web. Revisa el día de entrega. ${LLAMANOS_COPY}`,
     );
   }
 

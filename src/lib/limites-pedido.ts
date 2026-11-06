@@ -44,16 +44,29 @@ export const OFICINA_CONTACTO = {
   email: site.email,
 } as const;
 
-const CONSULTA_OFICINA = `consulta directamente con nuestra oficina: ${OFICINA_CONTACTO.phoneDisplay} · ${OFICINA_CONTACTO.email}`;
+/**
+ * Lo que se dice siempre que la web no deja hacer un pedido (6-11-2026):
+ * fuera de hora, día lleno o por encima de un límite. Por teléfono a lo
+ * mejor sí se puede. Con el teléfono de la tienda si ya se sabe cuál.
+ */
+const puedesLlamarnos = (phoneDisplay: string = OFICINA_CONTACTO.phoneDisplay) =>
+  `puedes llamarnos al ${phoneDisplay} y comentarnos tu caso para ver si podemos atenderte.`;
 
-export const LIMITE_UNIDADES_COPY = `Máximo ${MAX_UNIDADES_POR_PRODUCTO} unidades de un mismo producto por pedido. Para pedir más, ${CONSULTA_OFICINA}.`;
+export const llamanosCopy = (phoneDisplay?: string): string => {
+  const t = puedesLlamarnos(phoneDisplay);
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
-export const LIMITE_IMPORTE_COPY = `El pedido online admite hasta ${MAX_IMPORTE_PEDIDO_CENTS / 100} €. Para pedidos de importe superior, ${CONSULTA_OFICINA}.`;
+export const LLAMANOS_COPY = llamanosCopy();
 
-export const DIA_COMPLETO_COPY = `Ese día ya no nos caben tantos encargos. Elige otro día o ${CONSULTA_OFICINA}.`;
+export const LIMITE_UNIDADES_COPY = `Por la web, máximo ${MAX_UNIDADES_POR_PRODUCTO} unidades de un mismo producto por pedido. Si necesitas más, ${puedesLlamarnos()}`;
+
+export const LIMITE_IMPORTE_COPY = `El pedido online admite hasta ${MAX_IMPORTE_PEDIDO_CENTS / 100} €. Si necesitas más, ${puedesLlamarnos()}`;
+
+export const DIA_COMPLETO_COPY = `Ese día ya no nos caben más encargos por la web. Elige otro día o, si lo necesitas para ese, ${puedesLlamarnos()}`;
 
 /** Debajo del calendario, cuando hay algún día tachado. */
-export const DIAS_TACHADOS_COPY = `Los días tachados ya no tienen hueco para tu pedido. Elige otro o ${CONSULTA_OFICINA}.`;
+export const DIAS_TACHADOS_COPY = `Los días tachados ya no tienen hueco para tu pedido por la web. Si lo necesitas para uno de ellos, ${puedesLlamarnos()}`;
 
 type Linea = { slug: string; qty: number };
 
