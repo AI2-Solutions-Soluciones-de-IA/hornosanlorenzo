@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { listarPedidos } from "~/lib/db/pedidos";
 import { pedidosAExcel } from "~/lib/pedidos-excel";
-import { vePedidos } from "~/lib/auth/guardia";
+import { destinosVisibles, vePedidos } from "~/lib/auth/guardia";
 import { leerFiltrosPedidos } from "~/lib/filtros-pedidos";
 
 export const prerender = false;
@@ -27,7 +27,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const { tipo, desde, hasta, filtros } = leerFiltrosPedidos(url.searchParams);
 
   try {
-    const pedidos = await listarPedidos(MAX_EXCEL, filtros);
+    const pedidos = await listarPedidos(MAX_EXCEL, {
+      ...filtros,
+      soloDestinos: destinosVisibles(locals.usuario),
+    });
     const xlsx = await pedidosAExcel(pedidos);
     const rango = desde && hasta && desde !== hasta ? `${desde}-a-${hasta}` : (desde ?? (hasta && `hasta-${hasta}`));
     const nombre = `pedidos${rango ? `-${tipo}-${rango}` : ""}.xlsx`;

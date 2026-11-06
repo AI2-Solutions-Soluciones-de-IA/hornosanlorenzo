@@ -2,10 +2,34 @@
  * Quién entra en el panel. Sin `pg` ni `astro:*` a propósito: así se puede
  * probar sin levantar nada, igual que `~/lib/auth/campos`.
  */
+import type { DestinoPedido } from "~/lib/db/pedidos";
 
 export const ROL_ADMIN = "admin";
 /** La oficina entra en el panel, pero solo a Pedidos (7-10-2026). */
 export const ROL_OFICINA = "oficina";
+/**
+ * La oficina de cada tienda (6-11-2026): también solo Pedidos, y de ellos
+ * solo los suyos. Alcobendas lleva además los envíos a domicilio, que salen
+ * de su obrador.
+ */
+export const ROL_OFICINA_ALCOBENDAS = "oficina_alcobendas";
+export const ROL_OFICINA_POZUELO = "oficina_pozuelo";
+
+/** Qué pedidos ve cada oficina; la que no está aquí (`oficina`), todos. */
+const DESTINOS_DE_OFICINA: Record<string, DestinoPedido[]> = {
+  [ROL_OFICINA_ALCOBENDAS]: ["alcobendas", "domicilio"],
+  [ROL_OFICINA_POZUELO]: ["pozuelo"],
+};
+
+/** Los papeles que entran al panel solo para Pedidos. */
+const ROLES_OFICINA: readonly string[] = [
+  ROL_OFICINA,
+  ROL_OFICINA_ALCOBENDAS,
+  ROL_OFICINA_POZUELO,
+];
+
+const esOficina = (usuario: Usuario): boolean =>
+  ROLES_OFICINA.includes(usuario?.rol ?? "");
 
 type Usuario = App.Locals["usuario"];
 
@@ -18,9 +42,18 @@ export function esAdmin(usuario: Usuario): boolean {
   return usuario?.rol === ROL_ADMIN;
 }
 
-/** Quien puede ver y gestionar los pedidos: el admin y la oficina. */
+/** Quien puede ver y gestionar los pedidos: el admin y las oficinas. */
 export function vePedidos(usuario: Usuario): boolean {
-  return esAdmin(usuario) || usuario?.rol === ROL_OFICINA;
+  return esAdmin(usuario) || esOficina(usuario);
+}
+
+/**
+ * Los destinos de pedido a los que se limita este usuario, o `undefined`
+ * si los ve todos (admin y oficina general). Solo tiene sentido para quien
+ * `vePedidos`.
+ */
+export function destinosVisibles(usuario: Usuario): DestinoPedido[] | undefined {
+  return DESTINOS_DE_OFICINA[usuario?.rol ?? ""];
 }
 
 /** Lo único del panel que abre la oficina: la página de pedidos y su API. */
@@ -29,7 +62,7 @@ const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
 /** Lo que abre cada papel; la entrada al panel (`/admin`) la sirve aparte. */
 export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
   if (esAdmin(usuario)) return true;
-  if (usuario?.rol !== ROL_OFICINA) return false;
+  if (!esOficina(usuario)) return false;
   return RUTAS_OFICINA.some(
     (base) => pathname === base || pathname.startsWith(`${base}/`),
   );
@@ -77,7 +110,7 @@ export function guardiaAdmin(contexto: {
   }
   // La oficina, al entrar al panel, va directa a lo único que tiene.
   if (
-    contexto.usuario.rol === ROL_OFICINA &&
+    esOficina(contexto.usuario) &&
     pathname.replace(/\/$/, "") === "/admin"
   ) {
     return new Response(null, {

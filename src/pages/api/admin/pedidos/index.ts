@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 import { cambiarEstadoAMano } from "~/lib/db/pedidos";
-import { vePedidos } from "~/lib/auth/guardia";
+import { destinosVisibles, vePedidos } from "~/lib/auth/guardia";
 
 export const prerender = false;
 
@@ -40,7 +40,11 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
   if (!parsed.success) return json({ error: "Faltan datos del pedido." }, 400);
 
   try {
-    const cambiado = await cambiarEstadoAMano(parsed.data.id, parsed.data.estado);
+    const cambiado = await cambiarEstadoAMano(
+      parsed.data.id,
+      parsed.data.estado,
+      destinosVisibles(locals.usuario),
+    );
     if (!cambiado) {
       return json(
         { error: "Ese pedido no se puede cambiar desde aquí. Recarga la página." },

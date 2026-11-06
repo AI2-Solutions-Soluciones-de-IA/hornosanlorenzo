@@ -315,6 +315,17 @@ describeSiHayBD("repositorio de pedidos", () => {
       expect(await ids("domicilio")).toEqual([domicilio]);
       expect(await repo.contarPedidos(dia)).toBe(3);
       expect(await repo.contarPedidos({ ...dia, destino: "pozuelo" })).toBe(1);
+
+      // La oficina de una tienda: lo suyo, y elegir fuera de ello no amplía.
+      const deAlcobendas = { ...dia, soloDestinos: ["alcobendas", "domicilio"] as const };
+      const ve = (await repo.listarPedidos(50, { ...deAlcobendas, soloDestinos: [...deAlcobendas.soloDestinos] })).map((p) => p.id);
+      expect(ve.sort()).toEqual([alcobendas, domicilio].sort());
+      expect(
+        await repo.contarPedidos({ ...dia, soloDestinos: ["alcobendas", "domicilio"], destino: "pozuelo" }),
+      ).toBe(0);
+      // Ni cambiar el estado de uno que no es suyo.
+      expect(await repo.cambiarEstadoAMano(pozuelo, "pagado", ["alcobendas", "domicilio"])).toBe(false);
+      expect(await repo.cambiarEstadoAMano(pozuelo, "pagado", ["pozuelo"])).toBe(true);
     });
   });
 

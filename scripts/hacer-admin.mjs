@@ -6,7 +6,9 @@
  * de alta (`input: false` en `src/lib/auth/campos.ts`).
  *
  *   pnpm admin correo@ejemplo.com            → admin (todo el panel)
- *   pnpm admin correo@ejemplo.com oficina    → oficina (solo Pedidos)
+ *   pnpm admin correo@ejemplo.com oficina    → oficina (solo Pedidos, todos)
+ *   pnpm admin correo@ejemplo.com oficina_alcobendas → Pedidos de Alcobendas y a domicilio
+ *   pnpm admin correo@ejemplo.com oficina_pozuelo    → Pedidos de Pozuelo
  *   pnpm admin correo@ejemplo.com cliente    → le quita el acceso al panel
  *
  * La persona tiene que haberse registrado antes por `/acceso` con su
@@ -15,11 +17,13 @@
 import pg from "pg";
 
 const email = process.argv[2]?.trim().toLowerCase();
-// Mismos valores que `ROL_ADMIN` / `ROL_OFICINA` de `src/lib/auth/guardia.ts`.
-const ROLES = ["admin", "oficina", "cliente"];
+// Mismos valores que los `ROL_*` de `src/lib/auth/guardia.ts`.
+const ROLES = ["admin", "oficina", "oficina_alcobendas", "oficina_pozuelo", "cliente"];
 const rol = process.argv[3]?.trim() ?? "admin";
 if (!email || !ROLES.includes(rol)) {
-  console.error("Uso: pnpm admin correo@ejemplo.com [admin|oficina|cliente]");
+  console.error(
+    "Uso: pnpm admin correo@ejemplo.com [admin|oficina|oficina_alcobendas|oficina_pozuelo|cliente]",
+  );
   process.exit(1);
 }
 

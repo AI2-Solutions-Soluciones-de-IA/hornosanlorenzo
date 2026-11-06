@@ -75,7 +75,7 @@ export default function AccesoSesion({ tono }: { tono: Tono }) {
   // botón de admin pintado en servidor se lo vería la siguiente persona.
   // La oficina también entra (solo a Pedidos: el middleware la lleva allí).
   const rol = (data.user as { rol?: string }).rol;
-  const esAdmin = rol === "admin" || rol === "oficina";
+  const esAdmin = rol === "admin" || rol?.startsWith("oficina") === true;
 
   return (
     <div className={estilo.contenedor}>

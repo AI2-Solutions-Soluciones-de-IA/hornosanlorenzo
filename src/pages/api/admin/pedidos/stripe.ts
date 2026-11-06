@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
-import { vePedidos } from "~/lib/auth/guardia";
+import { destinosVisibles, vePedidos } from "~/lib/auth/guardia";
 import { pool } from "~/lib/db/pool";
 
 export const prerender = false;
@@ -20,9 +20,14 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   const secret = import.meta.env.STRIPE_SECRET_KEY;
   try {
+    // La oficina de una tienda, solo los suyos (como en la lista).
     const { rows } = await pool.query<{ sesion: string | null }>(
-      "select stripe_session_id as sesion from pedidos where id = $1",
-      [id],
+      `select stripe_session_id as sesion from pedidos
+        where id = $1
+          and ($2::text[] is null
+               or (case mode when 'domicilio' then 'domicilio'
+                             when 'recogida' then store_id end) = any($2::text[]))`,
+      [id, destinosVisibles(locals.usuario) ?? null],
     );
     const sesion = rows[0]?.sesion;
     if (!sesion || !secret) return new Response("Este pedido no tiene pago en Stripe.", { status: 404 });

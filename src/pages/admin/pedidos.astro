@@ -10,6 +10,8 @@ import { leerFiltrosPedidos, queryFiltros } from "~/lib/filtros-pedidos";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
+import { destinosVisibles } from "~/lib/auth/guardia";
+import type { DestinoPedido } from "~/lib/db/pedidos";
 import { etiquetaPieza } from "~/data/packs";
 
 export const prerender = false;
@@ -19,7 +21,25 @@ export const prerender = false;
 // caché (está excluida del ISR en `astro.config.mjs`), así que aquí sí se
 // pueden leer parámetros; en las páginas públicas no, que son estáticas.
 const leidos = leerFiltrosPedidos(Astro.url.searchParams);
-const { tipo, desde, hasta, texto: filtroTexto, destino: filtroDestino, hayFiltro } = leidos;
+const { tipo, desde, hasta, texto: filtroTexto, hayFiltro } = leidos;
+
+// La oficina de una tienda solo ve lo suyo (6-11-2026): se añade a todas
+// las consultas, también a la cuenta sin filtros del aviso de nuevos. En el
+// desplegable solo salen sus destinos, y uno que no es suyo no cuenta.
+const soloDestinos = destinosVisibles(Astro.locals.usuario);
+const filtroDestino =
+  leidos.destino && (!soloDestinos || soloDestinos.includes(leidos.destino))
+    ? leidos.destino
+    : undefined;
+const filtros = { ...leidos.filtros, destino: filtroDestino, soloDestinos };
+
+const OPCIONES_DESTINO: { valor: DestinoPedido; texto: string }[] = [
+  ...stores.map((s) => ({ valor: s.id, texto: `Recogida en ${s.shortName}` })),
+  { valor: "domicilio", texto: "Envío a domicilio" },
+];
+const opcionesDestino = OPCIONES_DESTINO.filter(
+  (o) => !soloDestinos || soloDestinos.includes(o.valor),
+);
 
 // De 20 en 20: con cada pedido desplegado con sus líneas, más que eso ya es
 // un scroll que nadie recorre.
@@ -36,10 +56,10 @@ let totalSinFiltros = 0;
 try {
   // Primero la cuenta: una `?pagina=` más allá de la última se queda en la
   // última en vez de enseñar una página vacía.
-  total = await contarPedidos(leidos.filtros);
+  total = await contarPedidos(filtros);
   pag = paginar(total, POR_PAGINA, leidos.pagina);
-  pedidos = await listarPedidos(POR_PAGINA, leidos.filtros, (pag.pagina - 1) * POR_PAGINA);
-  totalSinFiltros = hayFiltro ? await contarPedidos() : total;
+  pedidos = await listarPedidos(POR_PAGINA, filtros, (pag.pagina - 1) * POR_PAGINA);
+  totalSinFiltros = hayFiltro ? await contarPedidos({ soloDestinos }) : total;
 } catch (error) {
   fallo = true;
   console.error(
@@ -48,7 +68,7 @@ try {
   );
 }
 
-const query = queryFiltros(leidos);
+const query = queryFiltros({ ...leidos, destino: filtroDestino });
 const enlacePagina = (n: number) => {
   const q = new URLSearchParams(query);
   if (n > 1) q.set("pagina", String(n));
@@ -127,16 +147,18 @@ function modalidad(p: PedidoConLineas): string {
       <label for="f-hasta" class="numeracion block">Hasta</label>
       <input id="f-hasta" type="date" name="hasta" value={hasta ?? ""} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
-    <div>
-      <label for="f-destino" class="numeracion block">Tienda / envío</label>
-      <select id="f-destino" name="destino" class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm">
-        <option value="" selected={!filtroDestino}>Todos</option>
-        {stores.map((s) => (
-          <option value={s.id} selected={filtroDestino === s.id}>Recogida en {s.shortName}</option>
-        ))}
-        <option value="domicilio" selected={filtroDestino === "domicilio"}>Envío a domicilio</option>
-      </select>
-    </div>
+    {/* Con un solo destino posible (la oficina de Pozuelo) no hay nada que elegir. */}
+    {opcionesDestino.length > 1 && (
+      <div>
+        <label for="f-destino" class="numeracion block">Tienda / envío</label>
+        <select id="f-destino" name="destino" class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm">
+          <option value="" selected={!filtroDestino}>Todos</option>
+          {opcionesDestino.map((o) => (
+            <option value={o.valor} selected={filtroDestino === o.valor}>{o.texto}</option>
+          ))}
+        </select>
+      </div>
+    )}
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
       <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nº de pedido, nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />

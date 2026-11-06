@@ -343,14 +343,17 @@ export async function marcarAvisado(pedidoId: string): Promise<void> {
 export async function cambiarEstadoAMano(
   pedidoId: string,
   estado: "pagado" | "sin_pago",
+  /** La oficina de una tienda solo toca los suyos (`soloDestinos`). */
+  soloDestinos?: DestinoPedido[],
 ): Promise<boolean> {
+  const suyo = `and ($2::text[] is null or ${DESTINO_SQL} = any($2::text[]))`;
   const { rowCount } = await pool.query(
     estado === "pagado"
-      ? `update pedidos set estado = 'pagado'
-          where id = $1 and estado = 'sin_pago'`
-      : `update pedidos set estado = 'sin_pago'
-          where id = $1 and estado = 'pagado' and stripe_session_id is null`,
-    [pedidoId],
+      ? `update pedidos p set estado = 'pagado'
+          where id = $1 and estado = 'sin_pago' ${suyo}`
+      : `update pedidos p set estado = 'sin_pago'
+          where id = $1 and estado = 'pagado' and stripe_session_id is null ${suyo}`,
+    [pedidoId, soloDestinos ?? null],
   );
   return (rowCount ?? 0) > 0;
 }
@@ -421,14 +424,28 @@ export type FiltrosPedidos = {
    * `domicilio`. Sin él, todos.
    */
   destino?: DestinoPedido;
+  /**
+   * Los únicos destinos que puede ver quien mira (la oficina de una tienda,
+   * `destinosVisibles`). Lo pone el servidor según el papel, nunca la URL:
+   * con `destino` se elige dentro de estos, no fuera.
+   */
+  soloDestinos?: DestinoPedido[];
 };
 
 export type DestinoPedido = "alcobendas" | "pozuelo" | "domicilio";
 
 /**
+ * El destino del pedido como `DestinoPedido`: la tienda de recogida o
+ * `domicilio`. Sin modalidad (reconstruido desde Stripe), null: solo lo ve
+ * quien ve todos.
+ */
+const DESTINO_SQL = `(case p.mode when 'domicilio' then 'domicilio'
+                     when 'recogida' then p.store_id end)`;
+
+/**
  * El `where` de los filtros, compartido por la lista y por la cuenta que
  * pagina: si divergieran, el panel diría «página 3 de 2». Los parámetros
- * van del $1 al $7; quien lo usa pone los suyos detrás.
+ * van del $1 al $8; quien lo usa pone los suyos detrás.
  */
 const WHERE_FILTROS = `
       where p.estado in ('pagado', 'sin_pago')
@@ -450,9 +467,8 @@ const WHERE_FILTROS = `
              -- separadores por ambos lados.
              or ($6::text is not null
                  and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $6 || '%'))
-        and ($7::text is null
-             or (p.mode = 'domicilio' and $7 = 'domicilio')
-             or (p.mode = 'recogida' and p.store_id = $7))`;
+        and ($7::text is null or ${DESTINO_SQL} = $7)
+        and ($8::text[] is null or ${DESTINO_SQL} = any($8::text[]))`;
 
 function argsFiltros(f: FiltrosPedidos): unknown[] {
   const busqueda = patronBusqueda(f.texto);
@@ -464,6 +480,7 @@ function argsFiltros(f: FiltrosPedidos): unknown[] {
     busqueda.patron,
     busqueda.soloDigitos,
     f.destino ?? null,
+    f.soloDestinos ?? null,
   ];
 }
 
@@ -480,7 +497,7 @@ export async function listarPedidos(
       -- Buscando un número, el pedido con ese número va primero (luego los
       -- que solo lo llevan en el teléfono).
       order by (p.numero::text = $6) desc nulls last, p.created_at desc, p.id
-      limit $8 offset $9`,
+      limit $9 offset $10`,
     [...argsFiltros(filtros), limite, desplazamiento],
   );
   return rows;

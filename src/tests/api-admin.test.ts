@@ -376,7 +376,16 @@ describe("guardia y validación de PATCH /api/admin/pedidos", () => {
     expect(r.status).toBe(200);
     expect(await r.json()).toEqual({ estado: "pagado" });
     const { cambiarEstadoAMano } = await import("~/lib/db/pedidos");
-    expect(cambiarEstadoAMano).toHaveBeenCalledWith(cuerpo.id, "pagado");
+    expect(cambiarEstadoAMano).toHaveBeenCalledWith(cuerpo.id, "pagado", undefined);
+  });
+
+  it("la oficina de Pozuelo solo puede tocar pedidos de Pozuelo", async () => {
+    const { PATCH } = await import("~/pages/api/admin/pedidos/index");
+    const oficinaPozuelo = { ...admin, rol: "oficina_pozuelo" };
+    const r = await PATCH({ request: patch(cuerpo), locals: { usuario: oficinaPozuelo } } as never);
+    expect(r.status).toBe(200);
+    const { cambiarEstadoAMano } = await import("~/lib/db/pedidos");
+    expect(cambiarEstadoAMano).toHaveBeenLastCalledWith(cuerpo.id, "pagado", ["pozuelo"]);
   });
 
   it("si el pedido no admite ese cambio (Stripe, iniciado, no existe), 409 y lo dice", async () => {

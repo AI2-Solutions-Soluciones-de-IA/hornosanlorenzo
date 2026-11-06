@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  destinosVisibles,
   esAdmin,
   guardiaAdmin,
   vePedidos,
   ROL_ADMIN,
   ROL_OFICINA,
+  ROL_OFICINA_ALCOBENDAS,
+  ROL_OFICINA_POZUELO,
 } from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
@@ -131,5 +134,37 @@ describe("rol oficina", () => {
       "/api/admin/clientes/exportar",
     ])
       expect(guardiaAdmin({ usuario: oficina, pathname })!.status).toBe(404);
+  });
+});
+
+describe("oficina de cada tienda", () => {
+  const alcobendas = { id: "u4", email: "al@b.c", name: "Alba", rol: ROL_OFICINA_ALCOBENDAS };
+  const pozuelo = { id: "u5", email: "po@z.u", name: "Pablo", rol: ROL_OFICINA_POZUELO };
+
+  it("entra solo a Pedidos, como la oficina", () => {
+    for (const usuario of [alcobendas, pozuelo]) {
+      expect(esAdmin(usuario)).toBe(false);
+      expect(vePedidos(usuario)).toBe(true);
+      expect(guardiaAdmin({ usuario, pathname: "/admin/pedidos" })).toBeNull();
+      expect(guardiaAdmin({ usuario, pathname: "/admin" })!.headers.get("location")).toBe(
+        "/admin/pedidos",
+      );
+      expect(guardiaAdmin({ usuario, pathname: "/admin/productos" })!.status).toBe(404);
+    }
+  });
+
+  it("Alcobendas ve lo suyo y los envíos a domicilio; Pozuelo, lo suyo", () => {
+    expect(destinosVisibles(alcobendas)).toEqual(["alcobendas", "domicilio"]);
+    expect(destinosVisibles(pozuelo)).toEqual(["pozuelo"]);
+  });
+
+  it("el admin y la oficina general lo ven todo", () => {
+    expect(destinosVisibles(admin)).toBeUndefined();
+    expect(destinosVisibles(oficina)).toBeUndefined();
+  });
+
+  it("un papel parecido no cuela", () => {
+    const raro = { ...pozuelo, rol: "oficina_POZUELO" };
+    expect(vePedidos(raro)).toBe(false);
   });
 });
