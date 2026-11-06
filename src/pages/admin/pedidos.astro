@@ -14,12 +14,12 @@ import { etiquetaPieza } from "~/data/packs";
 
 export const prerender = false;
 
-// Filtros por URL (`?fecha=entrega|entrada&desde=&hasta=&q=&pagina=`, ver
+// Filtros por URL (`?fecha=entrega|entrada&desde=&hasta=&q=&destino=&pagina=`, ver
 // `leerFiltrosPedidos`). Esta página se sirve en servidor y fuera de la
 // caché (está excluida del ISR en `astro.config.mjs`), así que aquí sí se
 // pueden leer parámetros; en las páginas públicas no, que son estáticas.
 const leidos = leerFiltrosPedidos(Astro.url.searchParams);
-const { tipo, desde, hasta, texto: filtroTexto, hayFiltro } = leidos;
+const { tipo, desde, hasta, texto: filtroTexto, destino: filtroDestino, hayFiltro } = leidos;
 
 // De 20 en 20: con cada pedido desplegado con sus líneas, más que eso ya es
 // un scroll que nadie recorre.
@@ -127,6 +127,16 @@ function modalidad(p: PedidoConLineas): string {
       <label for="f-hasta" class="numeracion block">Hasta</label>
       <input id="f-hasta" type="date" name="hasta" value={hasta ?? ""} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
+    <div>
+      <label for="f-destino" class="numeracion block">Tienda / envío</label>
+      <select id="f-destino" name="destino" class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm">
+        <option value="" selected={!filtroDestino}>Todos</option>
+        {stores.map((s) => (
+          <option value={s.id} selected={filtroDestino === s.id}>Recogida en {s.shortName}</option>
+        ))}
+        <option value="domicilio" selected={filtroDestino === "domicilio"}>Envío a domicilio</option>
+      </select>
+    </div>
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
       <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nº de pedido, nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
@@ -155,8 +165,10 @@ function modalidad(p: PedidoConLineas): string {
     <p class="text-[color:var(--color-ink-muted)]">
       {filtroTexto
         ? "No hay pedidos que casen con esa búsqueda."
-        : hayFiltro
+        : desde || hasta
           ? "No hay pedidos entre esas fechas."
+          : filtroDestino
+            ? "No hay pedidos con esa entrega."
           : "Todavía no ha entrado ningún pedido por la web."}
     </p>
   )}

@@ -1,9 +1,10 @@
-import type { FiltrosPedidos } from "~/lib/db/pedidos";
+import type { DestinoPedido, FiltrosPedidos } from "~/lib/db/pedidos";
 import { leerPagina } from "~/lib/paginacion";
 
 /**
  * Los filtros de `/admin/pedidos` leídos de la URL:
- * `?fecha=entrega|entrada&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&q=texto&pagina=N`.
+ * `?fecha=entrega|entrada&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&q=texto
+ * &destino=alcobendas|pozuelo|domicilio&pagina=N`.
  *
  * Lo leen la página y el Excel, y por eso vive aquí: si cada uno los leyera
  * a su manera, el Excel dejaría de ser «lo que se ve».
@@ -20,6 +21,7 @@ export type FiltrosLeidos = {
   desde?: string;
   hasta?: string;
   texto: string;
+  destino?: DestinoPedido;
   /** Empieza en 1. */
   pagina: number;
   /** Lo que se pasa a `listarPedidos` / `contarPedidos`. */
@@ -28,6 +30,8 @@ export type FiltrosLeidos = {
 };
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+
+const DESTINOS: readonly DestinoPedido[] = ["alcobendas", "pozuelo", "domicilio"];
 
 export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
   const fecha = (clave: string): string | undefined => {
@@ -55,6 +59,9 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
   // manipulada arrastre un patrón kilométrico hasta Postgres.
   const texto = (params.get("q") ?? "").slice(0, 80).trim();
 
+  const d = params.get("destino");
+  const destino = DESTINOS.find((x) => x === d);
+
   const pagina = leerPagina(params);
 
   const filtros: FiltrosPedidos = {
@@ -62,6 +69,7 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
       ? { entregaDesde: desde, entregaHasta: hasta }
       : { entradaDesde: desde, entradaHasta: hasta }),
     texto: texto || undefined,
+    ...(destino ? { destino } : {}),
   };
 
   return {
@@ -69,20 +77,22 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
     desde,
     hasta,
     texto,
+    destino,
     pagina,
     filtros,
-    hayFiltro: Boolean(desde || hasta || texto),
+    hayFiltro: Boolean(desde || hasta || texto || destino),
   };
 }
 
 /** La query de estos filtros, sin la página (para enlaces y el Excel). */
 export function queryFiltros(
-  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto">,
+  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino">,
 ): URLSearchParams {
   const q = new URLSearchParams();
   q.set("fecha", f.tipo);
   if (f.desde) q.set("desde", f.desde);
   if (f.hasta) q.set("hasta", f.hasta);
   if (f.texto) q.set("q", f.texto);
+  if (f.destino) q.set("destino", f.destino);
   return q;
 }

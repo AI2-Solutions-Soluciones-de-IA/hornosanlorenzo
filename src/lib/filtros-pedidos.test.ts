@@ -32,6 +32,18 @@ describe("filtros de /admin/pedidos", () => {
     expect(f.hayFiltro).toBe(true);
   });
 
+  it("filtra por tienda de recogida o envío a domicilio; lo demás se ignora", () => {
+    const f = leer("destino=pozuelo");
+    expect(f.filtros.destino).toBe("pozuelo");
+    expect(f.hayFiltro).toBe(true);
+    expect(queryFiltros(f).get("destino")).toBe("pozuelo");
+    expect(leer("destino=domicilio").filtros.destino).toBe("domicilio");
+    const raro = leer("destino=madrid");
+    expect(raro.filtros.destino).toBeUndefined();
+    expect(raro.hayFiltro).toBe(false);
+    expect(queryFiltros(raro).has("destino")).toBe(false);
+  });
+
   it("un rango al revés se da la vuelta", () => {
     expect(leer("desde=2026-10-07&hasta=2026-10-01")).toMatchObject({
       desde: "2026-10-01",

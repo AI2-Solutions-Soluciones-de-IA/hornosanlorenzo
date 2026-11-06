@@ -416,12 +416,19 @@ export type FiltrosPedidos = {
    * distinguir mayúsculas. Vacío o solo espacios, no filtra.
    */
   texto?: string;
+  /**
+   * Dónde se entrega (6-11-2026): recogida en una tienda (su id) o
+   * `domicilio`. Sin él, todos.
+   */
+  destino?: DestinoPedido;
 };
+
+export type DestinoPedido = "alcobendas" | "pozuelo" | "domicilio";
 
 /**
  * El `where` de los filtros, compartido por la lista y por la cuenta que
  * pagina: si divergieran, el panel diría «página 3 de 2». Los parámetros
- * van del $1 al $6; quien lo usa pone los suyos detrás.
+ * van del $1 al $7; quien lo usa pone los suyos detrás.
  */
 const WHERE_FILTROS = `
       where p.estado in ('pagado', 'sin_pago')
@@ -442,7 +449,10 @@ const WHERE_FILTROS = `
              -- sin espacios; si lo buscado son solo dígitos se compara sin
              -- separadores por ambos lados.
              or ($6::text is not null
-                 and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $6 || '%'))`;
+                 and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $6 || '%'))
+        and ($7::text is null
+             or (p.mode = 'domicilio' and $7 = 'domicilio')
+             or (p.mode = 'recogida' and p.store_id = $7))`;
 
 function argsFiltros(f: FiltrosPedidos): unknown[] {
   const busqueda = patronBusqueda(f.texto);
@@ -453,6 +463,7 @@ function argsFiltros(f: FiltrosPedidos): unknown[] {
     f.entradaHasta ?? null,
     busqueda.patron,
     busqueda.soloDigitos,
+    f.destino ?? null,
   ];
 }
 
@@ -469,7 +480,7 @@ export async function listarPedidos(
       -- Buscando un número, el pedido con ese número va primero (luego los
       -- que solo lo llevan en el teléfono).
       order by (p.numero::text = $6) desc nulls last, p.created_at desc, p.id
-      limit $7 offset $8`,
+      limit $8 offset $9`,
     [...argsFiltros(filtros), limite, desplazamiento],
   );
   return rows;

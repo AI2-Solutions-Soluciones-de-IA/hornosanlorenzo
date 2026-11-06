@@ -281,6 +281,41 @@ describeSiHayBD("repositorio de pedidos", () => {
       const pag2 = await repo.listarPedidos(1, rango, 1);
       expect([...pag1, ...pag2].map((p) => p.id).sort()).toEqual([entregaHoy, entregaOtro].sort());
     });
+
+    it("filtra por tienda de recogida o envío a domicilio", async () => {
+      // Otro día que no usa nadie, para no mezclarse con el resto.
+      const dia = { entregaDesde: "2031-02-03", entregaHasta: "2031-02-03" };
+      const alcobendas = await repo.crearPedidoIniciado(
+        pedidoDePrueba({ dateISO: "2031-02-03" }) as never,
+        { estado: "sin_pago" },
+      );
+      const base = pedidoDePrueba({ dateISO: "2031-02-03" });
+      const pozuelo = await repo.crearPedidoIniciado(
+        { ...base, payload: { ...base.payload, storeId: "pozuelo" } } as never,
+        { estado: "sin_pago" },
+      );
+      const domicilio = await repo.crearPedidoIniciado(
+        {
+          ...base,
+          payload: {
+            ...base.payload,
+            mode: "domicilio",
+            storeId: undefined,
+            address: "C/ Mayor 1",
+            postalCode: "28013",
+          },
+        } as never,
+        { estado: "sin_pago" },
+      );
+
+      const ids = async (destino: "alcobendas" | "pozuelo" | "domicilio") =>
+        (await repo.listarPedidos(50, { ...dia, destino })).map((p) => p.id);
+      expect(await ids("alcobendas")).toEqual([alcobendas]);
+      expect(await ids("pozuelo")).toEqual([pozuelo]);
+      expect(await ids("domicilio")).toEqual([domicilio]);
+      expect(await repo.contarPedidos(dia)).toBe(3);
+      expect(await repo.contarPedidos({ ...dia, destino: "pozuelo" })).toBe(1);
+    });
   });
 
   describe("búsqueda de texto libre", () => {
