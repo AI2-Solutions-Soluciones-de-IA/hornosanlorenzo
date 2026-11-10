@@ -97,7 +97,7 @@ export const stores: readonly Store[] = [
     id: "pozuelo",
     name: "Tienda Pozuelo",
     shortName: "Pozuelo",
-    address: "Avda. Europa 28, entrada por C/ América",
+    address: "Avda. Europa 28, entrada por C/ América 4",
     city: "Pozuelo de Alarcón",
     postal: "28223",
     phone: "+34916059056",

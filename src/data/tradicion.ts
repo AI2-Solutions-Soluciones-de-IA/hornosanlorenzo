@@ -76,7 +76,7 @@ export const tradicion = {
       // petición del cliente (27-10-2026).
       destacado: "Abiertos de lunes a domingo",
       // Los dos hornean: Pozuelo, empanadas y salados (27-10-2026).
-      body: "Alcobendas (sede) y Pozuelo de Alarcón, los dos con horno propio.",
+      body: "Alcobendas (obrador central) y Pozuelo de Alarcón, los dos con horno propio.",
     },
     {
       // «L–S» como cifra y debajo, remarcado, el reparto (28-10-2026).

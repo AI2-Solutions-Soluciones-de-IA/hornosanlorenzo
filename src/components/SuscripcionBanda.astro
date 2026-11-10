@@ -3,8 +3,9 @@ import SuscripcionOfertas from "~/islands/SuscripcionOfertas.tsx";
 
 /**
  * Franja de suscripción a las ofertas por correo (tabla `suscriptores`),
- * lo primero de Este mes y de A quién servimos. En rojo teja para que se
- * vea (14-10-2026). Baja a propósito: en Este mes el precio de la oferta
+ * en Inicio y lo primero de Este mes. En rojo teja para que se
+ * vea (14-10-2026). Sin entradilla bajo el título: el correo justo debajo,
+ * breve (10-11-2026). Baja a propósito: en Este mes el precio de la oferta
  * tiene que verse sin hacer scroll.
  */
 ---
@@ -14,13 +15,6 @@ import SuscripcionOfertas from "~/islands/SuscripcionOfertas.tsx";
       <h2 class="text-2xl sm:text-3xl font-[family-name:var(--font-display)]">
         ¡Recibe las ofertas del obrador!
       </h2>
-      <p class="mt-1 text-lg sm:text-xl text-balance font-[family-name:var(--font-display)] italic text-[color:var(--color-latte)]">
-        Hay cosas que merece la pena saber antes que nadie.
-      </p>
-      <p class="mt-2 text-sm sm:text-base text-[color:var(--color-leche)]/90 max-w-md">
-        Déjanos tu correo y te avisamos cuando salga la oferta del mes.
-        <em class="italic font-semibold text-[color:var(--color-leche)]">Sin spam: solo las ofertas del obrador.</em>
-      </p>
     </div>
     <!-- Desde 1024 px el sello de la cabecera asoma sobre la franja: la
          columna del medio queda vacía para él (mismo ancho que su hueco en

@@ -1,6 +1,5 @@
 ---
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
-import SuscripcionBanda from "~/components/SuscripcionBanda.astro";
 import { stores } from "~/data/stores";
 
 /**
@@ -73,9 +72,6 @@ const tarjetas = [
   title="A quién servimos"
   description="Particulares, hostelería y empresas. El mismo obrador para la mesa de casa, la barra del bar y el desayuno de oficina."
 >
-  <!-- Arriba del todo, la misma suscripción que en Este mes. -->
-  <SuscripcionBanda />
-
   <!-- Portada: en móvil la foto va arriba; en escritorio, a sangre a la derecha. -->
   <section class="flex flex-col lg:grid lg:grid-cols-2 lg:min-h-[640px] bg-[color:var(--color-moka)] text-[color:var(--color-leche)]">
     <div class="relative order-first lg:order-last h-[260px] lg:h-auto">
