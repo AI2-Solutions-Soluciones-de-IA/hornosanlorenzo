@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { avisoDeCupo, gastadoDe } from "~/lib/email/cupo";
 
 /**
  * Único punto de salida de correo. Cambiar de proveedor es reescribir este
@@ -19,13 +20,46 @@ export type Correo = {
   cabeceras?: Record<string, string>;
 };
 
-export async function enviarCorreo({
-  para,
-  asunto,
-  texto,
-  html,
-  responderA,
-}: Correo): Promise<{ ok: boolean; error?: string }> {
+/**
+ * Tras cada envío, mira cuánto cupo de Resend queda y, si se ha pasado el
+ * umbral, avisa una vez por periodo (`~/lib/email/cupo`). Va a
+ * `AVISO_CUPO_EMAIL` (varias direcciones separadas por comas) o, si no
+ * está, a `ORDER_NOTIFICATION_EMAIL`. Nada de esto puede tumbar el envío que
+ * lo dispara: cualquier fallo se queda en el registro.
+ */
+async function vigilarCupo(cabeceras: Record<string, string> | null | undefined) {
+  try {
+    const gastado = gastadoDe(cabeceras);
+    const aviso = avisoDeCupo(gastado, new Date());
+    if (!aviso) return;
+    console.warn(
+      `[email] cupo de Resend: ${gastado.dia ?? "?"} hoy, ${gastado.mes ?? "?"} este mes`,
+    );
+    const destino =
+      import.meta.env.AVISO_CUPO_EMAIL ??
+      process.env.AVISO_CUPO_EMAIL ??
+      import.meta.env.ORDER_NOTIFICATION_EMAIL ??
+      process.env.ORDER_NOTIFICATION_EMAIL;
+    if (!destino) return;
+    // Import diferido: el pool de Postgres solo se carga si hay que avisar.
+    const { reservarAvisoCupo } = await import("~/lib/db/avisos-cupo");
+    if (!(await reservarAvisoCupo(aviso.clave))) return;
+    for (const para of String(destino).split(",").map((x) => x.trim()).filter(Boolean)) {
+      await enviarCorreo({ para, asunto: aviso.asunto, texto: aviso.texto }, { sinVigilar: true });
+    }
+  } catch (err) {
+    console.error(
+      "[email] no se pudo comprobar o avisar del cupo:",
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+export async function enviarCorreo(
+  { para, asunto, texto, html, responderA }: Correo,
+  /** El propio aviso de cupo no vuelve a vigilar (no se avisa en bucle). */
+  { sinVigilar = false }: { sinVigilar?: boolean } = {},
+): Promise<{ ok: boolean; error?: string }> {
   const clave = import.meta.env.RESEND_API_KEY ?? process.env.RESEND_API_KEY;
   const remitente =
     import.meta.env.ORDER_FROM_EMAIL ?? process.env.ORDER_FROM_EMAIL;
@@ -35,7 +69,7 @@ export async function enviarCorreo({
     return { ok: false, error: "Correo no configurado." };
   }
 
-  const { error } = await new Resend(clave).emails.send({
+  const { error, headers } = await new Resend(clave).emails.send({
     from: remitente,
     to: para,
     subject: asunto,
@@ -49,6 +83,7 @@ export async function enviarCorreo({
     return { ok: false, error: "No se pudo enviar el correo." };
   }
 
+  if (!sinVigilar) await vigilarCupo(headers);
   return { ok: true };
 }
 

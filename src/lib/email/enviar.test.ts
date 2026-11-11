@@ -9,10 +9,15 @@ vi.mock("resend", () => ({
   },
 }));
 
+const reservarAvisoCupo = vi.fn();
+vi.mock("~/lib/db/avisos-cupo", () => ({ reservarAvisoCupo }));
+
 beforeEach(() => {
   enviarMock.mockReset();
   loteMock.mockReset();
+  reservarAvisoCupo.mockReset().mockResolvedValue(true);
   vi.resetModules();
+  vi.unstubAllEnvs();
 });
 
 describe("enviarCorreo", () => {
@@ -84,5 +89,59 @@ describe("enviarLote", () => {
     const r = await enviarLote(correos(250));
     expect(r).toMatchObject({ ok: false, enviados: 100 });
     expect(loteMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("enviarCorreo — aviso de cupo de Resend", () => {
+  function configurar() {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("ORDER_FROM_EMAIL", "pedidos@hornosanlorenzo.com");
+    vi.stubEnv("ORDER_NOTIFICATION_EMAIL", "info@hornosanlorenzo.com");
+  }
+
+  it("por debajo del umbral no avisa ni toca la base", async () => {
+    configurar();
+    enviarMock.mockResolvedValue({ data: { id: "1" }, error: null, headers: { "x-resend-daily-quota": "12", "x-resend-monthly-quota": "300" } });
+    const { enviarCorreo } = await import("~/lib/email/enviar");
+    await enviarCorreo({ para: "a@b.com", asunto: "Pedido", texto: "x" });
+    expect(enviarMock).toHaveBeenCalledTimes(1);
+    expect(reservarAvisoCupo).not.toHaveBeenCalled();
+  });
+
+  it("al pasar el umbral avisa una vez a cada destino de AVISO_CUPO_EMAIL, sin volver a vigilar", async () => {
+    configurar();
+    vi.stubEnv("AVISO_CUPO_EMAIL", "info@hornosanlorenzo.com, otro@example.com");
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    enviarMock.mockResolvedValue({ data: { id: "1" }, error: null, headers: { "x-resend-daily-quota": "85", "x-resend-monthly-quota": "900" } });
+    const { enviarCorreo } = await import("~/lib/email/enviar");
+    const r = await enviarCorreo({ para: "a@b.com", asunto: "Pedido", texto: "x" });
+
+    expect(r.ok).toBe(true);
+    expect(reservarAvisoCupo).toHaveBeenCalledTimes(1);
+    expect(reservarAvisoCupo.mock.calls[0][0]).toMatch(/^dia:/);
+    const destinos = enviarMock.mock.calls.slice(1).map((c) => c[0].to);
+    expect(destinos).toEqual(["info@hornosanlorenzo.com", "otro@example.com"]);
+    expect(enviarMock.mock.calls[1][0].subject).toContain("85 de 100");
+  });
+
+  it("si el aviso de ese día ya salió, no lo repite", async () => {
+    configurar();
+    reservarAvisoCupo.mockResolvedValue(false);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    enviarMock.mockResolvedValue({ data: { id: "1" }, error: null, headers: { "x-resend-daily-quota": "90" } });
+    const { enviarCorreo } = await import("~/lib/email/enviar");
+    await enviarCorreo({ para: "a@b.com", asunto: "Pedido", texto: "x" });
+    expect(enviarMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("si la base falla al apuntar el aviso, el envío original sigue saliendo bien", async () => {
+    configurar();
+    reservarAvisoCupo.mockRejectedValue(new Error("caída"));
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    enviarMock.mockResolvedValue({ data: { id: "1" }, error: null, headers: { "x-resend-daily-quota": "90" } });
+    const { enviarCorreo } = await import("~/lib/email/enviar");
+    const r = await enviarCorreo({ para: "a@b.com", asunto: "Pedido", texto: "x" });
+    expect(r.ok).toBe(true);
   });
 });
