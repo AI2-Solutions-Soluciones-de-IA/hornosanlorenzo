@@ -1,5 +1,18 @@
 # Pendientes — Horno San Lorenzo
 
+## Pendientes de la sesión del 11-11-2026
+- [ ] **Trazas de las barras de pan** (baguette, artesana, gallega): solo
+      llevan «gluten»; no estaban en el Excel de alérgenos. Confirmar con el
+      obrador si pueden contener algo más (sésamo, soja…) y ponerlo en
+      `/admin/productos`
+- [ ] **Revisión de la política de privacidad** por la gestoría del cliente:
+      titular (persona física con NIF o sociedad, también en el aviso
+      legal) y si la foto del pedido debe guardarse 6 años o borrarse al
+      entregar (hoy nada la borra)
+- [ ] **Cuentas de cliente de prueba** que quedan en producción: borrarlas
+      con `pnpm borrar-cuenta` si el usuario lo pide (los pedidos de prueba
+      ya se borraron el 11-11 y la numeración empieza en 1)
+
 ## Tras el lanzamiento: Resend propio de HSL (11-11-2026)
 - [ ] **Cuenta de Resend solo para Horno San Lorenzo.** Hoy `RESEND_API_KEY`
       es de la cuenta de Óscar, que también envía para controltower.es; los
