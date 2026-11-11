@@ -56,6 +56,10 @@ export type PedidoConLineas = {
   /** Lo devuelto desde Stripe (migración 024); 0 si nada. */
   devueltoCents: number;
   reconstruido: boolean;
+  /** Marcado como procesado en el panel (migración 030); null si no. */
+  procesadoEn: Date | null;
+  /** Nombre de quien lo marcó. */
+  procesadoPor: string | null;
   createdAt: Date;
   lineas: LineaPedido[];
 };
@@ -359,6 +363,31 @@ export async function cambiarEstadoAMano(
 }
 
 /**
+ * Marca un pedido como procesado (o lo desmarca) desde el panel. Solo los
+ * que el panel enseña (pagados o sin pago) y, para la oficina de una tienda,
+ * solo los suyos. Devuelve quién y cuándo, o null si el pedido no admite el
+ * cambio (no existe, es un carrito abandonado o no es de esa oficina).
+ */
+export async function marcarProcesado(
+  pedidoId: string,
+  procesado: boolean,
+  quien: string,
+  soloDestinos?: DestinoPedido[],
+): Promise<{ procesadoEn: Date | null; procesadoPor: string | null } | null> {
+  const { rows } = await pool.query<{ procesadoEn: Date | null; procesadoPor: string | null }>(
+    `update pedidos p
+        set procesado_en  = case when $2 then now() else null end,
+            procesado_por = case when $2 then $3 else null end
+      where id = $1
+        and estado in ('pagado', 'sin_pago')
+        and ($4::text[] is null or ${DESTINO_SQL} = any($4::text[]))
+      returning procesado_en as "procesadoEn", procesado_por as "procesadoPor"`,
+    [pedidoId, procesado, quien, soloDestinos ?? null],
+  );
+  return rows[0] ?? null;
+}
+
+/**
  * La proyección que arma un `PedidoConLineas`: las columnas en camelCase y
  * las líneas agregadas en una subconsulta, en su orden. Va en una constante
  * para que el panel y el historial del cliente devuelvan exactamente lo
@@ -385,6 +414,8 @@ const PROYECCION_PEDIDO = `
   p.estado,
   p.devuelto_cents as "devueltoCents",
   p.reconstruido,
+  p.procesado_en   as "procesadoEn",
+  p.procesado_por  as "procesadoPor",
   p.created_at     as "createdAt",
   coalesce(
     (select json_agg(json_build_object(

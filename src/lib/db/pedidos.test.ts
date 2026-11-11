@@ -191,6 +191,31 @@ describeSiHayBD("repositorio de pedidos", () => {
     expect(lista.filter((p) => p.estado === "pagado").length).toBeGreaterThan(0);
   });
 
+  describe("marcar como procesado desde el panel", () => {
+    it("se marca con quién y cuándo, y se desmarca", async () => {
+      const id = await repo.crearPedidoIniciado(pedidoDePrueba() as never, { estado: "sin_pago" });
+      const marcado = await repo.marcarProcesado(id, true, "Oficina Alcobendas");
+      expect(marcado?.procesadoPor).toBe("Oficina Alcobendas");
+      expect(marcado?.procesadoEn).toBeInstanceOf(Date);
+      const leido = await repo.pedidoPorId(id);
+      expect(leido?.procesadoPor).toBe("Oficina Alcobendas");
+
+      expect(await repo.marcarProcesado(id, false, "Oficina Alcobendas")).toEqual({ procesadoEn: null, procesadoPor: null });
+    });
+
+    it("la oficina de otra tienda no puede marcar un pedido que no es suyo", async () => {
+      // pedidoDePrueba es una recogida en Alcobendas.
+      const id = await repo.crearPedidoIniciado(pedidoDePrueba() as never, { estado: "sin_pago" });
+      expect(await repo.marcarProcesado(id, true, "Pozuelo", ["pozuelo"])).toBeNull();
+      expect(await repo.marcarProcesado(id, true, "Alcobendas", ["alcobendas", "domicilio"])).not.toBeNull();
+    });
+
+    it("un carrito abandonado (iniciado) no se marca", async () => {
+      const id = await repo.crearPedidoIniciado(pedidoDePrueba() as never);
+      expect(await repo.marcarProcesado(id, true, "Panel")).toBeNull();
+    });
+  });
+
   describe("cambiar el estado desde el panel", () => {
     it("un pedido sin pago se marca como cobrado, y se puede deshacer", async () => {
       const id = await repo.crearPedidoIniciado(pedidoDePrueba() as never, {

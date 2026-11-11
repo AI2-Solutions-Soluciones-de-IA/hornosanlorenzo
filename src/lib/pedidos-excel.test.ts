@@ -24,6 +24,8 @@ const pedido = (extra: Partial<PedidoConLineas> = {}): PedidoConLineas => ({
   totalCents: 1200,
   estado: "sin_pago",
   reconstruido: false,
+  procesadoEn: null,
+  procesadoPor: null,
   createdAt: new Date("2026-09-11T15:00:35.355Z"),
   lineas: [
     { slug: "cebra", nombre: "Cebra", varianteLabel: "6 unidades", qty: 1, unitPriceCents: 600, detalle: null, fotoUrl: null },
