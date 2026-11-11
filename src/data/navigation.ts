@@ -33,17 +33,8 @@ export const mainNav: readonly NavItem[] = [
   {
     href: "/catalogo",
     label: "Tienda Online",
+    // Orden del 11-11-2026: Dulce y Salado delante, luego Packs y Top Ventas.
     children: [
-      {
-        href: "/catalogo/top-ventas",
-        label: "Top Ventas",
-        short: "Lo que más sale del obrador.",
-      },
-      {
-        href: "/catalogo/packs",
-        label: "Packs",
-        short: "Nuestras cajitas para cada ocasión, listas para llevar.",
-      },
       {
         href: "/catalogo/dulce",
         label: "Dulce",
@@ -55,6 +46,16 @@ export const mainNav: readonly NavItem[] = [
         label: "Salado",
         short: "El secreto de comer bien lleva 40 años en nuestra casa.",
         categories: ["salado"],
+      },
+      {
+        href: "/catalogo/packs",
+        label: "Packs",
+        short: "Nuestras cajitas para cada ocasión, listas para llevar.",
+      },
+      {
+        href: "/catalogo/top-ventas",
+        label: "Top Ventas",
+        short: "Lo que más sale del obrador.",
       },
       {
         href: "/catalogo/sin-alergenos",
