@@ -80,6 +80,16 @@ describe("filtros de /admin/pedidos", () => {
     expect(leer("q=%20%20ana%20").filtros.texto).toBe("ana");
   });
 
+  it("procesado: solo «si» o «no»; lo demás no filtra", () => {
+    expect(leer("procesado=no").filtros.procesado).toBe(false);
+    expect(leer("procesado=si").filtros.procesado).toBe(true);
+    expect(leer("procesado=si").hayFiltro).toBe(true);
+    expect(leer("procesado=quizas").filtros.procesado).toBeUndefined();
+    expect(queryFiltros({ tipo: "entrega", texto: "", procesado: "no" }).toString()).toBe(
+      "fecha=entrega&procesado=no",
+    );
+  });
+
   it("queryFiltros solo lleva lo que hay", () => {
     expect(queryFiltros({ tipo: "entrega", texto: "" }).toString()).toBe(
       "fecha=entrega",

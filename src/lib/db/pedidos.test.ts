@@ -368,6 +368,15 @@ describeSiHayBD("repositorio de pedidos", () => {
       // Ni cambiar el estado de uno que no es suyo.
       expect(await repo.cambiarEstadoAMano(pozuelo, "pagado", ["alcobendas", "domicilio"])).toBe(false);
       expect(await repo.cambiarEstadoAMano(pozuelo, "pagado", ["pozuelo"])).toBe(true);
+
+      // Filtro «Procesado» (11-11-2026), con la cuenta igual que la lista.
+      await repo.marcarProcesado(pozuelo, true, "Oficina Pozuelo");
+      const porProcesado = async (procesado: boolean) =>
+        (await repo.listarPedidos(50, { ...dia, procesado })).map((p) => p.id).sort();
+      expect(await porProcesado(true)).toEqual([pozuelo]);
+      expect(await porProcesado(false)).toEqual([alcobendas, domicilio].sort());
+      expect(await repo.contarPedidos({ ...dia, procesado: false })).toBe(2);
+      expect(await repo.contarPedidos(dia)).toBe(3);
     });
   });
 

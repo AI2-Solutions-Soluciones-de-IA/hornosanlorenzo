@@ -4,7 +4,7 @@ import { leerPagina } from "~/lib/paginacion";
 /**
  * Los filtros de `/admin/pedidos` leídos de la URL:
  * `?fecha=entrega|entrada&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&q=texto
- * &destino=alcobendas|pozuelo|domicilio&pagina=N`.
+ * &destino=alcobendas|pozuelo|domicilio&procesado=no|si&pagina=N`.
  *
  * Lo leen la página y el Excel, y por eso vive aquí: si cada uno los leyera
  * a su manera, el Excel dejaría de ser «lo que se ve».
@@ -22,6 +22,8 @@ export type FiltrosLeidos = {
   hasta?: string;
   texto: string;
   destino?: DestinoPedido;
+  /** «Sin procesar» (`no`) o «Procesados» (`si`); sin él, todos. */
+  procesado?: "si" | "no";
   /** Empieza en 1. */
   pagina: number;
   /** Lo que se pasa a `listarPedidos` / `contarPedidos`. */
@@ -62,6 +64,9 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
   const d = params.get("destino");
   const destino = DESTINOS.find((x) => x === d);
 
+  const pr = params.get("procesado");
+  const procesado = pr === "si" || pr === "no" ? pr : undefined;
+
   const pagina = leerPagina(params);
 
   const filtros: FiltrosPedidos = {
@@ -70,6 +75,7 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
       : { entradaDesde: desde, entradaHasta: hasta }),
     texto: texto || undefined,
     ...(destino ? { destino } : {}),
+    ...(procesado ? { procesado: procesado === "si" } : {}),
   };
 
   return {
@@ -78,15 +84,16 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
     hasta,
     texto,
     destino,
+    procesado,
     pagina,
     filtros,
-    hayFiltro: Boolean(desde || hasta || texto || destino),
+    hayFiltro: Boolean(desde || hasta || texto || destino || procesado),
   };
 }
 
 /** La query de estos filtros, sin la página (para enlaces y el Excel). */
 export function queryFiltros(
-  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino">,
+  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino" | "procesado">,
 ): URLSearchParams {
   const q = new URLSearchParams();
   q.set("fecha", f.tipo);
@@ -94,5 +101,6 @@ export function queryFiltros(
   if (f.hasta) q.set("hasta", f.hasta);
   if (f.texto) q.set("q", f.texto);
   if (f.destino) q.set("destino", f.destino);
+  if (f.procesado) q.set("procesado", f.procesado);
   return q;
 }

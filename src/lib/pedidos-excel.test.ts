@@ -119,12 +119,26 @@ describe("pedidosAExcel", () => {
     const val = (fila: number, col: string) =>
       ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
     // Al final, para no desplazar las columnas de quien lee por posición.
-    expect(cabecera.slice(-3)).toEqual(["Lleva", "Foto", "Nº pedido"]);
+    expect(cabecera.slice(-5)).toEqual(["Lleva", "Foto", "Nº pedido", "Procesado", "Procesado por"]);
     expect(val(2, "Tamaño") ?? "").toBe("");
     expect(val(2, "Lleva")).toBe("Cebra · 6 unidades · Glaseadas");
     expect(val(2, "Foto")).toBe("https://blob.example/foto.jpg");
     expect(val(3, "Lleva") ?? "").toBe("");
     expect(val(3, "Foto") ?? "").toBe("");
+  });
+
+  it("«Procesado»: Sí con quién y cuándo (hora de Madrid), o No", async () => {
+    const ws = await hoja([
+      pedido({ procesadoEn: new Date("2026-11-12T08:05:00Z"), procesadoPor: "Oficina Alcobendas" }),
+      pedido(),
+    ]);
+    const cabecera = ws.getRow(1).values as string[];
+    const val = (fila: number, col: string) => ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
+    // El pedido de ejemplo tiene dos líneas: filas 2-3 el primero, 4-5 el segundo.
+    expect(val(2, "Procesado")).toBe("Sí");
+    expect(val(2, "Procesado por")).toBe("Oficina Alcobendas · 2026-11-12 09:05");
+    expect(val(4, "Procesado")).toBe("No");
+    expect(val(4, "Procesado por") ?? "").toBe("");
   });
 
   it("sin pedidos, solo la cabecera", async () => {

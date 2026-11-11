@@ -461,6 +461,11 @@ export type FiltrosPedidos = {
    * con `destino` se elige dentro de estos, no fuera.
    */
   soloDestinos?: DestinoPedido[];
+  /**
+   * Casilla «Procesado» del panel (11-11-2026): `false`, solo los que nadie
+   * ha marcado; `true`, solo los marcados. Sin él, todos.
+   */
+  procesado?: boolean;
 };
 
 export type DestinoPedido = "alcobendas" | "pozuelo" | "domicilio";
@@ -476,7 +481,7 @@ const DESTINO_SQL = `(case p.mode when 'domicilio' then 'domicilio'
 /**
  * El `where` de los filtros, compartido por la lista y por la cuenta que
  * pagina: si divergieran, el panel diría «página 3 de 2». Los parámetros
- * van del $1 al $8; quien lo usa pone los suyos detrás.
+ * van del $1 al $9; quien lo usa pone los suyos detrás.
  */
 const WHERE_FILTROS = `
       where p.estado in ('pagado', 'sin_pago')
@@ -499,7 +504,8 @@ const WHERE_FILTROS = `
              or ($6::text is not null
                  and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $6 || '%'))
         and ($7::text is null or ${DESTINO_SQL} = $7)
-        and ($8::text[] is null or ${DESTINO_SQL} = any($8::text[]))`;
+        and ($8::text[] is null or ${DESTINO_SQL} = any($8::text[]))
+        and ($9::boolean is null or (p.procesado_en is not null) = $9)`;
 
 function argsFiltros(f: FiltrosPedidos): unknown[] {
   const busqueda = patronBusqueda(f.texto);
@@ -512,6 +518,7 @@ function argsFiltros(f: FiltrosPedidos): unknown[] {
     busqueda.soloDigitos,
     f.destino ?? null,
     f.soloDestinos ?? null,
+    f.procesado ?? null,
   ];
 }
 
@@ -528,7 +535,7 @@ export async function listarPedidos(
       -- Buscando un número, el pedido con ese número va primero (luego los
       -- que solo lo llevan en el teléfono).
       order by (p.numero::text = $6) desc nulls last, p.created_at desc, p.id
-      limit $9 offset $10`,
+      limit $10 offset $11`,
     [...argsFiltros(filtros), limite, desplazamiento],
   );
   return rows;

@@ -22,7 +22,7 @@ export const prerender = false;
 // caché (está excluida del ISR en `astro.config.mjs`), así que aquí sí se
 // pueden leer parámetros; en las páginas públicas no, que son estáticas.
 const leidos = leerFiltrosPedidos(Astro.url.searchParams);
-const { tipo, desde, hasta, texto: filtroTexto, hayFiltro } = leidos;
+const { tipo, desde, hasta, texto: filtroTexto, procesado: filtroProcesado, hayFiltro } = leidos;
 
 // La oficina de una tienda solo ve lo suyo (6-11-2026): se añade a todas
 // las consultas, también a la cuenta sin filtros del aviso de nuevos. En el
@@ -160,6 +160,14 @@ function modalidad(p: PedidoConLineas): string {
         </select>
       </div>
     )}
+    <div>
+      <label for="f-procesado" class="numeracion block">Procesado</label>
+      <select id="f-procesado" name="procesado" class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm">
+        <option value="" selected={!filtroProcesado}>Todos</option>
+        <option value="no" selected={filtroProcesado === "no"}>Sin procesar</option>
+        <option value="si" selected={filtroProcesado === "si"}>Procesados</option>
+      </select>
+    </div>
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
       <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nº de pedido, nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
@@ -192,6 +200,10 @@ function modalidad(p: PedidoConLineas): string {
           ? "No hay pedidos entre esas fechas."
           : filtroDestino
             ? "No hay pedidos con esa entrega."
+          : filtroProcesado === "no"
+            ? "No queda ningún pedido sin procesar."
+          : filtroProcesado === "si"
+            ? "No hay pedidos marcados como procesados."
           : "Todavía no ha entrado ningún pedido por la web."}
     </p>
   )}
