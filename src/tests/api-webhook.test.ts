@@ -10,11 +10,13 @@ const marcarPagado = vi.fn();
 const marcarAvisado = vi.fn();
 const crearPedidoReconstruido = vi.fn();
 const marcarDevuelto = vi.fn();
+const pedidoPorId = vi.fn();
 vi.mock("~/lib/db/pedidos", () => ({
   marcarPagado,
   marcarAvisado,
   crearPedidoReconstruido,
   marcarDevuelto,
+  pedidoPorId,
 }));
 
 beforeEach(() => {
@@ -25,13 +27,19 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ id: "pedido-1", notificadoEn: null });
   marcarAvisado.mockReset().mockResolvedValue(undefined);
+  pedidoPorId.mockReset().mockResolvedValue(null);
   crearPedidoReconstruido
     .mockReset()
     .mockResolvedValue({ id: "pedido-2", notificadoEn: null });
 });
 
 function stripeConLineItems(
-  items: { quantity: number; description: string; amount_total?: number }[],
+  items: {
+    quantity: number;
+    description: string;
+    amount_total?: number;
+    price?: { product: { description: string | null; deleted?: boolean } };
+  }[],
 ) {
   return {
     checkout: {
@@ -316,5 +324,108 @@ describe("notify — con todo configurado", () => {
     expect(obrador.html).toContain("2 × Tarta");
     expect(cliente).toMatchObject({ para: "cliente@example.com", responderA: "info@hornosanlorenzo.com" });
     expect(cliente.html).toContain("<strong>7</strong>");
+  });
+});
+
+describe("correo de un pack: el obrador ve qué lleva", () => {
+  const PACK = {
+    id: "pedido-1",
+    reconstruido: false,
+    envioCents: 600,
+    lineas: [
+      {
+        slug: "pack-cumpleanos",
+        nombre: "Pack Cumpleaños",
+        varianteLabel: null,
+        qty: 1,
+        unitPriceCents: 6900,
+        detalle: [
+          { slug: "empanada-de-carne", nombre: "Empanada de carne", varianteLabel: "Entera", qty: 1 },
+          { slug: "tarta-retrato", nombre: "Foto comestible", varianteLabel: null, qty: 1 },
+        ],
+        fotoUrl: "https://blob.example/foto.jpg",
+      },
+    ],
+  };
+
+  function configurarCorreo() {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("ORDER_NOTIFICATION_EMAIL", "info@hornosanlorenzo.com");
+    vi.stubEnv("ORDER_FROM_EMAIL", "Horno San Lorenzo <pedidos@hornosanlorenzo.com>");
+    enviarCorreoMock.mockResolvedValue({ ok: true });
+  }
+
+  it("con el pedido en la base: piezas, foto (solo al obrador) y reparto", async () => {
+    configurarCorreo();
+    pedidoPorId.mockResolvedValue(PACK);
+    const { notify } = await import("~/pages/api/webhook");
+    const stripe = stripeConLineItems([]);
+    await notify(stripe, sesionPagada(), 7, "pedido-1");
+
+    expect(pedidoPorId).toHaveBeenCalledWith("pedido-1");
+    expect(stripe.checkout.sessions.listLineItems).not.toHaveBeenCalled();
+    const [obrador, cliente] = enviarCorreoMock.mock.calls.map((c) => c[0]);
+    expect(obrador.texto).toContain("Empanada de carne · Entera");
+    expect(obrador.texto).toContain("Foto del cliente: https://blob.example/foto.jpg");
+    expect(obrador.texto).toContain("Reparto a domicilio");
+    expect(obrador.html).toContain("<li>Empanada de carne · Entera</li>");
+    expect(obrador.html).toContain('href="https://blob.example/foto.jpg"');
+    expect(cliente.html).toContain("<li>Empanada de carne · Entera</li>");
+    expect(cliente.html).not.toContain("blob.example");
+  });
+
+  it("si la base falla, saca lo que lleva el pack de la descripción del producto en Stripe", async () => {
+    configurarCorreo();
+    pedidoPorId.mockRejectedValue(new Error("caída"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { notify } = await import("~/pages/api/webhook");
+    const stripe = stripeConLineItems([
+      {
+        quantity: 1,
+        description: "Pack Cumpleaños",
+        amount_total: 6900,
+        price: { product: { description: "Empanada de carne · Entera · Foto comestible" } },
+      },
+    ]);
+    await notify(stripe, sesionPagada(), 7, "pedido-1");
+
+    expect(stripe.checkout.sessions.listLineItems).toHaveBeenCalledWith("cs_test_123", {
+      limit: 50,
+      expand: ["data.price.product"],
+    });
+    const obrador = enviarCorreoMock.mock.calls[0][0];
+    expect(obrador.texto).toContain("    - Empanada de carne");
+    expect(obrador.texto).toContain("    - Foto comestible");
+  });
+
+  it("un pedido reconstruido no usa la base (no tiene desglose), sino Stripe", async () => {
+    configurarCorreo();
+    pedidoPorId.mockResolvedValue({ ...PACK, reconstruido: true });
+    const { notify } = await import("~/pages/api/webhook");
+    const stripe = stripeConLineItems([{ quantity: 1, description: "Pack Cumpleaños", amount_total: 6900 }]);
+    await notify(stripe, sesionPagada(), 7, "pedido-1");
+    expect(stripe.checkout.sessions.listLineItems).toHaveBeenCalled();
+  });
+
+  it("al reconstruir un pack, lo que lleva queda en el nombre de la línea", async () => {
+    marcarPagado.mockResolvedValue(null);
+    const { anotarPago } = await import("~/pages/api/webhook");
+    await anotarPago(
+      stripeConLineItems([
+        {
+          quantity: 1,
+          description: "Pack Cumpleaños",
+          amount_total: 6900,
+          price: { product: { description: "Empanada de carne · Foto comestible" } },
+        },
+        { quantity: 2, description: "Roscón", amount_total: 3000, price: { product: { description: null } } },
+      ]),
+      sesionPagada(),
+    );
+    const { lineas } = crearPedidoReconstruido.mock.calls[0][0];
+    expect(lineas[0].nombre).toBe(
+      "Pack Cumpleaños (sin desglose; lleva: Empanada de carne · Foto comestible)",
+    );
+    expect(lineas[1]).toEqual({ nombre: "Roscón", qty: 2, unitPriceCents: 1500 });
   });
 });

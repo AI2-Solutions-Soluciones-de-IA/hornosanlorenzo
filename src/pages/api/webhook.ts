@@ -1,14 +1,22 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
 import { enviarCorreo } from "~/lib/email/enviar";
-import { correoCliente, correoObrador, type DatosPedido } from "~/lib/email/pedido";
+import {
+  correoCliente,
+  correoObrador,
+  type DatosPedido,
+  type LineaCorreo,
+} from "~/lib/email/pedido";
+import { etiquetaPieza } from "~/data/packs";
 import { site } from "~/data/site";
 import {
   marcarPagado,
   marcarAvisado,
   crearPedidoReconstruido,
   marcarDevuelto,
+  pedidoPorId,
   type PedidoAnotado,
+  type PedidoConLineas,
 } from "~/lib/db/pedidos";
 
 // Stripe llama a esta ruta: nunca se prerenderiza.
@@ -72,7 +80,12 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const avisado = await notify(stripe, session, anotado?.numero ?? null);
+    const avisado = await notify(
+      stripe,
+      session,
+      anotado?.numero ?? null,
+      anotado?.id ?? null,
+    );
     if (avisado && anotado) await marcarAvisado(anotado.id);
   } catch (err) {
     // Devolver 500 hace que Stripe reintente, que es lo que queremos si el
@@ -157,9 +170,7 @@ export async function anotarPago(
     // No estaba: el checkout no pudo escribirlo. Se reconstruye con lo que
     // da Stripe —sin slugs y sin desglose de envío— y queda marcado como
     // reconstruido para que en el panel no parezca un pedido completo.
-    const items = await stripe.checkout.sessions.listLineItems(session.id, {
-      limit: 50,
-    });
+    const lineas = await lineasDesdeStripe(stripe, session.id);
     const m = session.metadata ?? {};
     return await crearPedidoReconstruido({
       stripeSessionId: session.id,
@@ -177,11 +188,16 @@ export async function anotarPago(
       nombre: m.nombre || null,
       notas: m.notas || null,
       totalCents: session.amount_total ?? 0,
-      lineas: items.data.map((i) => ({
-        nombre: i.description ?? "",
-        qty: i.quantity ?? 1,
+      lineas: lineas.map((l) => ({
+        // Un pack reconstruido no tiene desglose en la base: sin esto la hoja
+        // de producción lo listaría como «Pack Cumpleaños», algo a hornear.
+        // Lo que lleva va en el nombre, tal como lo guardó Stripe.
+        nombre: l.detalle?.length
+          ? `${l.nombre} (sin desglose; lleva: ${l.detalle.join(" · ")})`
+          : l.nombre,
+        qty: l.qty,
         // Stripe da el importe de la línea; el unitario es lo que guardamos.
-        unitPriceCents: Math.round((i.amount_total ?? 0) / (i.quantity || 1)),
+        unitPriceCents: Math.round(l.importeCents / (l.qty || 1)),
       })),
     });
   } catch (err) {
@@ -226,11 +242,86 @@ export function yaAvisado(anotado: PedidoAnotado | null): boolean {
   return Boolean(anotado?.notificadoEn);
 }
 
+/**
+ * Las líneas del correo desde el pedido guardado al pedir: ahí está qué lleva
+ * cada pack (sabores elegidos) y la foto del cliente, que Stripe no guarda.
+ * El reparto no es una línea del pedido; se añade como en la página de pago.
+ */
+export function lineasDesdePedido(p: PedidoConLineas): LineaCorreo[] {
+  const lineas: LineaCorreo[] = p.lineas.map((l) => ({
+    qty: l.qty,
+    nombre: l.varianteLabel ? `${l.nombre} — ${l.varianteLabel}` : l.nombre,
+    importeCents: l.qty * l.unitPriceCents,
+    ...(l.detalle?.length && { detalle: l.detalle.map(etiquetaPieza) }),
+    ...(l.fotoUrl && { fotoUrl: l.fotoUrl }),
+  }));
+  if (p.envioCents > 0) {
+    lineas.push({ qty: 1, nombre: "Reparto a domicilio", importeCents: p.envioCents });
+  }
+  return lineas;
+}
+
+/**
+ * Las líneas según Stripe, para cuando el pedido no está en la base. Lo que
+ * lleva un pack sale de la descripción del producto, que `checkout.ts`
+ * escribe como «pieza · pieza · pieza» (la `description` de la línea es solo
+ * el nombre). La foto no llega a Stripe: en ese caso no hay forma de darla.
+ */
+export async function lineasDesdeStripe(
+  stripe: Stripe,
+  sessionId: string,
+): Promise<LineaCorreo[]> {
+  const items = await stripe.checkout.sessions.listLineItems(sessionId, {
+    limit: 50,
+    expand: ["data.price.product"],
+  });
+  return items.data.map((i) => {
+    const producto = i.price?.product;
+    const descripcion =
+      producto && typeof producto === "object" && !producto.deleted
+        ? producto.description
+        : null;
+    return {
+      qty: i.quantity ?? 1,
+      nombre: i.description ?? "",
+      importeCents: i.amount_total ?? 0,
+      ...(descripcion && { detalle: descripcion.split(" · ") }),
+    };
+  });
+}
+
+/**
+ * Del pedido guardado si se puede; si no (no hay id, la base no responde o
+ * el pedido es reconstruido y por tanto no tiene desglose), de Stripe.
+ */
+async function lineasParaCorreo(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+  pedidoId: string | null,
+): Promise<LineaCorreo[]> {
+  if (pedidoId) {
+    try {
+      const pedido = await pedidoPorId(pedidoId);
+      if (pedido && !pedido.reconstruido && pedido.lineas.length > 0) {
+        return lineasDesdePedido(pedido);
+      }
+    } catch (err) {
+      console.error(
+        "[webhook] no se pudo leer el pedido para el correo; se usan las líneas de Stripe:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+  return lineasDesdeStripe(stripe, session.id);
+}
+
 export async function notify(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
   /** Número de pedido (migración 023), para el asunto y el texto de los correos. */
   numero: number | null = null,
+  /** Id del pedido en la base, para sacar de ahí el desglose de los packs. */
+  pedidoId: string | null = null,
 ): Promise<boolean> {
   const apiKey = import.meta.env.RESEND_API_KEY;
   const to = import.meta.env.ORDER_NOTIFICATION_EMAIL;
@@ -239,17 +330,10 @@ export async function notify(
   const m = session.metadata ?? {};
   const cliente = session.customer_details?.email ?? "";
 
-  const items = await stripe.checkout.sessions.listLineItems(session.id, {
-    limit: 50,
-  });
   const datos: DatosPedido = {
     numero,
     totalCents: session.amount_total ?? 0,
-    lineas: items.data.map((i) => ({
-      qty: i.quantity ?? 1,
-      nombre: i.description ?? "",
-      importeCents: i.amount_total ?? 0,
-    })),
+    lineas: await lineasParaCorreo(stripe, session, pedidoId),
     modalidad: m.modalidad ?? "",
     dia: m.dia ?? "",
     franja: m.franja ?? "",

@@ -116,6 +116,23 @@ describeSiHayBD("repositorio de pedidos", () => {
     expect(leido.lineas[1].fotoUrl).toBeNull();
   });
 
+  it("pedidoPorId devuelve el pedido con su desglose (el que usa el correo al obrador); null si no existe", async () => {
+    const detalle = [{ slug: "cebra", nombre: "Cebra", varianteLabel: null, qty: 1 }];
+    const base = pedidoDePrueba();
+    const id = await repo.crearPedidoIniciado(
+      {
+        ...base,
+        lines: [{ slug: "pack-desayuno", name: "Pack desayuno", qty: 1, unitPriceCents: 1500, totalCents: 1500, detalle }],
+      } as never,
+      { estado: "sin_pago" },
+    );
+    const leido = await repo.pedidoPorId(id);
+    expect(leido?.id).toBe(id);
+    expect(leido?.reconstruido).toBe(false);
+    expect(leido?.lineas[0].detalle).toEqual(detalle);
+    expect(await repo.pedidoPorId("00000000-0000-0000-0000-000000000000")).toBeNull();
+  });
+
   it("marcarPagado es idempotente: dos avisos de Stripe no duplican nada", async () => {
     const id = await repo.crearPedidoIniciado(pedidoDePrueba() as never);
     await repo.anotarSesionStripe(id, "cs_test_idem");

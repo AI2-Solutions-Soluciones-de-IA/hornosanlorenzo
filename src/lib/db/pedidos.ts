@@ -537,6 +537,19 @@ export async function listarPedidosDeCliente(
   return rows;
 }
 
+/**
+ * Un pedido con sus líneas, por id: lo usa el webhook para armar el correo
+ * al obrador con lo que se guardó al pedir (qué lleva cada pack y la foto),
+ * que Stripe no conserva. null si no existe.
+ */
+export async function pedidoPorId(id: string): Promise<PedidoConLineas | null> {
+  const { rows } = await pool.query<PedidoConLineas>(
+    `select ${PROYECCION_PEDIDO} from pedidos p where p.id = $1`,
+    [id],
+  );
+  return rows[0] ?? null;
+}
+
 /** El número de un pedido (null si aún no lo tiene: carrito sin pagar). */
 export async function numeroDePedido(id: string): Promise<number | null> {
   const { rows } = await pool.query<{ numero: number | null }>("select numero from pedidos where id = $1", [id]);

@@ -9,7 +9,7 @@ import { stores } from "~/data/stores";
 export type DatosPedido = {
   numero: number | null;
   totalCents: number;
-  lineas: { qty: number; nombre: string; importeCents: number }[];
+  lineas: LineaCorreo[];
   /** «Envío a domicilio» / «Recogida en tienda», ya legible. */
   modalidad: string;
   /** «miércoles 24 de diciembre», ya legible. */
@@ -24,6 +24,19 @@ export type DatosPedido = {
   telefono?: string;
   notas?: string;
   referencia: string;
+};
+
+export type LineaCorreo = {
+  qty: number;
+  nombre: string;
+  importeCents: number;
+  /**
+   * Qué lleva un pack, pieza a pieza («Sabor de la empanada: …»). Sin esto
+   * el obrador solo leería «Pack Cumpleaños» y no sabría qué preparar.
+   */
+  detalle?: string[];
+  /** La foto que subió el cliente; solo se enseña en el aviso al obrador. */
+  fotoUrl?: string;
 };
 
 export type Mensaje = { asunto: string; texto: string; html: string };
@@ -69,12 +82,26 @@ function plantilla(titulo: string, cuerpo: string): string {
 </body></html>`;
 }
 
-function tablaLineas(d: DatosPedido): string {
+/** Debajo del nombre: las piezas del pack y, al obrador, el enlace a la foto. */
+function extrasLinea(l: LineaCorreo, conFoto: boolean): string {
+  const piezas = l.detalle?.length
+    ? `<ul style="margin:4px 0 0;padding-left:18px;font-size:14px;color:${COLOR.suave};">${l.detalle
+        .map((x) => `<li>${esc(x)}</li>`)
+        .join("")}</ul>`
+    : "";
+  const foto =
+    conFoto && l.fotoUrl
+      ? `<div style="margin-top:4px;font-size:14px;"><a href="${esc(l.fotoUrl)}" style="color:${COLOR.teja};">Ver la foto del cliente</a></div>`
+      : "";
+  return piezas + foto;
+}
+
+function tablaLineas(d: DatosPedido, conFoto: boolean): string {
   const filas = d.lineas
     .map(
       (l) => `<tr>
-<td style="padding:6px 0;border-bottom:1px solid ${COLOR.latte};">${l.qty} × ${esc(l.nombre)}</td>
-<td align="right" style="padding:6px 0;border-bottom:1px solid ${COLOR.latte};white-space:nowrap;">${euros(l.importeCents)}</td>
+<td style="padding:6px 0;border-bottom:1px solid ${COLOR.latte};vertical-align:top;">${l.qty} × ${esc(l.nombre)}${extrasLinea(l, conFoto)}</td>
+<td align="right" style="padding:6px 0;border-bottom:1px solid ${COLOR.latte};white-space:nowrap;vertical-align:top;">${euros(l.importeCents)}</td>
 </tr>`,
     )
     .join("");
@@ -93,9 +120,15 @@ const tablaDatos = (filas: [string, string | undefined][]) =>
     .map(([e, v]) => filaDato(e, v))
     .join("")}</table>`;
 
-const lineasTexto = (d: DatosPedido) =>
+const lineasTexto = (d: DatosPedido, conFoto: boolean) =>
   d.lineas
-    .map((l) => `• ${l.qty}× ${l.nombre} — ${euros(l.importeCents)}`)
+    .map((l) =>
+      [
+        `• ${l.qty}× ${l.nombre} — ${euros(l.importeCents)}`,
+        ...(l.detalle ?? []).map((x) => `    - ${x}`),
+        ...(conFoto && l.fotoUrl ? [`    Foto del cliente: ${l.fotoUrl}`] : []),
+      ].join("\n"),
+    )
     .join("\n");
 
 /** Al obrador: todo lo que hace falta para prepararlo y llamar al cliente. */
@@ -117,7 +150,7 @@ export function correoObrador(d: DatosPedido): Mensaje {
   const texto = [
     `Pedido ${n ? `${n} ` : ""}pagado — ${euros(d.totalCents)}`,
     "",
-    lineasTexto(d),
+    lineasTexto(d, true),
     "",
     ...datos.filter(([, v]) => v).map(([e, v]) => `${e}: ${v}`),
     "",
@@ -128,7 +161,7 @@ export function correoObrador(d: DatosPedido): Mensaje {
     asunto,
     `<p style="margin:0 0 4px;font-size:22px;">Pedido ${esc(n)} pagado</p>
 <p style="margin:0 0 16px;color:${COLOR.suave};font-family:Arial,sans-serif;font-size:14px;">${esc(d.modalidad)} · ${esc(d.dia)}</p>
-${tablaLineas(d)}
+${tablaLineas(d, true)}
 ${tablaDatos(datos)}
 <p style="margin:0;font-size:13px;color:${COLOR.suave};font-family:Arial,sans-serif;">Referencia Stripe: ${esc(d.referencia)}<br>Respondiendo a este correo le escribes al cliente.</p>`,
   );
@@ -161,7 +194,7 @@ export function correoCliente(d: DatosPedido): Mensaje {
       ? `Tu número de pedido es el ${d.numero}. Tenlo a mano si nos llamas.`
       : "",
     "",
-    lineasTexto(d),
+    lineasTexto(d, false),
     `Total pagado: ${euros(d.totalCents)}`,
     "",
     ...datos.filter(([, v]) => v).map(([e, v]) => `${e}: ${v}`),
@@ -179,7 +212,7 @@ export function correoCliente(d: DatosPedido): Mensaje {
         ? ` Tu número de pedido es el <strong>${d.numero}</strong>: tenlo a mano si nos llamas.`
         : ""
     }</p>
-${tablaLineas(d)}
+${tablaLineas(d, false)}
 ${tablaDatos(datos)}
 <p style="margin:0;">Si necesitas cambiar algo, llámanos al <a href="tel:${tienda.phone}" style="color:${COLOR.teja};">${esc(tienda.phoneDisplay)}</a> (${esc(tienda.shortName)}) o escríbenos a <a href="mailto:${site.email}" style="color:${COLOR.teja};">${esc(site.email)}</a>.</p>`,
   );
