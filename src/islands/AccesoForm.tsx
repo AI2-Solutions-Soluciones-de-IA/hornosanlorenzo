@@ -207,7 +207,11 @@ export default function AccesoForm({
 
   return (
     <>
-      <form onSubmit={onSubmit} noValidate style={{ maxWidth: "28rem", marginInline: "auto" }}>
+      <form
+        onSubmit={onSubmit}
+        noValidate
+        style={{ maxWidth: "28rem", marginInline: "auto" }}
+      >
         {!esRegistro && contrasenaRecuperada && (
           <p
             role="status"
@@ -236,11 +240,15 @@ export default function AccesoForm({
                 autoComplete="organization"
                 onChange={(e) => setEmpresa(e.target.value)}
                 aria-invalid={!!errores.empresa}
-                aria-describedby={errores.empresa ? "af-empresa-error" : undefined}
+                aria-describedby={
+                  errores.empresa ? "af-empresa-error" : undefined
+                }
                 placeholder="Tu empresa, S.L."
                 style={{
                   ...field,
-                  borderColor: errores.empresa ? "var(--color-teja)" : "var(--color-avellana)",
+                  borderColor: errores.empresa
+                    ? "var(--color-teja)"
+                    : "var(--color-avellana)",
                 }}
               />
               {errores.empresa && (
@@ -264,7 +272,9 @@ export default function AccesoForm({
                 style={{
                   ...field,
                   textTransform: "uppercase",
-                  borderColor: errores.cif ? "var(--color-teja)" : "var(--color-avellana)",
+                  borderColor: errores.cif
+                    ? "var(--color-teja)"
+                    : "var(--color-avellana)",
                 }}
               />
               {errores.cif && (
@@ -411,9 +421,13 @@ export default function AccesoForm({
               style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0 }}
             />
             <span>
-              Quiero recibir por correo las ofertas de Horno San Lorenzo. Puedo darme de baja cuando
-              quiera desde cualquier correo. Más información en la{" "}
-              <a href="/legal/privacidad" style={{ textDecoration: "underline" }}>
+              Quiero recibir por correo las ofertas de Horno San Lorenzo. Puedo
+              darme de baja cuando quiera desde cualquier correo. Más
+              información en la{" "}
+              <a
+                href="/legal/privacidad"
+                style={{ textDecoration: "underline" }}
+              >
                 política de privacidad
               </a>
               .
@@ -456,6 +470,25 @@ export default function AccesoForm({
               ? "Crear cuenta"
               : "Entrar"}
         </button>
+
+        {esRegistro && (
+          <p
+            style={{
+              marginTop: 10,
+              fontSize: 12,
+              lineHeight: 1.45,
+              color: "var(--color-ink-muted)",
+              textAlign: "center",
+            }}
+          >
+            Usamos tus datos para gestionar tu cuenta y tus pedidos. Más
+            información en la{" "}
+            <a href="/legal/privacidad" style={{ textDecoration: "underline" }}>
+              política de privacidad
+            </a>
+            .
+          </p>
+        )}
 
         {!esRegistro && (
           <p style={{ marginTop: 12, fontSize: 13, textAlign: "center" }}>

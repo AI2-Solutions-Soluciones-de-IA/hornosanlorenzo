@@ -12,7 +12,7 @@ const { title, description } = Astro.props;
       <a href="/">Inicio</a> · <span>Legal</span> · <span>{title}</span>
     </nav>
     <h1 class="text-3xl sm:text-4xl mb-6">{title}</h1>
-    <article class="prose prose-stone max-w-none [&_h2]:font-[family-name:var(--font-display)] [&_h2]:text-2xl [&_h2]:mt-8 [&_p]:my-4 [&_a]:underline">
+    <article class="prose prose-stone max-w-none [&_h2]:font-[family-name:var(--font-display)] [&_h2]:text-2xl [&_h2]:mt-8 [&_h3]:font-[family-name:var(--font-display)] [&_h3]:text-xl [&_h3]:mt-6 [&_p]:my-4 [&_a]:underline">
       <slot />
     </article>
   </section>

@@ -1176,7 +1176,14 @@ export default function CheckoutFlow({
                 >
                   condiciones de compra
                 </a>
-                .
+                . Usamos tus datos para preparar y entregar el pedido (
+                <a
+                  href="/legal/privacidad"
+                  style={{ textDecoration: "underline" }}
+                >
+                  privacidad
+                </a>
+                ).
               </p>
             </>
           )}

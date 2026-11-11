@@ -2,42 +2,122 @@
 import LegalLayout from "~/layouts/LegalLayout.astro";
 import { site } from "~/data/site";
 import { stores } from "~/data/stores";
+
+/**
+ * Política de privacidad (11-11-2026). Cubre todo lo que la web trata hoy:
+ * contacto, cuenta, pedidos y fotos, suscripción a las ofertas y la
+ * analítica. Si se añade un proveedor que toque datos de clientes (otro
+ * servicio de correo, de pagos, de almacenamiento...), tiene que entrar en
+ * «Quién más ve tus datos». El borrado de cuenta a petición se hace con
+ * `scripts/borrar-cuenta.mjs`.
+ */
+const correo = site.email;
 ---
-<LegalLayout title="Política de privacidad" description="Cómo tratamos tus datos cuando contactas con nosotros o te suscribes a las ofertas.">
+<LegalLayout title="Política de privacidad" description="Qué datos tratamos cuando nos escribes, creas una cuenta, haces un pedido o te suscribes a las ofertas, para qué y cuánto tiempo.">
   <p>
-    Esta política regula el tratamiento de datos personales que se realiza a través del formulario de contacto y de la suscripción a las ofertas del sitio.
+    Esta política explica qué datos personales tratamos a través de esta web, para qué, con qué base legal, quién
+    más los ve, cuánto tiempo los guardamos y cómo puedes ejercer tus derechos.
   </p>
+
   <h2>Responsable del tratamiento</h2>
   <p>
     {site.titular.nombre}, con NIF {site.titular.nif} ({site.name}), con domicilio en {stores[0].address},
-    {stores[0].postal} {stores[0].city} (Madrid), correo <a href={`mailto:${site.email}`}>{site.email}</a> y teléfono
+    {stores[0].postal} {stores[0].city} (Madrid), correo <a href={`mailto:${correo}`}>{correo}</a> y teléfono
     <a href={`tel:${stores[0].phone}`}>{stores[0].phoneDisplay}</a>.
     Más datos en el <a href="/legal/aviso-legal">aviso legal</a>.
   </p>
-  <h2>Datos que recogemos</h2>
-  <ul>
-    <li>Nombre y apellidos.</li>
-    <li>Email.</li>
-    <li>Teléfono (opcional).</li>
-    <li>Contenido del mensaje.</li>
-  </ul>
-  <h2>Finalidad</h2>
-  <p>Responder a tu consulta. Los datos del formulario de contacto no se usan para marketing ni se ceden a terceros.</p>
-  <h2>Suscripción a las ofertas</h2>
+
+  <h2>Qué datos tratamos y para qué</h2>
+
+  <h3>Si nos escribes</h3>
   <p>
-    Si te apuntas en «Este mes», guardamos solo tu correo electrónico y la fecha de alta, y lo usamos únicamente
-    para enviarte las ofertas de Horno San Lorenzo. La base legal es tu consentimiento, que das al marcar la casilla
-    y puedes retirar en cualquier momento con el enlace de baja que va al final de cada correo. Los correos se envían
-    a través de nuestro proveedor de correo, que actúa como encargado del tratamiento. Si te das de baja, dejamos de
-    escribirte y conservamos solo la constancia de la baja.
+    El formulario de contacto prepara un correo en tu programa de correo con tu nombre, tu email, tu teléfono si lo
+    das y tu mensaje; nos llega cuando tú lo envías. Lo usamos solo para responderte.
+    <strong>Base legal:</strong> tu consentimiento, que das al marcar la casilla del formulario.
   </p>
-  <h2>Base legal</h2>
-  <p>Consentimiento expreso al marcar la casilla del formulario.</p>
-  <h2>Plazo de conservación</h2>
-  <p>Hasta la resolución de la consulta y, posteriormente, durante el plazo legal de prescripción de obligaciones.</p>
+
+  <h3>Si creas una cuenta</h3>
+  <p>
+    Guardamos tu nombre, tu email, tu teléfono y tu contraseña (cifrada: nunca la vemos), y, si te das de alta
+    como empresa, la razón social y el CIF. Si decides guardarlas, también tus direcciones de entrega. Lo usamos
+    para que puedas entrar, ver tus pedidos y no tener que repetir tus datos en cada compra.
+    <strong>Base legal:</strong> la relación que mantienes con nosotros al abrir la cuenta.
+  </p>
+
+  <h3>Si haces un pedido</h3>
+  <p>
+    Guardamos lo que pides, el importe, tu nombre, tu email, tu teléfono, el día y la forma de entrega, la
+    dirección si es a domicilio, tus notas y, si el producto lleva foto (por ejemplo, una tarta con foto
+    comestible), la imagen que subes. Lo usamos para preparar y entregar el pedido, avisarte de él y atender
+    cualquier incidencia o devolución. El pago lo gestiona Stripe en su propia página: nosotros no vemos ni
+    guardamos los datos de tu tarjeta.
+    <strong>Base legal:</strong> la ejecución del contrato de compra y, para conservar los datos del pedido, las
+    obligaciones contables y fiscales.
+  </p>
+
+  <h3>Si te suscribes a las ofertas</h3>
+  <p>
+    Si te apuntas en «Este mes» o marcas la casilla al crear la cuenta, guardamos tu correo y la fecha de alta, y
+    lo usamos únicamente para enviarte las ofertas de {site.name}. Puedes darte de baja cuando quieras con el
+    enlace que va al final de cada correo; si te das de baja, dejamos de escribirte y conservamos solo la
+    constancia de la baja.
+    <strong>Base legal:</strong> tu consentimiento, que puedes retirar en cualquier momento.
+  </p>
+
+  <h3>Estadísticas de visitas</h3>
+  <p>
+    Medimos las visitas de forma agregada y anónima, sin cookies y sin identificarte. Más detalle en la
+    <a href="/legal/cookies">política de cookies</a>.
+    <strong>Base legal:</strong> nuestro interés legítimo en saber qué páginas funcionan.
+  </p>
+
+  <h2>Quién más ve tus datos</h2>
+  <p>
+    No vendemos ni cedemos tus datos a nadie. Para que la web funcione, estos proveedores los tratan por cuenta
+    nuestra, como encargados del tratamiento y solo para el servicio que nos prestan:
+  </p>
+  <ul>
+    <li><strong>Vercel</strong> — aloja la web, guarda las fotos que subes con un pedido y mide las visitas de forma anónima.</li>
+    <li><strong>Neon</strong> — base de datos donde están las cuentas, los pedidos y las suscripciones (servidores en la Unión Europea).</li>
+    <li><strong>Stripe</strong> — cobra los pedidos.</li>
+    <li><strong>Resend</strong> — envía los correos de los pedidos (servidores en la Unión Europea).</li>
+    <li><strong>Wix</strong> — envía los correos con las ofertas a quien se ha suscrito.</li>
+  </ul>
+  <p>
+    Vercel y Stripe pertenecen a grupos con sede en Estados Unidos, y Wix, en Israel. Cuando tus datos salen del
+    Espacio Económico Europeo, lo hacen con las garantías que exige el Reglamento General de Protección de Datos:
+    una decisión de adecuación de la Comisión Europea (el Marco de Privacidad de Datos UE-EE. UU., o la de Israel)
+    o las cláusulas contractuales tipo aprobadas por ella.
+  </p>
+  <p>Solo comunicaremos tus datos a una autoridad si una ley nos obliga.</p>
+
+  <h2>Cuánto tiempo los guardamos</h2>
+  <ul>
+    <li><strong>Mensajes de contacto:</strong> lo que tarde en resolverse tu consulta.</li>
+    <li><strong>Cuenta:</strong> mientras la tengas abierta. Si pides que la borremos, la borramos junto con tus direcciones guardadas.</li>
+    <li>
+      <strong>Pedidos (incluida la foto que subes):</strong> seis años desde el pedido, porque la ley nos obliga a
+      conservar la documentación de las ventas. Si borras tu cuenta, tus pedidos dejan de estar unidos a ella pero se
+      conservan ese tiempo.
+    </li>
+    <li><strong>Suscripción a las ofertas:</strong> hasta que te des de baja.</li>
+  </ul>
+
   <h2>Tus derechos</h2>
   <p>
-    Puedes ejercer tus derechos de acceso, rectificación, supresión, oposición, limitación y portabilidad escribiendo a
-    <a href={`mailto:${site.email}`}>{site.email}</a>. También puedes reclamar ante la Agencia Española de Protección de Datos.
+    Puedes pedir acceso a tus datos, rectificarlos, borrarlos, oponerte a que los tratemos, limitar su tratamiento o
+    llevártelos (portabilidad), y retirar en cualquier momento el consentimiento que nos hayas dado. Escríbenos a
+    <a href={`mailto:${correo}`}>{correo}</a>, mejor desde el correo de tu cuenta para que sepamos que eres tú. Te
+    contestaremos en un mes como máximo.
   </p>
+  <p>
+    <strong>Borrar tu cuenta:</strong> pídenoslo en ese mismo correo y la borraremos con tus direcciones guardadas y,
+    si quieres, también tu suscripción a las ofertas.
+  </p>
+  <p>
+    Si crees que no hemos tratado bien tus datos, puedes reclamar ante la
+    <a href="https://www.aepd.es" rel="noopener">Agencia Española de Protección de Datos</a>.
+  </p>
+
+  <p><small>Última actualización: 11 de noviembre de 2026.</small></p>
 </LegalLayout>

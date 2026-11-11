@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "db:migrar": "node --env-file=.env scripts/migrar.mjs",
     "admin": "node --env-file=.env scripts/hacer-admin.mjs",
+    "borrar-cuenta": "node --env-file=.env scripts/borrar-cuenta.mjs",
     "migrar:noticias": "node --env-file=.env scripts/migrar-noticias.mjs",
     "migrar:productos": "node --env-file=.env scripts/migrar-productos.mjs"
   },
