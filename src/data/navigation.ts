@@ -62,6 +62,12 @@ export const mainNav: readonly NavItem[] = [
         short: "Dulce y salado sin alérgenos, para que nadie se quede sin probarlo.",
         categories: ["sin-alergenos"],
       },
+      {
+        href: "/catalogo/complementos",
+        label: "Complementos",
+        short: "Pan del obrador, recién hecho, para acompañar tu pedido.",
+        categories: ["complementos"],
+      },
     ],
   },
   { href: "/noticias", label: "Este mes" },

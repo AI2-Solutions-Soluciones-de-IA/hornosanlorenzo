@@ -23,6 +23,7 @@ export const seccionIds = [
   "para-compartir",
   "las-lorenzas-salado",
   "salado-para-todos",
+  "pan",
   "packs",
 ] as const;
 
@@ -155,6 +156,13 @@ export const secciones: readonly Seccion[] = [
     label: "Sin alérgenos y especial para veganos",
     eyebrow: "Sin alérgenos · Veganos",
     order: 1750,
+  },
+  {
+    // Complementos (11-11-2026): el pan del día.
+    id: "pan",
+    label: "Pan del obrador",
+    eyebrow: "Complementos · Pan",
+    order: 1800,
   },
   {
     id: "packs",

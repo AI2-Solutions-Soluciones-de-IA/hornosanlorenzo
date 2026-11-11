@@ -1,5 +1,25 @@
 # Pendientes — Horno San Lorenzo
 
+## Tras el lanzamiento: Resend propio de HSL (11-11-2026)
+- [ ] **Cuenta de Resend solo para Horno San Lorenzo.** Hoy `RESEND_API_KEY`
+      es de la cuenta de Óscar, que también envía para controltower.es; los
+      límites del plan gratuito (100 correos/día, 3.000/mes) son por cuenta,
+      no por clave, así que HSL comparte cupo con Control Tower. Cada pedido
+      pagado gasta 2 correos (obrador + cliente). Pasos: (1) crear una cuenta
+      nueva de Resend con `info@hornosanlorenzo.com` (o `web@` si AMP lo
+      crea), no un Gmail personal: crear un team adicional en la cuenta de
+      Óscar es de pago (comprobado el 11-11-2026). Contraseña en un gestor y
+      verificación en dos pasos con códigos de recuperación guardados; si el
+      plan gratuito deja invitar miembros, invitar a Óscar; (2) quitar el
+      dominio de la cuenta de Óscar y añadirlo y verificarlo en la nueva
+      (Resend no admite el mismo dominio en dos sitios: hasta que AMP cambie
+      los DNS no salen correos de pedidos, así que hacerlo un día tranquilo); (3) **avisar a AMP** (la
+      empresa informática que lleva el DNS) para que cambien los registros
+      de Resend (DKIM `resend._domainkey` y los de `send`) por los nuevos;
+      (4) cuando salga verificado, cambiar `RESEND_API_KEY` en Vercel
+      Production y volver a desplegar.
+      Antes de diciembre (Navidad y Reyes pueden pasar de 50 pedidos/día)
+
 ## Bloquea encender los cobros
 - [ ] **Packs con Stripe: el obrador no vería el desglose.** Hoy no pasa (Stripe
       sin claves y los pedidos `sin_pago` no mandan correo), pero al encender

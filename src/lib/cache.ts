@@ -28,6 +28,7 @@ export const RUTAS_CATALOGO = [
   "/catalogo/dulce",
   "/catalogo/salado",
   "/catalogo/sin-alergenos",
+  "/catalogo/complementos",
   "/catalogo/top-ventas",
   "/catalogo/packs",
   // Este mes enseña productos (la tarjeta de la oferta y las secciones):

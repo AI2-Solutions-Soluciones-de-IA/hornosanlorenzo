@@ -59,7 +59,7 @@ const allowed = grupo ? grupoCategories[grupo] : null;
 // desactivada desde el panel desaparece de la web.
 // Con las gamas mezcladas («Todo el catálogo»), van en el orden de sus
 // chips (14-10-2026); dentro de cada gama, el de la carta (`sort` es estable).
-const ORDEN_GAMAS: readonly GrupoId[] = ["packs", "dulce", "salado", "sin-alergenos"];
+const ORDEN_GAMAS: readonly GrupoId[] = ["packs", "dulce", "salado", "sin-alergenos", "complementos"];
 const posGama = (cat: string): number => {
   const g = grupoOfCategory(cat as CategoryId);
   return g ? ORDEN_GAMAS.indexOf(g) : ORDEN_GAMAS.length;

@@ -4,6 +4,7 @@ export const categoryIds = [
   "salado",
   "temporada",
   "sin-alergenos",
+  "complementos",
   "packs",
 ] as const;
 
@@ -25,6 +26,8 @@ export const categories: readonly Category[] = [
   { id: "salado", label: "Salado", short: "Empanadas, quiches, hojaldres" },
   { id: "temporada", label: "Temporada", short: "Roscón, torrijas, panettone" },
   { id: "sin-alergenos", label: "Sin alérgenos", short: "Dulce y salado sin alérgenos" },
+  // Pan del día para acompañar el pedido (11-11-2026).
+  { id: "complementos", label: "Complementos", short: "Pan del obrador para acompañar" },
   {
     id: "packs",
     label: "Packs",
@@ -39,10 +42,11 @@ export const isCategoryId = (value: string | null): value is CategoryId =>
   value !== null && (categoryIds as readonly string[]).includes(value);
 
 /**
- * Agrupación comercial del brief: Dulce · Salado · Sin alérgenos · Packs.
+ * Agrupación comercial del brief: Dulce · Salado · Sin alérgenos · Packs, y
+ * Complementos (el pan) desde el 11-11-2026.
  * Se superpone a las categorías del catálogo sin sustituirlas.
  */
-export const grupoIds = ["dulce", "salado", "sin-alergenos", "packs"] as const;
+export const grupoIds = ["dulce", "salado", "sin-alergenos", "complementos", "packs"] as const;
 
 export type GrupoId = (typeof grupoIds)[number];
 
@@ -50,6 +54,7 @@ export const grupoCategories: Record<GrupoId, readonly CategoryId[]> = {
   dulce: ["bolleria", "tartas", "temporada"],
   salado: ["salado"],
   "sin-alergenos": ["sin-alergenos"],
+  complementos: ["complementos"],
   packs: ["packs"],
 };
 
@@ -57,6 +62,7 @@ export const grupoLabel: Record<GrupoId, string> = {
   dulce: "Dulce",
   salado: "Salado",
   "sin-alergenos": "Sin alérgenos",
+  complementos: "Complementos",
   packs: "Packs",
 };
 

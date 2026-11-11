@@ -11,6 +11,7 @@ import sello from "../../public/images/sello-hsl-512.png";
 import imgDulce from "../../public/images/productos/menu-dulce.jpg";
 import imgSalado from "../../public/images/productos/menu-salado.jpg";
 import imgSinAlergenos from "../../public/images/productos/menu-sin-alergenos.jpg";
+import imgComplementos from "../../public/images/productos/menu-complementos.jpg";
 import imgPacks from "../../public/images/productos/menu-packs.jpg";
 import imgTop from "../../public/images/productos/menu-top-ventas.jpg";
 import imgParticulares from "../../public/images/productos/menu-particulares.jpg";
@@ -22,6 +23,10 @@ const submenuImages: Record<string, { src: ImageMetadata; alt: string }> = {
   Dulce: { src: imgDulce, alt: "Tarta de nata coronada de fresas naturales" },
   Salado: { src: imgSalado, alt: "Empanada de hojaldre entera sobre tabla de madera" },
   "Sin alérgenos": { src: imgSinAlergenos, alt: "Tarta de chocolate sin alérgenos cubierta de fideos de chocolate, con una physalis" },
+  Complementos: {
+    src: imgComplementos,
+    alt: "Barras de pan del obrador en una caja de madera",
+  },
   Packs: {
     src: imgPacks,
     alt: "Mesa de celebración con empanada, quiche, bollos preñaos, croissants, canapés y pastelitos",
@@ -50,6 +55,9 @@ const submenuLayout: Record<number, string> = {
   3: "w-[41rem] grid-cols-3",
   4: "w-[54rem] grid-cols-4",
   5: "w-[67rem] grid-cols-5",
+  // Seis («Tienda Online» con Complementos, 11-11-2026): dos filas de tres,
+  // porque seis columnas no caben en una pantalla de portátil.
+  6: "w-[41rem] grid-cols-3",
 };
 
 const here = Astro.url.pathname;
