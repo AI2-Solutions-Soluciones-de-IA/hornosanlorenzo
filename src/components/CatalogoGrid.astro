@@ -61,7 +61,7 @@ const allowed = grupo ? grupoCategories[grupo] : null;
 // chips (14-10-2026); dentro de cada gama, el de la carta (`sort` es estable).
 // El orden es el del submenú de «Tienda Online» (11-11-2026): Dulce y Salado
 // delante, luego Packs (y Top ventas, que no es gama), Sin alérgenos y
-// Complementos.
+// Pan (gama `complementos`).
 const ORDEN_GAMAS: readonly GrupoId[] = ["dulce", "salado", "packs", "sin-alergenos", "complementos"];
 const posGama = (cat: string): number => {
   const g = grupoOfCategory(cat as CategoryId);

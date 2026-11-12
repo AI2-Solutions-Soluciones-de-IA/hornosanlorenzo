@@ -158,10 +158,10 @@ export const secciones: readonly Seccion[] = [
     order: 1750,
   },
   {
-    // Complementos (11-11-2026): el pan del día.
+    // Pan (11-11-2026): el pan del día.
     id: "pan",
     label: "Pan del obrador",
-    eyebrow: "Complementos · Pan",
+    eyebrow: "Pan",
     order: 1800,
   },
   {

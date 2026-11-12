@@ -64,8 +64,8 @@ export const mainNav: readonly NavItem[] = [
         categories: ["sin-alergenos"],
       },
       {
-        href: "/catalogo/complementos",
-        label: "Complementos",
+        href: "/catalogo/pan",
+        label: "Pan",
         short: "Pan del obrador, recién hecho, para acompañar tu pedido.",
         categories: ["complementos"],
       },

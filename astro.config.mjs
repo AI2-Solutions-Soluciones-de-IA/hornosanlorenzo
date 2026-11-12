@@ -137,6 +137,8 @@ export default defineConfig({
   // estar compartida por ahí fuera, así que se redirige en vez de romperse.
   redirects: {
     "/hosteleria-y-empresas": "/a-quien-servimos",
+    // «Complementos» pasó a llamarse «Pan» el 12-11-2026.
+    "/catalogo/complementos": "/catalogo/pan",
     // Páginas de la web antigua de Wix (su sitemap, 27-10-2026), para cuando
     // hornosanlorenzo.com apunte aquí. /contacto, /servicios y /noticias ya
     // existen con la misma dirección.
