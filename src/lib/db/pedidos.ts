@@ -590,6 +590,18 @@ export async function numeroDePedido(id: string): Promise<number | null> {
   return rows[0]?.numero ?? null;
 }
 
+/**
+ * El nombre del cliente del pedido de una sesión de pago de Stripe, para la
+ * página de «Gracias» (12-11-2026, sustituye al número). null si no está.
+ */
+export async function nombrePorSesion(sessionId: string): Promise<string | null> {
+  const { rows } = await pool.query<{ nombre: string | null }>(
+    "select nombre from pedidos where stripe_session_id = $1",
+    [sessionId],
+  );
+  return rows[0]?.nombre?.trim() || null;
+}
+
 /** El número del pedido de una sesión de pago de Stripe, si ya lo tiene. */
 export async function numeroPorSesion(sessionId: string): Promise<number | null> {
   const { rows } = await pool.query<{ numero: number | null }>(

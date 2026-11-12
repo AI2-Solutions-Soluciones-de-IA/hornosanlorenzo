@@ -1,14 +1,34 @@
 ---
+import Stripe from "stripe";
 import MarketingLayout from "~/layouts/MarketingLayout.astro";
 import { site } from "~/data/site";
 import { stores } from "~/data/stores";
+import { nombrePorSesion } from "~/lib/db/pedidos";
 
-// Sin número de pedido desde el 12-11-2026: el cliente no lo ve en ningún
-// sitio. El correo lo manda el webhook.
+// Se sirve en servidor (y fuera del ISR, `astro.config.mjs`) para decir a
+// nombre de quién está el pedido (12-11-2026; antes era el número, que ya no
+// se enseña). Se lee del pedido guardado por la sesión de Stripe; si no se
+// encuentra, de los metadatos de la sesión, que lleva el nombre desde
+// `checkout.ts`. Si nada de eso sale, la página se queda sin la frase.
+// El correo lo manda el webhook.
 export const prerender = false;
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
 const central = stores[0];
+const sesion = Astro.url.searchParams.get("session_id") ?? "";
+let nombre: string | null = null;
+if (/^cs_(test|live)_[A-Za-z0-9]+$/.test(sesion)) {
+  try {
+    nombre = await nombrePorSesion(sesion);
+    const secret = import.meta.env.STRIPE_SECRET_KEY;
+    if (!nombre && secret) {
+      const s = await new Stripe(secret).checkout.sessions.retrieve(sesion);
+      nombre = s.metadata?.nombre?.trim() || null;
+    }
+  } catch (error) {
+    console.error("[gracias] no se pudo leer el nombre del pedido:", error instanceof Error ? error.message : error);
+  }
+}
 ---
 <MarketingLayout
   title="Pedido confirmado"
@@ -17,6 +37,11 @@ const central = stores[0];
   <section class="mx-auto max-w-2xl px-4 sm:px-6 py-16 sm:py-24">
     <p class="numeracion">Pedido confirmado</p>
     <h1 class="text-4xl sm:text-5xl mt-3">Gracias. Ya está anotado.</h1>
+    {nombre && (
+      <p class="mt-6 text-lg">
+        Tu pedido está a nombre de <strong class="font-[family-name:var(--font-display)] text-2xl">{nombre}</strong>.
+      </p>
+    )}
     <p class="mt-5 text-lg text-[color:var(--color-ink-muted)]">
       Te hemos enviado un correo con el detalle de tu pedido. El obrador lo prepara
       para el día y la franja que elegiste.

@@ -186,6 +186,7 @@ export function correoCliente(d: DatosPedido): Mensaje {
     saludo,
     "",
     "Tu pedido está pagado y anotado en el obrador.",
+    d.nombre ? `Está a nombre de ${d.nombre}.` : "",
     "",
     lineasTexto(d, false),
     `Total pagado: ${euros(d.totalCents)}`,
@@ -200,7 +201,9 @@ export function correoCliente(d: DatosPedido): Mensaje {
   const html = plantilla(
     asunto,
     `<p style="margin:0 0 8px;font-size:22px;">${esc(saludo)}</p>
-<p style="margin:0 0 16px;">Tu pedido está pagado y anotado en el obrador.</p>
+<p style="margin:0 0 16px;">Tu pedido está pagado y anotado en el obrador.${
+      d.nombre ? ` Está a nombre de <strong>${esc(d.nombre)}</strong>.` : ""
+    }</p>
 ${tablaLineas(d, false)}
 ${tablaDatos(datos)}
 <p style="margin:0;">Si necesitas cambiar algo, llámanos al <a href="tel:${tienda.phone}" style="color:${COLOR.teja};">${esc(tienda.phoneDisplay)}</a> (${esc(tienda.shortName)}) o escríbenos a <a href="mailto:${site.email}" style="color:${COLOR.teja};">${esc(site.email)}</a>.</p>`,

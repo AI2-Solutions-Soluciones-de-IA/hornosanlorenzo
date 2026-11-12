@@ -50,6 +50,8 @@ describe("correoCliente", () => {
     const c = correoCliente(base);
     expect(c.asunto).toBe("Tu pedido en Horno San Lorenzo");
     expect(c.texto).not.toMatch(/número de pedido|nº/);
+    expect(c.texto).toContain("Está a nombre de Lucía");
+    expect(c.html).toContain("Está a nombre de <strong>Lucía");
     expect(c.texto).toContain("¡Gracias, Lucía!");
     expect(c.texto).toContain("91 605 90 56 (Pozuelo)");
     expect(c.html).toContain('href="tel:+34916059056"');
