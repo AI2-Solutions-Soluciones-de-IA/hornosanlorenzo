@@ -60,6 +60,9 @@ export type PedidoConLineas = {
   procesadoEn: Date | null;
   /** Nombre de quien lo marcó. */
   procesadoPor: string | null;
+  /** Archivado en el panel (migración 031); null si no. */
+  archivadoEn: Date | null;
+  archivadoPor: string | null;
   createdAt: Date;
   lineas: LineaPedido[];
 };
@@ -388,6 +391,30 @@ export async function marcarProcesado(
 }
 
 /**
+ * Archiva un pedido (o lo saca del archivo) desde el panel. Mismas reglas
+ * que `marcarProcesado`: solo pagados o sin pago y, para la oficina de una
+ * tienda, solo los suyos. Devuelve quién y cuándo, o null si no se puede.
+ */
+export async function marcarArchivado(
+  pedidoId: string,
+  archivar: boolean,
+  quien: string,
+  soloDestinos?: DestinoPedido[],
+): Promise<{ archivadoEn: Date | null; archivadoPor: string | null } | null> {
+  const { rows } = await pool.query<{ archivadoEn: Date | null; archivadoPor: string | null }>(
+    `update pedidos p
+        set archivado_en  = case when $2 then now() else null end,
+            archivado_por = case when $2 then $3 else null end
+      where id = $1
+        and estado in ('pagado', 'sin_pago')
+        and ($4::text[] is null or ${DESTINO_SQL} = any($4::text[]))
+      returning archivado_en as "archivadoEn", archivado_por as "archivadoPor"`,
+    [pedidoId, archivar, quien, soloDestinos ?? null],
+  );
+  return rows[0] ?? null;
+}
+
+/**
  * La proyección que arma un `PedidoConLineas`: las columnas en camelCase y
  * las líneas agregadas en una subconsulta, en su orden. Va en una constante
  * para que el panel y el historial del cliente devuelvan exactamente lo
@@ -416,6 +443,8 @@ const PROYECCION_PEDIDO = `
   p.reconstruido,
   p.procesado_en   as "procesadoEn",
   p.procesado_por  as "procesadoPor",
+  p.archivado_en   as "archivadoEn",
+  p.archivado_por  as "archivadoPor",
   p.created_at     as "createdAt",
   coalesce(
     (select json_agg(json_build_object(
@@ -466,6 +495,11 @@ export type FiltrosPedidos = {
    * ha marcado; `true`, solo los marcados. Sin él, todos.
    */
   procesado?: boolean;
+  /**
+   * Archivo (12-11-2026): `"no"` (por defecto), solo los no archivados;
+   * `"si"`, solo los archivados; `"todos"`, sin mirar.
+   */
+  archivo?: "no" | "si" | "todos";
 };
 
 export type DestinoPedido = "alcobendas" | "pozuelo" | "domicilio";
@@ -481,7 +515,7 @@ const DESTINO_SQL = `(case p.mode when 'domicilio' then 'domicilio'
 /**
  * El `where` de los filtros, compartido por la lista y por la cuenta que
  * pagina: si divergieran, el panel diría «página 3 de 2». Los parámetros
- * van del $1 al $9; quien lo usa pone los suyos detrás.
+ * van del $1 al $10; quien lo usa pone los suyos detrás.
  */
 const WHERE_FILTROS = `
       where p.estado in ('pagado', 'sin_pago')
@@ -503,7 +537,8 @@ const WHERE_FILTROS = `
                  and regexp_replace(p.telefono, '\\D', '', 'g') like '%' || $6 || '%'))
         and ($7::text is null or ${DESTINO_SQL} = $7)
         and ($8::text[] is null or ${DESTINO_SQL} = any($8::text[]))
-        and ($9::boolean is null or (p.procesado_en is not null) = $9)`;
+        and ($9::boolean is null or (p.procesado_en is not null) = $9)
+        and ($10::text = 'todos' or ($10::text = 'si') = (p.archivado_en is not null))`;
 
 function argsFiltros(f: FiltrosPedidos): unknown[] {
   const busqueda = patronBusqueda(f.texto);
@@ -517,6 +552,7 @@ function argsFiltros(f: FiltrosPedidos): unknown[] {
     f.destino ?? null,
     f.soloDestinos ?? null,
     f.procesado ?? null,
+    f.archivo ?? "no",
   ];
 }
 
@@ -531,7 +567,7 @@ export async function listarPedidos(
        from pedidos p
      ${WHERE_FILTROS}
       order by p.created_at desc, p.id
-      limit $10 offset $11`,
+      limit $11 offset $12`,
     [...argsFiltros(filtros), limite, desplazamiento],
   );
   return rows;

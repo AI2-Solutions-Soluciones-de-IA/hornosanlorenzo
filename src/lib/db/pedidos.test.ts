@@ -377,6 +377,20 @@ describeSiHayBD("repositorio de pedidos", () => {
       expect(await porProcesado(false)).toEqual([alcobendas, domicilio].sort());
       expect(await repo.contarPedidos({ ...dia, procesado: false })).toBe(2);
       expect(await repo.contarPedidos(dia)).toBe(3);
+
+      // Archivo (12-11-2026): fuera de la lista por defecto, dentro con
+      // «si» o «todos»; la oficina de otra tienda no archiva lo que no es suyo.
+      expect(await repo.marcarArchivado(alcobendas, true, "Oficina Pozuelo", ["pozuelo"])).toBeNull();
+      const archivado = await repo.marcarArchivado(alcobendas, true, "Oficina Alcobendas", ["alcobendas", "domicilio"]);
+      expect(archivado?.archivadoPor).toBe("Oficina Alcobendas");
+      const idsArchivo = async (archivo?: "no" | "si" | "todos") =>
+        (await repo.listarPedidos(50, { ...dia, archivo })).map((p) => p.id).sort();
+      expect(await idsArchivo()).toEqual([pozuelo, domicilio].sort());
+      expect(await idsArchivo("si")).toEqual([alcobendas]);
+      expect(await idsArchivo("todos")).toEqual([alcobendas, pozuelo, domicilio].sort());
+      expect(await repo.contarPedidos({ ...dia, archivo: "todos" })).toBe(3);
+      expect(await repo.marcarArchivado(alcobendas, false, "Oficina Alcobendas")).toEqual({ archivadoEn: null, archivadoPor: null });
+      expect(await repo.contarPedidos(dia)).toBe(3);
     });
   });
 

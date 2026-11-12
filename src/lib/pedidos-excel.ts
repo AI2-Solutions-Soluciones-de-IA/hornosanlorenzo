@@ -40,6 +40,7 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   // filtrar, y aparte quién y cuándo.
   { header: "Procesado", key: "procesado", width: 11 },
   { header: "Procesado por", key: "procesadoPor", width: 32 },
+  { header: "Archivado", key: "archivado", width: 11 },
 ];
 
 const EUROS = '#,##0.00 "€"';
@@ -133,6 +134,7 @@ export async function pedidosAExcel(pedidos: PedidoConLineas[]): Promise<Buffer>
       procesadoPor: p.procesadoEn
         ? [p.procesadoPor, entradaEnMadrid(new Date(p.procesadoEn))].filter(Boolean).join(" · ")
         : "",
+      archivado: p.archivadoEn ? "Sí" : "No",
     });
     fila.font = FUENTE;
     // Arriba y con saltos de línea: un pedido de varios productos ocupa una

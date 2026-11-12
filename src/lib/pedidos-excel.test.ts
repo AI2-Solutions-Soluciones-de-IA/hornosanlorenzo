@@ -26,6 +26,8 @@ const pedido = (extra: Partial<PedidoConLineas> = {}): PedidoConLineas => ({
   reconstruido: false,
   procesadoEn: null,
   procesadoPor: null,
+  archivadoEn: null,
+  archivadoPor: null,
   createdAt: new Date("2026-09-11T15:00:35.355Z"),
   lineas: [
     { slug: "cebra", nombre: "Cebra", varianteLabel: "6 unidades", qty: 1, unitPriceCents: 600, detalle: null, fotoUrl: null },
@@ -111,7 +113,8 @@ describe("pedidosAExcel", () => {
       "1× Pack desayuno · 15,00 € (Cebra · 6 unidades, Glaseadas)\n2× Glaseadas · 6,00 €",
     );
     expect(val("Foto")).toBe("https://blob.example/foto.jpg");
-    expect(cabecera.slice(-3)).toEqual(["Foto", "Procesado", "Procesado por"]);
+    expect(cabecera.slice(-4)).toEqual(["Foto", "Procesado", "Procesado por", "Archivado"]);
+    expect(val("Archivado")).toBe("No");
   });
 
   it("«Procesado»: Sí con quién y cuándo (hora de Madrid), o No", async () => {

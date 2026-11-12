@@ -90,6 +90,16 @@ describe("filtros de /admin/pedidos", () => {
     );
   });
 
+  it("archivo: por defecto activos; «si» o «todos», y lo demás no filtra", () => {
+    expect(leer("").filtros.archivo).toBeUndefined();
+    expect(leer("").hayFiltro).toBe(false);
+    expect(leer("archivo=si").filtros.archivo).toBe("si");
+    expect(leer("archivo=todos").filtros.archivo).toBe("todos");
+    expect(leer("archivo=si").hayFiltro).toBe(true);
+    expect(leer("archivo=otro").filtros.archivo).toBeUndefined();
+    expect(queryFiltros({ tipo: "entrega", texto: "", archivo: "si" }).toString()).toBe("fecha=entrega&archivo=si");
+  });
+
   it("queryFiltros solo lleva lo que hay", () => {
     expect(queryFiltros({ tipo: "entrega", texto: "" }).toString()).toBe(
       "fecha=entrega",

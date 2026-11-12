@@ -4,7 +4,7 @@ import { leerPagina } from "~/lib/paginacion";
 /**
  * Los filtros de `/admin/pedidos` leídos de la URL:
  * `?fecha=entrega|entrada&desde=YYYY-MM-DD&hasta=YYYY-MM-DD&q=texto
- * &destino=alcobendas|pozuelo|domicilio&procesado=no|si&pagina=N`.
+ * &destino=alcobendas|pozuelo|domicilio&procesado=no|si&archivo=si|todos&pagina=N`.
  *
  * Lo leen la página y el Excel, y por eso vive aquí: si cada uno los leyera
  * a su manera, el Excel dejaría de ser «lo que se ve».
@@ -24,6 +24,8 @@ export type FiltrosLeidos = {
   destino?: DestinoPedido;
   /** «Sin procesar» (`no`) o «Procesados» (`si`); sin él, todos. */
   procesado?: "si" | "no";
+  /** Archivados (`si`) o todos (`todos`); sin él, solo los activos. */
+  archivo?: "si" | "todos";
   /** Empieza en 1. */
   pagina: number;
   /** Lo que se pasa a `listarPedidos` / `contarPedidos`. */
@@ -67,6 +69,9 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
   const pr = params.get("procesado");
   const procesado = pr === "si" || pr === "no" ? pr : undefined;
 
+  const ar = params.get("archivo");
+  const archivo = ar === "si" || ar === "todos" ? ar : undefined;
+
   const pagina = leerPagina(params);
 
   const filtros: FiltrosPedidos = {
@@ -76,6 +81,7 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
     texto: texto || undefined,
     ...(destino ? { destino } : {}),
     ...(procesado ? { procesado: procesado === "si" } : {}),
+    ...(archivo ? { archivo } : {}),
   };
 
   return {
@@ -85,15 +91,16 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
     texto,
     destino,
     procesado,
+    archivo,
     pagina,
     filtros,
-    hayFiltro: Boolean(desde || hasta || texto || destino || procesado),
+    hayFiltro: Boolean(desde || hasta || texto || destino || procesado || archivo),
   };
 }
 
 /** La query de estos filtros, sin la página (para enlaces y el Excel). */
 export function queryFiltros(
-  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino" | "procesado">,
+  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino" | "procesado" | "archivo">,
 ): URLSearchParams {
   const q = new URLSearchParams();
   q.set("fecha", f.tipo);
@@ -102,5 +109,6 @@ export function queryFiltros(
   if (f.texto) q.set("q", f.texto);
   if (f.destino) q.set("destino", f.destino);
   if (f.procesado) q.set("procesado", f.procesado);
+  if (f.archivo) q.set("archivo", f.archivo);
   return q;
 }
