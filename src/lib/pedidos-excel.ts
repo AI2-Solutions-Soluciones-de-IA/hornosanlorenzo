@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import type { PedidoConLineas } from "~/lib/db/pedidos";
+import type { DestinoPedido, PedidoConLineas } from "~/lib/db/pedidos";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
 import { etiquetaPieza } from "~/data/packs";
@@ -47,7 +47,7 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
 const EUROS = '#,##0.00 "€"';
 
 /** `created_at` viene en UTC; el obrador vive en hora de Madrid. */
-function entradaEnMadrid(fecha: Date): string {
+export function entradaEnMadrid(fecha: Date): string {
   const partes = new Intl.DateTimeFormat("es-ES", {
     timeZone: "Europe/Madrid",
     year: "numeric",
@@ -61,14 +61,14 @@ function entradaEnMadrid(fecha: Date): string {
   return `${v("year")}-${v("month")}-${v("day")} ${v("hour")}:${v("minute")}`;
 }
 
-function estadoLegible(p: PedidoConLineas): string {
+export function estadoLegible(p: PedidoConLineas): string {
   if (p.estado === "sin_pago") return "Sin pagar";
   if (p.devueltoCents >= p.totalCents && p.devueltoCents > 0) return "Devuelto";
   if (p.devueltoCents > 0) return `Devuelto en parte (${(p.devueltoCents / 100).toFixed(2).replace(".", ",")} €)`;
   return p.stripeSessionId ? "Pagado por Stripe" : "Cobrado en tienda";
 }
 
-function destino(p: PedidoConLineas): string {
+export function destino(p: PedidoConLineas): string {
   if (p.mode === null) return SIN_DATOS;
   if (p.mode === "domicilio") {
     return [p.address, p.postalCode].filter(Boolean).join(" · ") || SIN_DATOS;
@@ -94,7 +94,17 @@ function productos(p: PedidoConLineas): string {
     .join("\n");
 }
 
-function franja(p: PedidoConLineas): string {
+/**
+ * A qué oficina toca el pedido (la misma regla que `DESTINO_SQL`): la tienda
+ * de recogida o `domicilio`; null si no dice modalidad.
+ */
+export function destinoDePedido(p: Pick<PedidoConLineas, "mode" | "storeId">): DestinoPedido | null {
+  if (p.mode === "domicilio") return "domicilio";
+  if (p.mode === "recogida" && (p.storeId === "alcobendas" || p.storeId === "pozuelo")) return p.storeId;
+  return null;
+}
+
+export function franja(p: PedidoConLineas): string {
   if (p.mode === "recogida") return p.slot ? SLOT_LABEL[p.slot] : SIN_DATOS;
   if (p.mode === "domicilio") return ENTREGA_DOMICILIO_COPY;
   return SIN_DATOS;

@@ -1,0 +1,182 @@
+---
+/**
+ * Pedidos para imprimir (12-11-2026). Dos usos, la misma página:
+ *  - `?id=<uuid>`: un pedido solo, como comanda (botón «Imprimir» de cada
+ *    tarjeta del panel).
+ *  - con los filtros de `/admin/pedidos` (los mismos parámetros, pestaña
+ *    incluida): todos los que casan, no solo la página que se ve (botón
+ *    «Imprimir» del recuadro de filtros).
+ * Se abre en otra pestaña y lanza el diálogo de imprimir al cargar.
+ *
+ * El middleware ya corta a quien no ve pedidos (`/admin/pedidos/...` es de
+ * las oficinas); aquí, además, cada oficina solo saca lo suyo.
+ */
+import { listarPedidos, pedidoPorId, type PedidoConLineas } from "~/lib/db/pedidos";
+import { leerFiltrosPedidos } from "~/lib/filtros-pedidos";
+import { destinosDeVista, destinosVisibles, vePedidos } from "~/lib/auth/guardia";
+import { destinoDePedido, destino, estadoLegible, franja, entradaEnMadrid } from "~/lib/pedidos-excel";
+import { MODE_COPY } from "~/lib/entrega";
+import { formatDateISO, formatPriceCents } from "~/lib/format";
+import { etiquetaPieza } from "~/data/packs";
+import { nombreConTipo } from "~/data/secciones";
+import { site } from "~/data/site";
+
+export const prerender = false;
+Astro.response.headers.set("Cache-Control", "private, no-store");
+
+const usuario = Astro.locals.usuario;
+if (!vePedidos(usuario)) return new Response("No encontrado", { status: 404 });
+
+/** Tope de la lista, como el Excel: con más, mejor el Excel. */
+const MAX_IMPRESION = 300;
+
+const params = Astro.url.searchParams;
+const id = params.get("id") ?? "";
+const unSolo = /^[0-9a-f-]{36}$/i.test(id);
+
+let pedidos: PedidoConLineas[] = [];
+let titulo = "Pedidos";
+let fallo = false;
+try {
+  if (unSolo) {
+    const p = await pedidoPorId(id);
+    const propios = destinosVisibles(usuario);
+    const dest = p ? destinoDePedido(p) : null;
+    const suyo = !propios || (dest !== null && propios.includes(dest));
+    if (!p || !["pagado", "sin_pago"].includes(p.estado) || !suyo) {
+      return new Response("No encontrado", { status: 404 });
+    }
+    pedidos = [p];
+    titulo = p.nombre ? `Pedido de ${p.nombre}` : "Pedido";
+  } else {
+    const leidos = leerFiltrosPedidos(params);
+    const soloDestinos = destinosDeVista(usuario, leidos.oficina);
+    const destinoValido =
+      leidos.destino && (!soloDestinos || soloDestinos.includes(leidos.destino)) ? leidos.destino : undefined;
+    pedidos = await listarPedidos(MAX_IMPRESION, { ...leidos.filtros, destino: destinoValido, soloDestinos });
+    const partes = [
+      leidos.oficina === "alcobendas" ? "Alcobendas" : leidos.oficina === "pozuelo" ? "Pozuelo" : null,
+      leidos.desde || leidos.hasta
+        ? `${leidos.tipo === "entrada" ? "entrados" : "entrega"} ${
+            leidos.desde === leidos.hasta
+              ? formatDateISO(leidos.desde!)
+              : [leidos.desde && `desde ${formatDateISO(leidos.desde)}`, leidos.hasta && `hasta ${formatDateISO(leidos.hasta)}`]
+                  .filter(Boolean)
+                  .join(" ")
+          }`
+        : null,
+      leidos.procesado === "no" ? "sin procesar" : leidos.procesado === "si" ? "procesados" : null,
+      leidos.archivo === "si" ? "archivados" : null,
+      leidos.texto ? `«${leidos.texto}»` : null,
+    ].filter(Boolean);
+    titulo = `Pedidos${partes.length ? ` · ${partes.join(" · ")}` : ""}`;
+  }
+} catch (error) {
+  fallo = true;
+  console.error("[pedidos/imprimir]", error instanceof Error ? error.message : error);
+}
+
+const impresoEl = entradaEnMadrid(new Date());
+const entrega = (p: PedidoConLineas) =>
+  p.fechaEntrega
+    ? `${formatDateISO(p.fechaEntrega)}${p.mode ? ` · ${franja(p)}` : ""}`
+    : "Día sin datos";
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{titulo} · {site.name}</title>
+    <style>
+      @page { size: A4; margin: 14mm 12mm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 24px; font: 13px/1.45 Arial, Helvetica, sans-serif; color: #1e1712; background: #fff; }
+      h1 { font: 600 20px Georgia, serif; margin: 0 0 2px; }
+      .meta { color: #6f5c4a; font-size: 12px; margin: 0 0 16px; }
+      .barra { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+      .barra button { font: 600 13px Arial, sans-serif; padding: 8px 16px; border: 1px solid #8e241d; background: #8e241d; color: #fff; cursor: pointer; }
+      .pedido { border: 1px solid #b9a690; padding: 12px 14px; margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid; }
+      .uno .pedido { border: 0; padding: 0; font-size: 15px; }
+      .cab { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; border-bottom: 1px solid #d8c2a6; padding-bottom: 6px; margin-bottom: 8px; }
+      .cab strong { font: 600 16px Georgia, serif; }
+      .uno .cab strong { font-size: 22px; }
+      .datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 16px; margin-bottom: 8px; }
+      .datos span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #6f5c4a; }
+      table { width: 100%; border-collapse: collapse; }
+      td { padding: 3px 0; vertical-align: top; border-top: 1px solid #eee5d8; }
+      td.n { width: 3.2em; font-weight: 700; }
+      td.e { text-align: right; white-space: nowrap; width: 6em; }
+      .piezas { margin: 2px 0 0 0; padding-left: 16px; color: #4d3f33; font-size: 12px; }
+      .notas { margin-top: 8px; padding: 6px 8px; border-left: 3px solid #8e241d; background: #faf6f0; }
+      .pie { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-weight: 700; }
+      .vacio { color: #6f5c4a; }
+      @media print {
+        body { padding: 0; }
+        .barra { display: none; }
+        .notas { background: none; }
+      }
+    </style>
+  </head>
+  <body class:list={[unSolo && "uno"]}>
+    <div class="barra">
+      <button type="button" onclick="window.print()">Imprimir</button>
+      <span class="meta" style="margin:0">Se abre el diálogo de imprimir al cargar la página.</span>
+    </div>
+    {/* En la comanda el cliente ya va en el pedido: arriba, la casa. */}
+    <h1>{unSolo ? site.name : titulo}</h1>
+    <p class="meta">
+      {unSolo ? "Comanda" : site.name} · impreso el {impresoEl}
+      {!unSolo && ` · ${pedidos.length} ${pedidos.length === 1 ? "pedido" : "pedidos"}`}
+      {!unSolo && pedidos.length === MAX_IMPRESION && ` (los ${MAX_IMPRESION} primeros: acota los filtros)`}
+    </p>
+
+    {fallo && <p class="vacio">No se han podido leer los pedidos. Vuelve a intentarlo en un momento.</p>}
+    {!fallo && pedidos.length === 0 && <p class="vacio">No hay pedidos con esos filtros.</p>}
+
+    {pedidos.map((p) => (
+      <section class="pedido">
+        <div class="cab">
+          <strong>{p.nombre ? `Pedido de ${p.nombre}` : "Pedido"}</strong>
+          <span>Ref. {p.id.slice(0, 8)}</span>
+        </div>
+        <div class="datos">
+          <div><span>Entrega</span>{entrega(p)}</div>
+          <div><span>{p.mode ? MODE_COPY[p.mode].label : "Modalidad"}</span>{destino(p)}</div>
+          <div><span>Estado</span>{estadoLegible(p)}{p.procesadoEn ? " · procesado" : ""}</div>
+          <div><span>Teléfono</span>{p.telefono || "—"}</div>
+          <div><span>Correo</span>{p.email || "—"}</div>
+          <div><span>Entró el</span>{entradaEnMadrid(new Date(p.createdAt))}</div>
+        </div>
+        <table>
+          <tbody>
+            {p.lineas.map((l) => (
+              <tr>
+                <td class="n">{l.qty}×</td>
+                <td>
+                  {nombreConTipo(l.nombre, l.seccion)}{l.varianteLabel ? ` — ${l.varianteLabel}` : ""}
+                  {l.detalle && l.detalle.length > 0 && (
+                    <ul class="piezas">{l.detalle.map((pieza) => <li>{etiquetaPieza(pieza)}</li>)}</ul>
+                  )}
+                  {l.fotoUrl && <div class="piezas">Lleva foto del cliente (verla en el panel)</div>}
+                </td>
+                <td class="e">{formatPriceCents(l.qty * l.unitPriceCents)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {p.notas && <div class="notas"><strong>Notas:</strong> {p.notas}</div>}
+        <div class="pie">
+          <span>{p.envioCents > 0 ? `Reparto ${formatPriceCents(p.envioCents)}` : ""}</span>
+          <span>Total {formatPriceCents(p.totalCents)}</span>
+        </div>
+      </section>
+    ))}
+
+    <script is:inline>
+      // Lanza el diálogo de imprimir al abrir la pestaña.
+      window.addEventListener("load", () => setTimeout(() => window.print(), 300));
+    </script>
+  </body>
+</html>

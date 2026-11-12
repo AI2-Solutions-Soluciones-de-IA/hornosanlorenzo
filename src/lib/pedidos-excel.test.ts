@@ -147,3 +147,13 @@ describe("pedidosAExcel", () => {
     expect(ws.rowCount).toBe(1);
   });
 });
+
+describe("destinoDePedido", () => {
+  it("la tienda de recogida, domicilio, o null si no dice modalidad", async () => {
+    const { destinoDePedido } = await import("~/lib/pedidos-excel");
+    expect(destinoDePedido({ mode: "recogida", storeId: "pozuelo" })).toBe("pozuelo");
+    expect(destinoDePedido({ mode: "recogida", storeId: "alcobendas" })).toBe("alcobendas");
+    expect(destinoDePedido({ mode: "domicilio", storeId: null })).toBe("domicilio");
+    expect(destinoDePedido({ mode: null, storeId: null })).toBeNull();
+  });
+});
