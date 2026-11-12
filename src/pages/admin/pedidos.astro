@@ -170,7 +170,7 @@ function modalidad(p: PedidoConLineas): string {
     </div>
     <div class="grow basis-56">
       <label for="f-q" class="numeracion block">Buscar</label>
-      <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nº de pedido, nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <input id="f-q" type="search" name="q" value={filtroTexto} maxlength="80" placeholder="Nombre, correo, teléfono o referencia" class="mt-2 block w-full border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <button type="submit" class="btn btn-primario">Filtrar</button>
     {hayFiltro && (
@@ -218,8 +218,10 @@ function modalidad(p: PedidoConLineas): string {
         data-procesado={p.procesadoEn ? "si" : "no"}
       >
         <div class="pedido-cabecera mb-3 flex flex-wrap items-start justify-between gap-3">
+          {/* Sin número de pedido desde el 12-11-2026: se identifica por
+              el cliente (nombre obligatorio al pedir) y la referencia. */}
           <p class="font-[family-name:var(--font-display)] text-lg">
-            Pedido nº {p.numero ?? "—"}
+            {p.nombre ? `Pedido de ${p.nombre}` : "Pedido"}
           </p>
           {/* «Procesado» (11-11-2026): la oficina lo marca al pasarlo al
               obrador; la tarjeta se apaga para que salten los pendientes. */}
@@ -332,7 +334,7 @@ function modalidad(p: PedidoConLineas): string {
                 {" · "}
                 {/* Abre el pago en el panel de Stripe (pasa por
                     `/api/admin/pedidos/stripe`, que averigua cuál es). En
-                    Stripe el pago lleva además «Pedido nº X · Ref. …». */}
+                    Stripe el pago lleva además «Ref. …». */}
                 <a href={`/api/admin/pedidos/stripe?pedido=${p.id}`} target="_blank" rel="noopener" class="underline font-semibold text-[color:var(--color-ink)]">
                   Ver en Stripe
                 </a>

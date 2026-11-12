@@ -6,7 +6,6 @@ import {
 } from "~/lib/email/pedido";
 
 const base: DatosPedido = {
-  numero: 42,
   totalCents: 5250,
   lineas: [
     { qty: 2, nombre: "Empanada de Atún · 6 rac.", importeCents: 5000 },
@@ -29,7 +28,7 @@ describe("correoObrador", () => {
   it("lleva lo necesario para prepararlo y llamar: líneas, día, teléfono y referencia", () => {
     const c = correoObrador(base);
     expect(c.asunto).toBe(
-      "Pedido web nº 42 — Recogida en tienda · sábado 7 de noviembre · 52,50 €",
+      "Pedido web — Recogida en tienda · sábado 7 de noviembre · 52,50 €",
     );
     for (const t of [c.texto, c.html]) {
       expect(t).toContain("Empanada de Atún");
@@ -47,9 +46,10 @@ describe("correoObrador", () => {
 });
 
 describe("correoCliente", () => {
-  it("da el número y el teléfono de la tienda donde recoge", () => {
+  it("da el teléfono de la tienda donde recoge, sin número de pedido", () => {
     const c = correoCliente(base);
-    expect(c.asunto).toBe("Tu pedido nº 42 en Horno San Lorenzo");
+    expect(c.asunto).toBe("Tu pedido en Horno San Lorenzo");
+    expect(c.texto).not.toMatch(/número de pedido|nº/);
     expect(c.texto).toContain("¡Gracias, Lucía!");
     expect(c.texto).toContain("91 605 90 56 (Pozuelo)");
     expect(c.html).toContain('href="tel:+34916059056"');
@@ -69,8 +69,8 @@ describe("correoCliente", () => {
     expect(c.texto).toContain("Dirección: C/ Mayor 1 · 28013");
   });
 
-  it("sin número ni nombre sigue siendo legible", () => {
-    const c = correoCliente({ ...base, numero: null, nombre: undefined });
+  it("sin nombre sigue siendo legible", () => {
+    const c = correoCliente({ ...base, nombre: undefined });
     expect(c.asunto).toBe("Tu pedido en Horno San Lorenzo");
     expect(c.texto.startsWith("¡Gracias por tu pedido!")).toBe(true);
   });

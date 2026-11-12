@@ -80,12 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const avisado = await notify(
-      stripe,
-      session,
-      anotado?.numero ?? null,
-      anotado?.id ?? null,
-    );
+    const avisado = await notify(stripe, session, anotado?.id ?? null);
     if (avisado && anotado) await marcarAvisado(anotado.id);
   } catch (err) {
     // Devolver 500 hace que Stripe reintente, que es lo que queremos si el
@@ -112,7 +107,7 @@ export async function anotarDevolucion(stripe: Stripe, charge: Stripe.Charge): P
     if (!sesion) return new Response("sin sesión", { status: 200 });
     const pedido = await marcarDevuelto(sesion, charge.amount_refunded ?? 0);
     if (!pedido) return new Response("pedido desconocido", { status: 200 });
-    console.info(`[webhook] devolución apuntada en el pedido nº ${pedido.numero ?? pedido.id}: ${charge.amount_refunded} céntimos`);
+    console.info(`[webhook] devolución apuntada en el pedido ${pedido.id}: ${charge.amount_refunded} céntimos`);
     return new Response("devolución apuntada", { status: 200 });
   } catch (err) {
     console.error("[webhook] no se pudo apuntar la devolución:", err instanceof Error ? err.message : err);
@@ -121,10 +116,11 @@ export async function anotarDevolucion(stripe: Stripe, charge: Stripe.Charge): P
 }
 
 /**
- * Pone en el pago de Stripe el número de pedido y la referencia de la web
- * (9-10-2026): «Horno San Lorenzo · Pedido nº 14 · Ref. a6bf584a». Así el
- * pago se encuentra en Stripe buscando el número, y desde el panel se llega
- * al pago con «Ver en Stripe». Es un extra: si falla, no para nada.
+ * Pone en el pago de Stripe la referencia de la web (9-10-2026):
+ * «Horno San Lorenzo · Ref. a6bf584a». Así el pago se encuentra en Stripe
+ * buscando la referencia que sale en el panel, y desde el panel se llega al
+ * pago con «Ver en Stripe». Sin número de pedido desde el 12-11-2026. Es un
+ * extra: si falla, no para nada.
  */
 export async function etiquetaPagoEnStripe(
   stripe: Stripe,
@@ -137,12 +133,11 @@ export async function etiquetaPagoEnStripe(
     await stripe.paymentIntents.update(pago, {
       description: [
         "Horno San Lorenzo",
-        anotado.numero ? `Pedido nº ${anotado.numero}` : null,
         `Ref. ${anotado.id.slice(0, 8)}`,
       ]
         .filter(Boolean)
         .join(" · "),
-      metadata: { pedidoId: anotado.id, numero: anotado.numero ? String(anotado.numero) : "" },
+      metadata: { pedidoId: anotado.id },
     });
   } catch (err) {
     console.warn("[webhook] no se pudo poner el número en el pago de Stripe:", err instanceof Error ? err.message : err);
@@ -318,8 +313,6 @@ async function lineasParaCorreo(
 export async function notify(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
-  /** Número de pedido (migración 023), para el asunto y el texto de los correos. */
-  numero: number | null = null,
   /** Id del pedido en la base, para sacar de ahí el desglose de los packs. */
   pedidoId: string | null = null,
 ): Promise<boolean> {
@@ -331,7 +324,6 @@ export async function notify(
   const cliente = session.customer_details?.email ?? "";
 
   const datos: DatosPedido = {
-    numero,
     totalCents: session.amount_total ?? 0,
     lineas: await lineasParaCorreo(stripe, session, pedidoId),
     modalidad: m.modalidad ?? "",

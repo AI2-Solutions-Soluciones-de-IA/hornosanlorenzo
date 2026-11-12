@@ -7,7 +7,6 @@ import { stores } from "~/data/stores";
  * reúne los datos y `enviarCorreo` los manda.
  */
 export type DatosPedido = {
-  numero: number | null;
   totalCents: number;
   lineas: LineaCorreo[];
   /** «Envío a domicilio» / «Recogida en tienda», ya legible. */
@@ -55,7 +54,6 @@ const esc = (s: string) =>
 const tiendaDe = (d: DatosPedido) =>
   stores.find((s) => s.id === d.tiendaId) ?? stores[0];
 
-const nPedido = (d: DatosPedido) => (d.numero ? `nº ${d.numero}` : "");
 
 const COLOR = {
   leche: "#fefcf8",
@@ -133,8 +131,7 @@ const lineasTexto = (d: DatosPedido, conFoto: boolean) =>
 
 /** Al obrador: todo lo que hace falta para prepararlo y llamar al cliente. */
 export function correoObrador(d: DatosPedido): Mensaje {
-  const n = nPedido(d);
-  const asunto = `Pedido web ${n ? `${n} ` : ""}— ${d.modalidad} · ${d.dia} · ${euros(d.totalCents)}`;
+  const asunto = `Pedido web — ${d.modalidad} · ${d.dia} · ${euros(d.totalCents)}`;
   const datos: [string, string | undefined][] = [
     ["Modalidad", d.modalidad],
     ["Día", d.franja ? `${d.dia} (${d.franja})` : d.dia],
@@ -148,7 +145,7 @@ export function correoObrador(d: DatosPedido): Mensaje {
     ["Notas", d.notas],
   ];
   const texto = [
-    `Pedido ${n ? `${n} ` : ""}pagado — ${euros(d.totalCents)}`,
+    `Pedido pagado — ${euros(d.totalCents)}`,
     "",
     lineasTexto(d, true),
     "",
@@ -159,7 +156,7 @@ export function correoObrador(d: DatosPedido): Mensaje {
   ].join("\n");
   const html = plantilla(
     asunto,
-    `<p style="margin:0 0 4px;font-size:22px;">Pedido ${esc(n)} pagado</p>
+    `<p style="margin:0 0 4px;font-size:22px;">Pedido pagado</p>
 <p style="margin:0 0 16px;color:${COLOR.suave};font-family:Arial,sans-serif;font-size:14px;">${esc(d.modalidad)} · ${esc(d.dia)}</p>
 ${tablaLineas(d, true)}
 ${tablaDatos(datos)}
@@ -170,9 +167,8 @@ ${tablaDatos(datos)}
 
 /** Al cliente: la confirmación, con a quién llamar si necesita cambiar algo. */
 export function correoCliente(d: DatosPedido): Mensaje {
-  const n = nPedido(d);
   const tienda = tiendaDe(d);
-  const asunto = `Tu pedido ${n ? `${n} ` : ""}en ${site.name}`;
+  const asunto = `Tu pedido en ${site.name}`;
   const saludo = d.nombre
     ? `¡Gracias, ${d.nombre}!`
     : "¡Gracias por tu pedido!";
@@ -190,9 +186,6 @@ export function correoCliente(d: DatosPedido): Mensaje {
     saludo,
     "",
     "Tu pedido está pagado y anotado en el obrador.",
-    n
-      ? `Tu número de pedido es el ${d.numero}. Tenlo a mano si nos llamas.`
-      : "",
     "",
     lineasTexto(d, false),
     `Total pagado: ${euros(d.totalCents)}`,
@@ -207,11 +200,7 @@ export function correoCliente(d: DatosPedido): Mensaje {
   const html = plantilla(
     asunto,
     `<p style="margin:0 0 8px;font-size:22px;">${esc(saludo)}</p>
-<p style="margin:0 0 16px;">Tu pedido está pagado y anotado en el obrador.${
-      n
-        ? ` Tu número de pedido es el <strong>${d.numero}</strong>: tenlo a mano si nos llamas.`
-        : ""
-    }</p>
+<p style="margin:0 0 16px;">Tu pedido está pagado y anotado en el obrador.</p>
 ${tablaLineas(d, false)}
 ${tablaDatos(datos)}
 <p style="margin:0;">Si necesitas cambiar algo, llámanos al <a href="tel:${tienda.phone}" style="color:${COLOR.teja};">${esc(tienda.phoneDisplay)}</a> (${esc(tienda.shortName)}) o escríbenos a <a href="mailto:${site.email}" style="color:${COLOR.teja};">${esc(site.email)}</a>.</p>`,

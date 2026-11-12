@@ -5,6 +5,7 @@ import {
   shippingCents,
   admiteCP,
   esTelefonoValido,
+  tieneNombreYApellido,
   ZONA_REPARTO_COPY,
   minimoPedidoCents,
   franjasRecogida,
@@ -81,7 +82,12 @@ export const orderPayloadSchema = z.object({
     .string()
     .regex(/^\d{5}$/)
     .optional(),
-  name: z.string().max(120).optional(),
+  /**
+   * Nombre y apellidos, obligatorio desde el 12-11-2026: sin número de
+   * pedido, es como el obrador identifica cada encargo. Al menos dos
+   * palabras (nombre y un apellido).
+   */
+  name: z.string().trim().max(120),
   notes: z.string().max(500).optional(),
   email: z.string().email().max(160),
   /** Obligatorio en las dos modalidades: es como se avisa de un problema. */
@@ -89,6 +95,7 @@ export const orderPayloadSchema = z.object({
 });
 
 export type OrderPayload = z.infer<typeof orderPayloadSchema>;
+
 
 export type PricedLine = {
   slug: string;
@@ -158,6 +165,9 @@ export async function priceOrder(
     if (!valid) throw new OrderError("La tienda de recogida no es válida.");
   }
 
+  if (!tieneNombreYApellido(payload.name)) {
+    throw new OrderError("Escribe tu nombre y apellidos para que podamos identificar el pedido.");
+  }
   if (!esTelefonoValido(payload.phone)) {
     throw new OrderError("El teléfono de contacto no parece válido.");
   }

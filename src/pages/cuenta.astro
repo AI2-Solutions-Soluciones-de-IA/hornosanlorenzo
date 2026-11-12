@@ -139,9 +139,6 @@ function destino(p: PedidoConLineas): string {
         <ul class="mt-8 flex flex-col gap-px bg-[color:var(--color-avellana)]">
           {pedidos.map(({ pedido: p, repeticion }) => (
             <li class="bg-[color:var(--color-leche)] p-5">
-              {p.numero && (
-                <p class="mb-2 font-[family-name:var(--font-display)] text-lg">Pedido nº {p.numero}</p>
-              )}
               <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
                 <p class="numeracion">
                   {p.fechaEntrega ? formatDateISO(p.fechaEntrega) : "Fecha sin datos"}

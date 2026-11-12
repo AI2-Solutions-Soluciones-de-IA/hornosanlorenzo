@@ -496,8 +496,6 @@ const WHERE_FILTROS = `
              or p.email ilike $5
              or p.telefono ilike $5
              or p.id::text ilike $5
-             -- Solo cifras: también el número de pedido, exacto.
-             or ($6::text is not null and p.numero::text = $6)
              -- El teléfono se guarda tal como lo escribió el cliente, con o
              -- sin espacios; si lo buscado son solo dígitos se compara sin
              -- separadores por ambos lados.
@@ -532,9 +530,7 @@ export async function listarPedidos(
     `select ${PROYECCION_PEDIDO}
        from pedidos p
      ${WHERE_FILTROS}
-      -- Buscando un número, el pedido con ese número va primero (luego los
-      -- que solo lo llevan en el teléfono).
-      order by (p.numero::text = $6) desc nulls last, p.created_at desc, p.id
+      order by p.created_at desc, p.id
       limit $10 offset $11`,
     [...argsFiltros(filtros), limite, desplazamiento],
   );

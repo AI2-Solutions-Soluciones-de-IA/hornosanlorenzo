@@ -104,6 +104,8 @@ const pedidoBase = (): OrderPayload => ({
   storeId: "alcobendas",
   email: "cliente@example.com",
   phone: "666123456",
+
+  name: "Ana López",
 });
 
 describe("priceOrder", () => {
@@ -122,6 +124,8 @@ describe("priceOrder", () => {
       postalCode: "28900",
       email: "cliente@example.com",
       phone: "666123456",
+
+      name: "Ana López",
     };
 
     // No basta con comprobar que lanza `OrderError`: cualquier otro motivo
@@ -145,6 +149,8 @@ describe("priceOrder", () => {
       postalCode: "28001",
       email: "cliente@example.com",
       phone: "666123456",
+
+      name: "Ana López",
     };
     await expect(priceOrder(payload, { now: AHORA })).rejects.toMatchObject({
       message: expect.stringContaining("mínimo a domicilio es de 25 €"),
@@ -161,6 +167,8 @@ describe("priceOrder", () => {
       postalCode: "28001",
       email: "cliente@example.com",
       phone: "666123456",
+
+      name: "Ana López",
     };
     await expect(priceOrder(payload, { now: AHORA })).resolves.toMatchObject({
       subtotalCents: 3700,
@@ -210,6 +218,16 @@ describe("priceOrder", () => {
     await expect(priceOrder(payload, { now: AHORA })).rejects.toThrow(
       /fecha elegida no está disponible/i,
     );
+  });
+
+  it("sin nombre y apellidos no se anota (12-11-2026)", async () => {
+    for (const name of ["", "Ana", "   "]) {
+      await expect(priceOrder({ ...pedidoBase(), name }, { now: AHORA })).rejects.toMatchObject({
+        name: "OrderError",
+        message: expect.stringContaining("nombre y apellidos"),
+      });
+    }
+    await expect(priceOrder({ ...pedidoBase(), name: "Ana López" }, { now: AHORA })).resolves.toBeTruthy();
   });
 
   it("rechaza un teléfono que no parece válido", async () => {

@@ -17,6 +17,7 @@ import {
   admiteCP,
   municipioDeCP,
   esTelefonoValido,
+  tieneNombreYApellido,
   minimoPedidoCents,
   franjasRecogida,
   type Franja,
@@ -288,6 +289,7 @@ export default function CheckoutFlow({
 
   const emailOk = /.+@.+\..+/.test(email.trim());
   const telefonoOk = esTelefonoValido(phone);
+  const nombreOk = tieneNombreYApellido(name);
   /**
    * Franjas de recogida del día elegido: para hoy solo tarde, y en Alcobendas
    * los sábados, domingos y festivos solo mañana. Si la elegida deja de
@@ -310,6 +312,7 @@ export default function CheckoutFlow({
     llegaAlMinimo &&
     emailOk &&
     telefonoOk &&
+    nombreOk &&
     !sending;
 
   /**
@@ -355,7 +358,7 @@ export default function CheckoutFlow({
 
   /** Solo se mandan referencias y cantidades: el precio lo pone el servidor. */
   async function pay() {
-    if (!mode || !dateISO || !emailOk || !telefonoOk || sending) return;
+    if (!mode || !dateISO || !emailOk || !telefonoOk || !nombreOk || sending) return;
     setSending(true);
     setError(null);
     // Sin `await`: guardar la dirección es una comodidad y no puede retrasar
@@ -386,7 +389,7 @@ export default function CheckoutFlow({
           storeId: mode === "recogida" ? storeId : undefined,
           address: mode === "domicilio" ? address.trim() : undefined,
           postalCode: mode === "domicilio" ? postalCode : undefined,
-          name: name.trim() || undefined,
+          name: name.trim(),
           notes: notes.trim() || undefined,
           email: email.trim(),
           phone: phone.trim(),
@@ -1100,14 +1103,37 @@ export default function CheckoutFlow({
 
               <div style={{ marginTop: 16 }}>
                 <label style={label} htmlFor="cf-name">
-                  Tu nombre (opcional)
+                  Nombre y apellidos *
                 </label>
                 <input
                   id="cf-name"
+                  autoComplete="name"
+                  required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  style={field}
+                  aria-invalid={name.trim() !== "" && !nombreOk}
+                  aria-describedby="cf-name-aviso"
+                  placeholder="Para identificar tu pedido"
+                  style={{
+                    ...field,
+                    borderColor:
+                      name.trim() !== "" && !nombreOk
+                        ? "var(--color-teja)"
+                        : "var(--color-avellana)",
+                  }}
                 />
+                {name.trim() !== "" && !nombreOk && (
+                  <p
+                    id="cf-name-aviso"
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      color: "var(--color-teja)",
+                    }}
+                  >
+                    Escribe tu nombre y al menos un apellido.
+                  </p>
+                )}
               </div>
 
               <div style={{ marginTop: 16 }}>

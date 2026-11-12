@@ -55,6 +55,7 @@ const PEDIDO_VALORADO = {
     storeId: "alcobendas",
     email: "cliente@example.com",
     phone: "666123456",
+    name: "Ana López",
   },
 };
 
@@ -159,7 +160,7 @@ describe("POST /api/checkout", () => {
 
       expect(respuesta.status).toBe(200);
       // Con el número de pedido, para enseñárselo al cliente.
-      expect(await respuesta.json()).toEqual({ url: "/pedido/anotado?n=12" });
+      expect(await respuesta.json()).toEqual({ url: "/pedido/anotado" });
       expect(priceOrder).toHaveBeenCalledOnce();
       expect(crearPedidoIniciado).toHaveBeenCalledWith(PEDIDO_VALORADO, {
         estado: "sin_pago",

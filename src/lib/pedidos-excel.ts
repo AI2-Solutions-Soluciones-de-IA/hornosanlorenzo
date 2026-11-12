@@ -43,7 +43,6 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   // las columnas de siempre.
   { header: "Lleva", key: "detalle", width: 50 },
   { header: "Foto", key: "foto", width: 40 },
-  { header: "Nº pedido", key: "numero", width: 10 },
   // Casilla «Procesado» del panel (11-11-2026): «Sí»/«No» para poder
   // filtrar, y aparte quién y cuándo.
   { header: "Procesado", key: "procesado", width: 11 },
@@ -127,7 +126,6 @@ export async function pedidosAExcel(pedidos: PedidoConLineas[]): Promise<Buffer>
         estado: estadoLegible(p),
         notas: p.notas ?? "",
         id: p.id,
-        numero: p.numero ?? "",
         procesado: p.procesadoEn ? "Sí" : "No",
         procesadoPor: p.procesadoEn
           ? [p.procesadoPor, entradaEnMadrid(new Date(p.procesadoEn))].filter(Boolean).join(" · ")

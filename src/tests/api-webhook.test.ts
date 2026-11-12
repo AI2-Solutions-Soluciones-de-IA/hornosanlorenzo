@@ -261,8 +261,8 @@ describe("etiquetaPagoEnStripe", () => {
       { id: "a6bf584a-0000-0000-0000-000000000000", notificadoEn: null, numero: 14 },
     );
     expect(update).toHaveBeenCalledWith("pi_123", {
-      description: "Horno San Lorenzo · Pedido nº 14 · Ref. a6bf584a",
-      metadata: { pedidoId: "a6bf584a-0000-0000-0000-000000000000", numero: "14" },
+      description: "Horno San Lorenzo · Ref. a6bf584a",
+      metadata: { pedidoId: "a6bf584a-0000-0000-0000-000000000000" },
     });
   });
 
@@ -313,17 +313,16 @@ describe("notify — con todo configurado", () => {
     const avisado = await notify(
       stripeConLineItems([{ quantity: 2, description: "Tarta", amount_total: 2500 }]),
       sesionPagada(),
-      7,
     );
 
     expect(avisado).toBe(true);
     expect(enviarCorreoMock).toHaveBeenCalledTimes(2);
     const [obrador, cliente] = enviarCorreoMock.mock.calls.map((c) => c[0]);
     expect(obrador).toMatchObject({ para: "info@hornosanlorenzo.com", responderA: "cliente@example.com" });
-    expect(obrador.asunto).toContain("nº 7");
+    expect(obrador.asunto).not.toContain("nº");
     expect(obrador.html).toContain("2 × Tarta");
     expect(cliente).toMatchObject({ para: "cliente@example.com", responderA: "info@hornosanlorenzo.com" });
-    expect(cliente.html).toContain("<strong>7</strong>");
+    expect(cliente.html).not.toContain("número de pedido");
   });
 });
 
@@ -360,7 +359,7 @@ describe("correo de un pack: el obrador ve qué lleva", () => {
     pedidoPorId.mockResolvedValue(PACK);
     const { notify } = await import("~/pages/api/webhook");
     const stripe = stripeConLineItems([]);
-    await notify(stripe, sesionPagada(), 7, "pedido-1");
+    await notify(stripe, sesionPagada(), "pedido-1");
 
     expect(pedidoPorId).toHaveBeenCalledWith("pedido-1");
     expect(stripe.checkout.sessions.listLineItems).not.toHaveBeenCalled();
@@ -387,7 +386,7 @@ describe("correo de un pack: el obrador ve qué lleva", () => {
         price: { product: { description: "Empanada de carne · Entera · Foto comestible" } },
       },
     ]);
-    await notify(stripe, sesionPagada(), 7, "pedido-1");
+    await notify(stripe, sesionPagada(), "pedido-1");
 
     expect(stripe.checkout.sessions.listLineItems).toHaveBeenCalledWith("cs_test_123", {
       limit: 50,
@@ -403,7 +402,7 @@ describe("correo de un pack: el obrador ve qué lleva", () => {
     pedidoPorId.mockResolvedValue({ ...PACK, reconstruido: true });
     const { notify } = await import("~/pages/api/webhook");
     const stripe = stripeConLineItems([{ quantity: 1, description: "Pack Cumpleaños", amount_total: 6900 }]);
-    await notify(stripe, sesionPagada(), 7, "pedido-1");
+    await notify(stripe, sesionPagada(), "pedido-1");
     expect(stripe.checkout.sessions.listLineItems).toHaveBeenCalled();
   });
 

@@ -129,6 +129,13 @@ export const normalizaTelefono = (tel: string): string => {
 export const esTelefonoValido = (tel: string): boolean =>
   /^[6789]\d{8}$/.test(normalizaTelefono(tel));
 
+/**
+ * Nombre y apellidos del pedido (obligatorio desde el 12-11-2026): «Ana» no
+ * basta, «Ana López» sí. La misma regla en el formulario y en el servidor.
+ */
+export const tieneNombreYApellido = (nombre: string): boolean =>
+  /\S+\s+\S+/.test(nombre.trim());
+
 /** Municipios a los que llega el reparto propio. */
 export const ZONA_REPARTO = [
   "Madrid capital",
