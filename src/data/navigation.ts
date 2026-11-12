@@ -69,6 +69,12 @@ export const mainNav: readonly NavItem[] = [
         short: "Pan del obrador, recién hecho, para acompañar tu pedido.",
         categories: ["complementos"],
       },
+      {
+        href: "/catalogo/complementos",
+        label: "Complementos",
+        short: "Figuras y velas para terminar la tarta.",
+        categories: ["decoracion"],
+      },
     ],
   },
   { href: "/noticias", label: "Este mes" },

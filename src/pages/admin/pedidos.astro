@@ -12,7 +12,7 @@ import { leerFiltrosPedidos, queryFiltros } from "~/lib/filtros-pedidos";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
-import { destinosVisibles } from "~/lib/auth/guardia";
+import { destinosVisibles, destinosDeVista } from "~/lib/auth/guardia";
 import type { DestinoPedido } from "~/lib/db/pedidos";
 import { etiquetaPieza } from "~/data/packs";
 import { nombreConTipo } from "~/data/secciones";
@@ -29,7 +29,11 @@ const { tipo, desde, hasta, texto: filtroTexto, procesado: filtroProcesado, arch
 // La oficina de una tienda solo ve lo suyo (6-11-2026): se añade a todas
 // las consultas, también a la cuenta sin filtros del aviso de nuevos. En el
 // desplegable solo salen sus destinos, y uno que no es suyo no cuenta.
-const soloDestinos = destinosVisibles(Astro.locals.usuario);
+// Quien lo ve todo tiene arriba «Todo · Alcobendas · Pozuelo» (12-11-2026):
+// la pestaña restringe igual que la oficina de esa tienda.
+const propios = destinosVisibles(Astro.locals.usuario);
+const conPestanas = !propios;
+const soloDestinos = destinosDeVista(Astro.locals.usuario, leidos.oficina);
 const filtroDestino =
   leidos.destino && (!soloDestinos || soloDestinos.includes(leidos.destino))
     ? leidos.destino
@@ -64,7 +68,9 @@ try {
   pedidos = await listarPedidos(POR_PAGINA, filtros, (pag.pagina - 1) * POR_PAGINA);
   // Con los archivados: archivar uno no puede bajar la cuenta y esconder el
   // siguiente pedido nuevo (mismo criterio en `/api/admin/pedidos/nuevos`).
-  totalSinFiltros = await contarPedidos({ soloDestinos, archivo: "todos" });
+  // Con lo propio, no con la pestaña: el aviso de nuevos cuenta igual en
+  // `/api/admin/pedidos/nuevos` y no puede saltar al cambiar de pestaña.
+  totalSinFiltros = await contarPedidos({ soloDestinos: propios, archivo: "todos" });
 } catch (error) {
   fallo = true;
   console.error(
@@ -126,6 +132,32 @@ function modalidad(p: PedidoConLineas): string {
 
 ---
 <AdminLayout titulo="Pedidos">
+  {conPestanas && (
+    <nav aria-label="Pedidos de qué tienda" class="mb-6 flex flex-wrap gap-2">
+      {([
+        { id: undefined, texto: "Todo" },
+        { id: "alcobendas", texto: "Alcobendas" },
+        { id: "pozuelo", texto: "Pozuelo" },
+      ] as const).map((v) => {
+        const activa = leidos.oficina === v.id;
+        const q = queryFiltros({ ...leidos, destino: filtroDestino, oficina: v.id });
+        return (
+          <a
+            href={`/admin/pedidos?${q}`}
+            aria-current={activa ? "page" : undefined}
+            class:list={[
+              "inline-flex items-center min-h-11 px-5 border text-sm font-semibold uppercase tracking-[0.12em]",
+              activa
+                ? "bg-[color:var(--color-moka)] border-[color:var(--color-moka)] text-[color:var(--color-leche)]"
+                : "bg-[color:var(--color-leche)] border-[color:var(--color-avellana)] text-[color:var(--color-moka)] hover:border-[color:var(--color-moka)]",
+            ]}
+          >
+            {v.texto}
+          </a>
+        );
+      })}
+    </nav>
+  )}
   {!fallo && (
     <PedidosNuevos client:load inicial={totalSinFiltros} marcables={!hayFiltro && pag.pagina === 1} />
   )}
@@ -137,6 +169,8 @@ function modalidad(p: PedidoConLineas): string {
   )}
 
   <form method="get" class="mb-6 flex flex-wrap items-end gap-4 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-4">
+    {/* La pestaña de arriba viaja con el formulario. */}
+    {conPestanas && leidos.oficina && <input type="hidden" name="oficina" value={leidos.oficina} />}
     <div>
       <label for="f-fecha" class="numeracion block">Fecha de</label>
       <select id="f-fecha" name="fecha" class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm">
@@ -186,7 +220,7 @@ function modalidad(p: PedidoConLineas): string {
     </div>
     <button type="submit" class="btn btn-primario">Filtrar</button>
     {hayFiltro && (
-      <a href="/admin/pedidos" class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">Quitar filtros</a>
+      <a href={conPestanas && leidos.oficina ? `/admin/pedidos?oficina=${leidos.oficina}` : "/admin/pedidos"} class="text-sm underline underline-offset-4 text-[color:var(--color-ink-muted)]">Quitar filtros</a>
     )}
     {/* Descarga los pedidos que casan con los filtros: todas las páginas. */}
     <a

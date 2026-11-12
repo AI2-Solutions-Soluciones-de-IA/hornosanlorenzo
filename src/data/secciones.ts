@@ -24,6 +24,7 @@ export const seccionIds = [
   "las-lorenzas-salado",
   "salado-para-todos",
   "pan",
+  "complementos-tarta",
   "packs",
 ] as const;
 
@@ -185,6 +186,13 @@ export const secciones: readonly Seccion[] = [
     label: "Pan del obrador",
     eyebrow: "Pan",
     order: 1800,
+  },
+  {
+    // Complementos (12-11-2026): figuras y velas para la tarta.
+    id: "complementos-tarta",
+    label: "Complementos para tu tarta",
+    eyebrow: "Complementos",
+    order: 1900,
   },
   {
     id: "packs",

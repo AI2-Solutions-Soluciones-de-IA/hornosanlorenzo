@@ -7,7 +7,7 @@ import {
   ROL_ADMIN,
   ROL_OFICINA,
   ROL_OFICINA_ALCOBENDAS,
-  ROL_OFICINA_POZUELO, veClientes } from "~/lib/auth/guardia";
+  ROL_OFICINA_POZUELO, veClientes, destinosDeVista } from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
 const admin = { id: "u2", email: "c@d.e", name: "Carmen", rol: ROL_ADMIN };
@@ -182,5 +182,16 @@ describe("oficina de cada tienda", () => {
   it("un papel parecido no cuela", () => {
     const raro = { ...pozuelo, rol: "oficina_POZUELO" };
     expect(vePedidos(raro)).toBe(false);
+  });
+});
+
+describe("pestañas Todo · Alcobendas · Pozuelo (12-11-2026)", () => {
+  it("quien lo ve todo elige; la oficina de una tienda no puede ampliar lo suyo", () => {
+    expect(destinosDeVista(admin, undefined)).toBeUndefined();
+    expect(destinosDeVista(admin, "alcobendas")).toEqual(["alcobendas", "domicilio"]);
+    expect(destinosDeVista(admin, "pozuelo")).toEqual(["pozuelo"]);
+    const pozuelo = { id: "u5", email: "po@z.u", name: "Pablo", rol: ROL_OFICINA_POZUELO };
+    expect(destinosDeVista(pozuelo, "alcobendas")).toEqual(["pozuelo"]);
+    expect(destinosDeVista(pozuelo, undefined)).toEqual(["pozuelo"]);
   });
 });

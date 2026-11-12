@@ -1,4 +1,5 @@
 import type { DestinoPedido, FiltrosPedidos } from "~/lib/db/pedidos";
+import type { VistaOficina } from "~/lib/auth/guardia";
 import { leerPagina } from "~/lib/paginacion";
 
 /**
@@ -26,6 +27,11 @@ export type FiltrosLeidos = {
   procesado?: "si" | "no";
   /** Archivados (`si`) o todos (`todos`); sin él, solo los activos. */
   archivo?: "si" | "todos";
+  /**
+   * Pestaña «Alcobendas» o «Pozuelo» de quien lo ve todo (12-11-2026). No va
+   * en `filtros`: los destinos los decide `destinosDeVista` con el usuario.
+   */
+  oficina?: VistaOficina;
   /** Empieza en 1. */
   pagina: number;
   /** Lo que se pasa a `listarPedidos` / `contarPedidos`. */
@@ -72,6 +78,9 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
   const ar = params.get("archivo");
   const archivo = ar === "si" || ar === "todos" ? ar : undefined;
 
+  const of = params.get("oficina");
+  const oficina: VistaOficina | undefined = of === "alcobendas" || of === "pozuelo" ? of : undefined;
+
   const pagina = leerPagina(params);
 
   const filtros: FiltrosPedidos = {
@@ -92,15 +101,16 @@ export function leerFiltrosPedidos(params: URLSearchParams): FiltrosLeidos {
     destino,
     procesado,
     archivo,
+    oficina,
     pagina,
     filtros,
-    hayFiltro: Boolean(desde || hasta || texto || destino || procesado || archivo),
+    hayFiltro: Boolean(desde || hasta || texto || destino || procesado || archivo || oficina),
   };
 }
 
 /** La query de estos filtros, sin la página (para enlaces y el Excel). */
 export function queryFiltros(
-  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino" | "procesado" | "archivo">,
+  f: Pick<FiltrosLeidos, "tipo" | "desde" | "hasta" | "texto" | "destino" | "procesado" | "archivo" | "oficina">,
 ): URLSearchParams {
   const q = new URLSearchParams();
   q.set("fecha", f.tipo);
@@ -110,5 +120,6 @@ export function queryFiltros(
   if (f.destino) q.set("destino", f.destino);
   if (f.procesado) q.set("procesado", f.procesado);
   if (f.archivo) q.set("archivo", f.archivo);
+  if (f.oficina) q.set("oficina", f.oficina);
   return q;
 }

@@ -100,6 +100,13 @@ describe("filtros de /admin/pedidos", () => {
     expect(queryFiltros({ tipo: "entrega", texto: "", archivo: "si" }).toString()).toBe("fecha=entrega&archivo=si");
   });
 
+  it("oficina: solo «alcobendas» o «pozuelo», y viaja en la query", () => {
+    expect(leer("oficina=pozuelo").oficina).toBe("pozuelo");
+    expect(leer("oficina=pozuelo").hayFiltro).toBe(true);
+    expect(leer("oficina=otra").oficina).toBeUndefined();
+    expect(queryFiltros({ tipo: "entrega", texto: "", oficina: "alcobendas" }).toString()).toBe("fecha=entrega&oficina=alcobendas");
+  });
+
   it("queryFiltros solo lleva lo que hay", () => {
     expect(queryFiltros({ tipo: "entrega", texto: "" }).toString()).toBe(
       "fecha=entrega",

@@ -5,6 +5,7 @@ export const categoryIds = [
   "temporada",
   "sin-alergenos",
   "complementos",
+  "decoracion",
   "packs",
 ] as const;
 
@@ -29,6 +30,9 @@ export const categories: readonly Category[] = [
   // Pan del día para acompañar el pedido (11-11-2026). Se llamó
   // «Complementos» hasta el 12-11-2026: el id se queda, la etiqueta es «Pan».
   { id: "complementos", label: "Pan", short: "Pan del obrador para acompañar" },
+  // Figuras y velas para la tarta (12-11-2026). Para el cliente es
+  // «Complementos»; el id `complementos` ya lo tenía el pan.
+  { id: "decoracion", label: "Complementos", short: "Figuras y velas para la tarta" },
   {
     id: "packs",
     label: "Packs",
@@ -47,7 +51,7 @@ export const isCategoryId = (value: string | null): value is CategoryId =>
  * Pan desde el 11-11-2026 (id `complementos`, su primer nombre).
  * Se superpone a las categorías del catálogo sin sustituirlas.
  */
-export const grupoIds = ["dulce", "salado", "sin-alergenos", "complementos", "packs"] as const;
+export const grupoIds = ["dulce", "salado", "sin-alergenos", "complementos", "decoracion", "packs"] as const;
 
 export type GrupoId = (typeof grupoIds)[number];
 
@@ -56,6 +60,7 @@ export const grupoCategories: Record<GrupoId, readonly CategoryId[]> = {
   salado: ["salado"],
   "sin-alergenos": ["sin-alergenos"],
   complementos: ["complementos"],
+  decoracion: ["decoracion"],
   packs: ["packs"],
 };
 
@@ -64,6 +69,7 @@ export const grupoLabel: Record<GrupoId, string> = {
   salado: "Salado",
   "sin-alergenos": "Sin alérgenos",
   complementos: "Pan",
+  decoracion: "Complementos",
   packs: "Packs",
 };
 

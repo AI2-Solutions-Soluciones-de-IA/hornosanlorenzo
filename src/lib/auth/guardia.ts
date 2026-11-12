@@ -57,6 +57,31 @@ export function destinosVisibles(usuario: Usuario): DestinoPedido[] | undefined 
   return DESTINOS_DE_OFICINA[usuario?.rol ?? ""];
 }
 
+/**
+ * Pestañas «Todo · Alcobendas · Pozuelo» de Pedidos para quien lo ve todo
+ * (12-11-2026): cada una enseña lo mismo que ve esa oficina.
+ */
+export const VISTAS_OFICINA = {
+  alcobendas: DESTINOS_DE_OFICINA[ROL_OFICINA_ALCOBENDAS],
+  pozuelo: DESTINOS_DE_OFICINA[ROL_OFICINA_POZUELO],
+} as const;
+
+export type VistaOficina = keyof typeof VISTAS_OFICINA;
+
+/**
+ * Los destinos que se enseñan: los de su oficina si es una oficina de
+ * tienda (la pestaña no puede ampliarlos), o los de la pestaña elegida si
+ * lo ve todo. `undefined`, todos.
+ */
+export function destinosDeVista(
+  usuario: Usuario,
+  vista: VistaOficina | undefined,
+): DestinoPedido[] | undefined {
+  const propios = destinosVisibles(usuario);
+  if (propios) return propios;
+  return vista ? [...VISTAS_OFICINA[vista]] : undefined;
+}
+
 /** Lo que abre la oficina general: la página de pedidos y su API. */
 const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
 

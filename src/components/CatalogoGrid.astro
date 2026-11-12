@@ -62,7 +62,7 @@ const allowed = grupo ? grupoCategories[grupo] : null;
 // El orden es el del submenú de «Tienda Online» (11-11-2026): Dulce y Salado
 // delante, luego Packs (y Top ventas, que no es gama), Sin alérgenos y
 // Pan (gama `complementos`).
-const ORDEN_GAMAS: readonly GrupoId[] = ["dulce", "salado", "packs", "sin-alergenos", "complementos"];
+const ORDEN_GAMAS: readonly GrupoId[] = ["dulce", "salado", "packs", "sin-alergenos", "complementos", "decoracion"];
 const posGama = (cat: string): number => {
   const g = grupoOfCategory(cat as CategoryId);
   return g ? ORDEN_GAMAS.indexOf(g) : ORDEN_GAMAS.length;
