@@ -10,7 +10,8 @@ export const ROL_OFICINA = "oficina";
 /**
  * La oficina de cada tienda (6-11-2026): Pedidos, y de ellos solo los suyos
  * (Alcobendas lleva además los envíos a domicilio, que salen de su
- * obrador). Desde el 12-11-2026, también Clientes, que es solo consulta.
+ * obrador). La de Alcobendas ve también Clientes, que es solo consulta
+ * (12-11-2026; Pozuelo la tuvo unas horas y se le quitó).
  */
 export const ROL_OFICINA_ALCOBENDAS = "oficina_alcobendas";
 export const ROL_OFICINA_POZUELO = "oficina_pozuelo";
@@ -60,24 +61,23 @@ export function destinosVisibles(usuario: Usuario): DestinoPedido[] | undefined 
 const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
 
 /**
- * Lo que abre la oficina de cada tienda: Pedidos y, desde el 12-11-2026,
- * Clientes (la lista de cuentas y de suscritos, y su Excel: solo consulta).
+ * Lo que abre la oficina de Alcobendas: Pedidos y Clientes (la lista de
+ * cuentas y de suscritos, y su Excel: solo consulta), desde el 12-11-2026.
  */
-const RUTAS_OFICINA_TIENDA = [...RUTAS_OFICINA, "/admin/clientes", "/api/admin/clientes"];
+const RUTAS_OFICINA_CLIENTES = [...RUTAS_OFICINA, "/admin/clientes", "/api/admin/clientes"];
 
-const esOficinaDeTienda = (usuario: Usuario): boolean =>
-  usuario?.rol === ROL_OFICINA_ALCOBENDAS || usuario?.rol === ROL_OFICINA_POZUELO;
+const veClientesOficina = (usuario: Usuario): boolean => usuario?.rol === ROL_OFICINA_ALCOBENDAS;
 
-/** Quien ve la sección Clientes: el admin y la oficina de cada tienda. */
+/** Quien ve la sección Clientes: el admin y la oficina de Alcobendas. */
 export function veClientes(usuario: Usuario): boolean {
-  return esAdmin(usuario) || esOficinaDeTienda(usuario);
+  return esAdmin(usuario) || veClientesOficina(usuario);
 }
 
 /** Lo que abre cada papel; la entrada al panel (`/admin`) la sirve aparte. */
 export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
   if (esAdmin(usuario)) return true;
   if (!esOficina(usuario)) return false;
-  const rutas = esOficinaDeTienda(usuario) ? RUTAS_OFICINA_TIENDA : RUTAS_OFICINA;
+  const rutas = veClientesOficina(usuario) ? RUTAS_OFICINA_CLIENTES : RUTAS_OFICINA;
   return rutas.some((base) => pathname === base || pathname.startsWith(`${base}/`));
 }
 

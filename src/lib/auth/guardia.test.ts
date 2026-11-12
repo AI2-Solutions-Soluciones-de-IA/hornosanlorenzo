@@ -140,11 +140,17 @@ describe("oficina de cada tienda", () => {
   const alcobendas = { id: "u4", email: "al@b.c", name: "Alba", rol: ROL_OFICINA_ALCOBENDAS };
   const pozuelo = { id: "u5", email: "po@z.u", name: "Pablo", rol: ROL_OFICINA_POZUELO };
 
-  it("entra a Pedidos y a Clientes (12-11-2026), y a nada más", () => {
+  it("Alcobendas ve también Clientes; Pozuelo no (12-11-2026)", () => {
+    expect(veClientes(alcobendas)).toBe(true);
+    expect(guardiaAdmin({ usuario: alcobendas, pathname: "/admin/clientes" })).toBeNull();
+    expect(guardiaAdmin({ usuario: alcobendas, pathname: "/api/admin/clientes/exportar" })).toBeNull();
+    expect(veClientes(pozuelo)).toBe(false);
+    expect(guardiaAdmin({ usuario: pozuelo, pathname: "/admin/clientes" })!.status).toBe(404);
+    expect(guardiaAdmin({ usuario: pozuelo, pathname: "/api/admin/clientes/exportar" })!.status).toBe(404);
+  });
+
+  it("entra a Pedidos y a nada más de lo de admin", () => {
     for (const usuario of [alcobendas, pozuelo]) {
-      expect(veClientes(usuario)).toBe(true);
-      expect(guardiaAdmin({ usuario, pathname: "/admin/clientes" })).toBeNull();
-      expect(guardiaAdmin({ usuario, pathname: "/api/admin/clientes/exportar" })).toBeNull();
       expect(guardiaAdmin({ usuario, pathname: "/admin/produccion" })!.status).toBe(404);
       expect(guardiaAdmin({ usuario, pathname: "/admin/noticias" })!.status).toBe(404);
       expect(esAdmin(usuario)).toBe(false);
