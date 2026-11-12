@@ -5,12 +5,11 @@ import { stores } from "~/data/stores";
 import { etiquetaPieza } from "~/data/packs";
 
 /**
- * Los pedidos del panel en una hoja de cálculo: una fila por línea de
- * pedido (por producto), no por pedido, para que en Excel se pueda sumar y
- * filtrar por producto sin desmontar celdas. Los importes van en euros como
- * número, con formato de moneda, nunca como texto; el importe de la línea es
- * una fórmula (cantidad × precio) para que Excel lo recalcule si alguien
- * corrige una cantidad a mano.
+ * Los pedidos del panel en una hoja de cálculo: UNA FILA POR PEDIDO
+ * (12-11-2026; antes era una por producto). Todos los productos van en la
+ * misma celda, uno por línea («2× Barra Artesana · 2,40 €»), y lo que lleva
+ * un pack, detrás de su nombre. Los importes del pedido van en euros como
+ * número, con formato de moneda, nunca como texto.
  *
  * Sin `pg` ni `astro:*` a propósito: recibe los pedidos ya leídos y devuelve
  * bytes, así se prueba sin base de datos.
@@ -29,19 +28,13 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   { header: "Nombre", key: "nombre", width: 22 },
   { header: "Teléfono", key: "telefono", width: 14 },
   { header: "Correo", key: "email", width: 28 },
-  { header: "Producto", key: "producto", width: 30 },
-  { header: "Tamaño", key: "tamano", width: 16 },
-  { header: "Cantidad", key: "cantidad", width: 10 },
-  { header: "Precio unidad (€)", key: "precio", width: 16 },
-  { header: "Importe línea (€)", key: "importe", width: 16 },
+  { header: "Productos", key: "productos", width: 60 },
+  { header: "Unidades", key: "unidades", width: 10 },
   { header: "Reparto (€)", key: "reparto", width: 12 },
   { header: "Total pedido (€)", key: "total", width: 16 },
   { header: "Estado", key: "estado", width: 18 },
   { header: "Notas", key: "notas", width: 40 },
   { header: "Referencia", key: "id", width: 38 },
-  // Al final a propósito: quien lea el Excel por posición no ve desplazadas
-  // las columnas de siempre.
-  { header: "Lleva", key: "detalle", width: 50 },
   { header: "Foto", key: "foto", width: 40 },
   // Casilla «Procesado» del panel (11-11-2026): «Sí»/«No» para poder
   // filtrar, y aparte quién y cuándo.
@@ -82,6 +75,22 @@ function destino(p: PedidoConLineas): string {
   return tienda ? `${tienda.shortName} — ${tienda.address}` : SIN_DATOS;
 }
 
+const euros = (cents: number) => `${(cents / 100).toFixed(2).replace(".", ",")} €`;
+
+/**
+ * Los productos del pedido, uno por línea:
+ * «1× Pack Cumpleaños · 69,00 € (Empanada de carne · Entera, …)».
+ */
+function productos(p: PedidoConLineas): string {
+  return p.lineas
+    .map((l) => {
+      const nombre = l.varianteLabel ? `${l.nombre} — ${l.varianteLabel}` : l.nombre;
+      const lleva = l.detalle?.length ? ` (${l.detalle.map(etiquetaPieza).join(", ")})` : "";
+      return `${l.qty}× ${nombre} · ${euros(l.qty * l.unitPriceCents)}${lleva}`;
+    })
+    .join("\n");
+}
+
 function franja(p: PedidoConLineas): string {
   if (p.mode === "recogida") return p.slot ? SLOT_LABEL[p.slot] : SIN_DATOS;
   if (p.mode === "domicilio") return ENTREGA_DOMICILIO_COPY;
@@ -100,47 +109,36 @@ export async function pedidosAExcel(pedidos: PedidoConLineas[]): Promise<Buffer>
   cabecera.font = { ...FUENTE, bold: true };
   cabecera.alignment = { vertical: "middle" };
 
-  const colCantidad = COLUMNAS.findIndex((c) => c.key === "cantidad") + 1;
-  const colPrecio = COLUMNAS.findIndex((c) => c.key === "precio") + 1;
   const letra = (n: number) => ws.getColumn(n).letter;
 
   for (const p of pedidos) {
-    for (const l of p.lineas) {
-      const fila = ws.addRow({
-        entrada: entradaEnMadrid(p.createdAt),
-        entrega: p.fechaEntrega ?? SIN_DATOS,
-        franja: franja(p),
-        modalidad: p.mode ? MODE_COPY[p.mode].label : SIN_DATOS,
-        destino: destino(p),
-        nombre: p.nombre ?? "",
-        telefono: p.telefono,
-        email: p.email,
-        producto: l.nombre,
-        tamano: l.varianteLabel ?? "",
-        detalle: l.detalle?.map(etiquetaPieza).join(" · ") ?? "",
-        foto: l.fotoUrl ?? "",
-        cantidad: l.qty,
-        precio: l.unitPriceCents / 100,
-        reparto: p.envioCents / 100,
-        total: p.totalCents / 100,
-        estado: estadoLegible(p),
-        notas: p.notas ?? "",
-        id: p.id,
-        procesado: p.procesadoEn ? "Sí" : "No",
-        procesadoPor: p.procesadoEn
-          ? [p.procesadoPor, entradaEnMadrid(new Date(p.procesadoEn))].filter(Boolean).join(" · ")
-          : "",
-      });
-      const n = fila.number;
-      fila.getCell("importe").value = {
-        formula: `${letra(colCantidad)}${n}*${letra(colPrecio)}${n}`,
-        result: (l.qty * l.unitPriceCents) / 100,
-      };
-      fila.font = FUENTE;
-      for (const key of ["precio", "importe", "reparto", "total"]) {
-        fila.getCell(key).numFmt = EUROS;
-      }
-    }
+    const fila = ws.addRow({
+      entrada: entradaEnMadrid(p.createdAt),
+      entrega: p.fechaEntrega ?? SIN_DATOS,
+      franja: franja(p),
+      modalidad: p.mode ? MODE_COPY[p.mode].label : SIN_DATOS,
+      destino: destino(p),
+      nombre: p.nombre ?? "",
+      telefono: p.telefono,
+      email: p.email,
+      productos: productos(p),
+      unidades: p.lineas.reduce((n, l) => n + l.qty, 0),
+      foto: p.lineas.map((l) => l.fotoUrl).filter(Boolean).join("\n"),
+      reparto: p.envioCents / 100,
+      total: p.totalCents / 100,
+      estado: estadoLegible(p),
+      notas: p.notas ?? "",
+      id: p.id,
+      procesado: p.procesadoEn ? "Sí" : "No",
+      procesadoPor: p.procesadoEn
+        ? [p.procesadoPor, entradaEnMadrid(new Date(p.procesadoEn))].filter(Boolean).join(" · ")
+        : "",
+    });
+    fila.font = FUENTE;
+    // Arriba y con saltos de línea: un pedido de varios productos ocupa una
+    // fila alta en vez de varias filas.
+    fila.alignment = { vertical: "top", wrapText: true };
+    for (const key of ["reparto", "total"]) fila.getCell(key).numFmt = EUROS;
   }
 
   ws.autoFilter = { from: "A1", to: `${letra(COLUMNAS.length)}1` };

@@ -42,19 +42,18 @@ async function hoja(pedidos: PedidoConLineas[]) {
 }
 
 describe("pedidosAExcel", () => {
-  it("una fila por línea de pedido, con los importes en euros como número", async () => {
+  it("una fila por pedido, con todos los productos en la misma celda", async () => {
     const ws = await hoja([pedido()]);
-    expect(ws.rowCount).toBe(3); // cabecera + 2 líneas
+    expect(ws.rowCount).toBe(2); // cabecera + 1 pedido (de 2 productos)
     const cabecera = ws.getRow(1).values as string[];
-    expect(cabecera).toContain("Producto");
-    expect(cabecera).toContain("Total pedido (€)");
+    expect(cabecera).toContain("Productos");
+    expect(cabecera).not.toContain("Producto");
+    expect(cabecera).not.toContain("Nº pedido");
 
     const fila = ws.getRow(2);
     const col = (nombre: string) => fila.getCell(cabecera.indexOf(nombre)).value;
-    expect(col("Producto")).toBe("Cebra");
-    expect(col("Tamaño")).toBe("6 unidades");
-    expect(col("Cantidad")).toBe(1);
-    expect(col("Precio unidad (€)")).toBe(6);
+    expect(col("Productos")).toBe("1× Cebra — 6 unidades · 6,00 €\n2× Glaseadas · 6,00 €");
+    expect(col("Unidades")).toBe(3);
     expect(col("Total pedido (€)")).toBe(12);
     expect(col("Estado")).toBe("Sin pagar");
     expect(col("Día de entrega")).toBe("2026-09-16");
@@ -62,21 +61,14 @@ describe("pedidosAExcel", () => {
     expect(col("Entró el")).toBe("2026-09-11 17:00");
     expect(col("Modalidad")).toBe("Recogida en tienda");
     expect(col("Tienda o dirección")).toMatch(/Alcobendas/);
-  });
-
-  it("el importe de la línea es una fórmula cantidad × precio, con su resultado", async () => {
-    const ws = await hoja([pedido()]);
-    const cabecera = ws.getRow(1).values as string[];
-    const celda = ws.getRow(3).getCell(cabecera.indexOf("Importe línea (€)"));
-    expect(celda.formula).toMatch(/\*/);
-    expect(celda.result).toBe(6);
+    expect(fila.getCell(cabecera.indexOf("Productos")).alignment?.wrapText).toBe(true);
   });
 
   it("los estados se traducen: pagado por Stripe, cobrado en tienda, sin pagar", async () => {
     const ws = await hoja([
-      pedido({ estado: "pagado", stripeSessionId: "cs_1", lineas: [pedido().lineas[0]] }),
-      pedido({ estado: "pagado", lineas: [pedido().lineas[0]] }),
-      pedido({ lineas: [pedido().lineas[0]] }),
+      pedido({ estado: "pagado", stripeSessionId: "cs_1" }),
+      pedido({ estado: "pagado" }),
+      pedido(),
     ]);
     const cabecera = ws.getRow(1).values as string[];
     const estado = (r: number) => ws.getRow(r).getCell(cabecera.indexOf("Estado")).value;
@@ -86,16 +78,14 @@ describe("pedidosAExcel", () => {
   });
 
   it("un pedido reconstruido sin datos no inventa la modalidad ni el día", async () => {
-    const ws = await hoja([
-      pedido({ mode: null, fechaEntrega: null, slot: null, reconstruido: true, lineas: [pedido().lineas[0]] }),
-    ]);
+    const ws = await hoja([pedido({ mode: null, fechaEntrega: null, slot: null, reconstruido: true })]);
     const cabecera = ws.getRow(1).values as string[];
     const fila = ws.getRow(2);
     expect(fila.getCell(cabecera.indexOf("Modalidad")).value).toBe("sin datos");
     expect(fila.getCell(cabecera.indexOf("Día de entrega")).value).toBe("sin datos");
   });
 
-  it("una línea de pack lleva el desglose en «Lleva» y la foto, sin tamaño; una normal deja las dos vacías", async () => {
+  it("un pack lleva sus piezas detrás del nombre, y la foto va en su columna", async () => {
     const ws = await hoja([
       pedido({
         lineas: [
@@ -116,16 +106,12 @@ describe("pedidosAExcel", () => {
       }),
     ]);
     const cabecera = ws.getRow(1).values as string[];
-    const val = (fila: number, col: string) =>
-      ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
-    // Al final, para no desplazar las columnas de quien lee por posición.
-    expect(cabecera.slice(-4)).toEqual(["Lleva", "Foto", "Procesado", "Procesado por"]);
-    expect(cabecera).not.toContain("Nº pedido");
-    expect(val(2, "Tamaño") ?? "").toBe("");
-    expect(val(2, "Lleva")).toBe("Cebra · 6 unidades · Glaseadas");
-    expect(val(2, "Foto")).toBe("https://blob.example/foto.jpg");
-    expect(val(3, "Lleva") ?? "").toBe("");
-    expect(val(3, "Foto") ?? "").toBe("");
+    const val = (col: string) => ws.getRow(2).getCell(cabecera.indexOf(col)).value;
+    expect(val("Productos")).toBe(
+      "1× Pack desayuno · 15,00 € (Cebra · 6 unidades, Glaseadas)\n2× Glaseadas · 6,00 €",
+    );
+    expect(val("Foto")).toBe("https://blob.example/foto.jpg");
+    expect(cabecera.slice(-3)).toEqual(["Foto", "Procesado", "Procesado por"]);
   });
 
   it("«Procesado»: Sí con quién y cuándo (hora de Madrid), o No", async () => {
@@ -135,11 +121,10 @@ describe("pedidosAExcel", () => {
     ]);
     const cabecera = ws.getRow(1).values as string[];
     const val = (fila: number, col: string) => ws.getRow(fila).getCell(cabecera.indexOf(col)).value;
-    // El pedido de ejemplo tiene dos líneas: filas 2-3 el primero, 4-5 el segundo.
     expect(val(2, "Procesado")).toBe("Sí");
     expect(val(2, "Procesado por")).toBe("Oficina Alcobendas · 2026-11-12 09:05");
-    expect(val(4, "Procesado")).toBe("No");
-    expect(val(4, "Procesado por") ?? "").toBe("");
+    expect(val(3, "Procesado")).toBe("No");
+    expect(val(3, "Procesado por") ?? "").toBe("");
   });
 
   it("sin pedidos, solo la cabecera", async () => {

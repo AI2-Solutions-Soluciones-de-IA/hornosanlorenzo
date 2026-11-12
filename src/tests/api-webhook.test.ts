@@ -428,3 +428,24 @@ describe("correo de un pack: el obrador ve qué lleva", () => {
     expect(lineas[1]).toEqual({ nombre: "Roscón", qty: 2, unitPriceCents: 1500 });
   });
 });
+
+describe("destinoAviso: a quién va el aviso del pedido", () => {
+  it("una recogida en Pozuelo, a la pastelería de Pozuelo; lo demás, al correo general", async () => {
+    const { destinoAviso } = await import("~/pages/api/webhook");
+    const general = "info@hornosanlorenzo.com";
+    expect(destinoAviso({ entregaModo: "recogida", entregaTienda: "pozuelo" }, general)).toBe(
+      "pasteleriapozuelo@hornosanlorenzo.com",
+    );
+    expect(destinoAviso({ entregaModo: "recogida", entregaTienda: "alcobendas" }, general)).toBe(general);
+    expect(destinoAviso({ entregaModo: "domicilio" }, general)).toBe(general);
+    expect(destinoAviso({}, general)).toBe(general);
+  });
+
+  it("sin el correo general configurado, Pozuelo sigue teniendo destino y lo demás no", async () => {
+    const { destinoAviso } = await import("~/pages/api/webhook");
+    expect(destinoAviso({ entregaModo: "recogida", entregaTienda: "pozuelo" }, undefined)).toBe(
+      "pasteleriapozuelo@hornosanlorenzo.com",
+    );
+    expect(destinoAviso({ entregaModo: "domicilio" }, undefined)).toBeUndefined();
+  });
+});

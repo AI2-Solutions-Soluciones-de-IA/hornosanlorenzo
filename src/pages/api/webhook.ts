@@ -9,6 +9,7 @@ import {
 } from "~/lib/email/pedido";
 import { etiquetaPieza } from "~/data/packs";
 import { site } from "~/data/site";
+import { stores } from "~/data/stores";
 import {
   marcarPagado,
   marcarAvisado,
@@ -310,6 +311,22 @@ async function lineasParaCorreo(
   return lineasDesdeStripe(stripe, session.id);
 }
 
+/**
+ * A quién va el aviso del pedido (12-11-2026): una recogida en Pozuelo, a
+ * la pastelería de Pozuelo (el correo de esa tienda en `~/data/stores`);
+ * lo demás (Alcobendas y envíos a domicilio, que salen del obrador), a
+ * `ORDER_NOTIFICATION_EMAIL`.
+ */
+export function destinoAviso(
+  m: Record<string, string>,
+  porDefecto: string | undefined,
+): string | undefined {
+  if (m.entregaModo === "recogida" && m.entregaTienda === "pozuelo") {
+    return stores.find((s) => s.id === "pozuelo")?.email ?? porDefecto;
+  }
+  return porDefecto;
+}
+
 export async function notify(
   stripe: Stripe,
   session: Stripe.Checkout.Session,
@@ -317,10 +334,10 @@ export async function notify(
   pedidoId: string | null = null,
 ): Promise<boolean> {
   const apiKey = import.meta.env.RESEND_API_KEY;
-  const to = import.meta.env.ORDER_NOTIFICATION_EMAIL;
   const from = import.meta.env.ORDER_FROM_EMAIL;
 
   const m = session.metadata ?? {};
+  const to = destinoAviso(m, import.meta.env.ORDER_NOTIFICATION_EMAIL);
   const cliente = session.customer_details?.email ?? "";
 
   const datos: DatosPedido = {
