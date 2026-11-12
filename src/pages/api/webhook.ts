@@ -8,6 +8,7 @@ import {
   type LineaCorreo,
 } from "~/lib/email/pedido";
 import { etiquetaPieza } from "~/data/packs";
+import { nombreConTipo } from "~/data/secciones";
 import { site } from "~/data/site";
 import { stores } from "~/data/stores";
 import {
@@ -246,7 +247,9 @@ export function yaAvisado(anotado: PedidoAnotado | null): boolean {
 export function lineasDesdePedido(p: PedidoConLineas): LineaCorreo[] {
   const lineas: LineaCorreo[] = p.lineas.map((l) => ({
     qty: l.qty,
-    nombre: l.varianteLabel ? `${l.nombre} — ${l.varianteLabel}` : l.nombre,
+    nombre: l.varianteLabel
+      ? `${nombreConTipo(l.nombre, l.seccion)} — ${l.varianteLabel}`
+      : nombreConTipo(l.nombre, l.seccion),
     importeCents: l.qty * l.unitPriceCents,
     ...(l.detalle?.length && { detalle: l.detalle.map(etiquetaPieza) }),
     ...(l.fotoUrl && { fotoUrl: l.fotoUrl }),

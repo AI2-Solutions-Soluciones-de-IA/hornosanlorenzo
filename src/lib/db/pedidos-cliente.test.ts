@@ -181,6 +181,7 @@ describeSiHayBD("pedidos de un cliente (historial de /cuenta)", () => {
         unitPriceCents: 1850,
         detalle: null,
         fotoUrl: null,
+        seccion: null,
       },
       {
         slug: "croissant",
@@ -190,6 +191,7 @@ describeSiHayBD("pedidos de un cliente (historial de /cuenta)", () => {
         unitPriceCents: 190,
         detalle: null,
         fotoUrl: null,
+        seccion: null,
       },
     ]);
   });

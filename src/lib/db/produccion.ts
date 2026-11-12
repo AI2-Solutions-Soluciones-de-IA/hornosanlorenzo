@@ -16,6 +16,8 @@ export type LineaProduccion = {
   slug: string | null;
   nombre: string;
   varianteLabel: string | null;
+  /** Sección de la carta del producto (para `nombreConTipo`); null si no se sabe. */
+  seccion: string | null;
   /** Suma de `qty` en todos los pedidos del día. */
   unidades: number;
   /** En cuántos pedidos distintos aparece. */
@@ -101,6 +103,9 @@ export async function hojaProduccion(
     // Stripe devolvió, así que no hay garantía de que sea el mismo producto.
     pool.query(
       `select l.slug, l.nombre, l.variante_label as "varianteLabel",
+              -- La sección de la carta, para nombrarlo con su tipo
+              -- («Empanada · Bonito», 12-11-2026).
+              (select pr.seccion from productos pr where pr.slug = l.slug) as seccion,
               sum(l.qty)                as unidades,
               count(distinct l.pedido_id) as pedidos
          from ${PIEZAS} l
@@ -171,6 +176,7 @@ export async function hojaProduccion(
       slug: r.slug,
       nombre: r.nombre,
       varianteLabel: r.varianteLabel,
+      seccion: r.seccion ?? null,
       unidades: n(r.unidades),
       pedidos: n(r.pedidos),
       porDestino: reparto.get(clave(r)) ?? [],

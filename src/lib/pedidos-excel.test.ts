@@ -66,6 +66,18 @@ describe("pedidosAExcel", () => {
     expect(fila.getCell(cabecera.indexOf("Productos")).alignment?.wrapText).toBe(true);
   });
 
+  it("cada producto lleva su tipo delante (por su sección de la carta)", async () => {
+    const ws = await hoja([
+      pedido({
+        lineas: [
+          { slug: "empanada-de-bonito", nombre: "Bonito", varianteLabel: "Entera", qty: 1, unitPriceCents: 3000, detalle: null, fotoUrl: null, seccion: "empanadas" },
+        ],
+      }),
+    ]);
+    const cabecera = ws.getRow(1).values as string[];
+    expect(ws.getRow(2).getCell(cabecera.indexOf("Productos")).value).toBe("1× Empanada · Bonito — Entera · 30,00 €");
+  });
+
   it("los estados se traducen: pagado por Stripe, cobrado en tienda, sin pagar", async () => {
     const ws = await hoja([
       pedido({ estado: "pagado", stripeSessionId: "cs_1" }),

@@ -15,6 +15,7 @@ import { stores } from "~/data/stores";
 import { destinosVisibles } from "~/lib/auth/guardia";
 import type { DestinoPedido } from "~/lib/db/pedidos";
 import { etiquetaPieza } from "~/data/packs";
+import { nombreConTipo } from "~/data/secciones";
 
 export const prerender = false;
 
@@ -320,7 +321,7 @@ function modalidad(p: PedidoConLineas): string {
             {p.lineas.map((l) => (
               <li class="py-1.5 flex flex-wrap justify-between gap-x-4">
                 <span>
-                  <strong class="tabular-nums">{l.qty}×</strong> {l.nombre}{l.varianteLabel ? ` — ${l.varianteLabel}` : ""}
+                  <strong class="tabular-nums">{l.qty}×</strong> {nombreConTipo(l.nombre, l.seccion)}{l.varianteLabel ? ` — ${l.varianteLabel}` : ""}
                   {l.detalle && (
                     <ul class="text-xs text-[color:var(--color-ink-muted)]">
                       {l.detalle.map((pieza) => <li>{etiquetaPieza(pieza)}</li>)}

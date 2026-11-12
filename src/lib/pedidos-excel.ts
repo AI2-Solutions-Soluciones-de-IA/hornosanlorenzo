@@ -3,6 +3,7 @@ import type { PedidoConLineas } from "~/lib/db/pedidos";
 import { MODE_COPY, ENTREGA_DOMICILIO_COPY } from "~/lib/entrega";
 import { stores } from "~/data/stores";
 import { etiquetaPieza } from "~/data/packs";
+import { nombreConTipo } from "~/data/secciones";
 
 /**
  * Los pedidos del panel en una hoja de cálculo: UNA FILA POR PEDIDO
@@ -85,7 +86,8 @@ const euros = (cents: number) => `${(cents / 100).toFixed(2).replace(".", ",")} 
 function productos(p: PedidoConLineas): string {
   return p.lineas
     .map((l) => {
-      const nombre = l.varianteLabel ? `${l.nombre} — ${l.varianteLabel}` : l.nombre;
+      const base = nombreConTipo(l.nombre, l.seccion);
+      const nombre = l.varianteLabel ? `${base} — ${l.varianteLabel}` : base;
       const lleva = l.detalle?.length ? ` (${l.detalle.map(etiquetaPieza).join(", ")})` : "";
       return `${l.qty}× ${nombre} · ${euros(l.qty * l.unitPriceCents)}${lleva}`;
     })

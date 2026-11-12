@@ -25,6 +25,12 @@ export type LineaPedido = {
   detalle: PiezaResuelta[] | null;
   /** Foto que subió el cliente (tarta con foto); nulo si no hay. */
   fotoUrl: string | null;
+  /**
+   * Sección de la carta del producto, leída de `productos` al mostrar el
+   * pedido (12-11-2026), para nombrarlo con su tipo (`nombreConTipo`).
+   * Nula si el producto ya no existe o la línea no tiene slug.
+   */
+  seccion?: string | null;
 };
 
 export type PedidoConLineas = {
@@ -454,7 +460,8 @@ const PROYECCION_PEDIDO = `
               'qty', l.qty,
               'unitPriceCents', l.unit_price_cents,
               'detalle', l.detalle,
-              'fotoUrl', l.foto_url)
+              'fotoUrl', l.foto_url,
+              'seccion', (select pr.seccion from productos pr where pr.slug = l.slug))
             order by l.orden)
        from lineas_pedido l
       where l.pedido_id = p.id),

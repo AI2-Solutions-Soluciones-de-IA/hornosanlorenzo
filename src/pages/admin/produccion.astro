@@ -4,6 +4,7 @@ import AdminLayout from "~/layouts/AdminLayout.astro";
 import { hojaProduccion, type HojaProduccion } from "~/lib/db/produccion";
 import { formatDateISO } from "~/lib/format";
 import { stores } from "~/data/stores";
+import { nombreConTipo } from "~/data/secciones";
 
 export const prerender = false;
 
@@ -175,7 +176,7 @@ const celda = "py-2 text-right tabular-nums";
           <tbody>
             {hoja.lineas.map((l) => (
               <tr class="border-t border-[color:var(--color-line)]" data-fila>
-                <td class="py-2 font-semibold">{l.nombre}</td>
+                <td class="py-2 font-semibold">{nombreConTipo(l.nombre, l.seccion)}</td>
                 <td class="py-2 text-[color:var(--color-ink-muted)]">{l.varianteLabel ?? "—"}</td>
                 <td class:list={[celda, "font-[family-name:var(--font-display)] text-lg"]}>{l.unidades}</td>
                 <td class:list={[celda, "text-[color:var(--color-ink-muted)]"]}>{l.pedidos}</td>

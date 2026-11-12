@@ -45,12 +45,20 @@ export type Seccion = {
    * id sigue existiendo porque es lo que guarda cada ficha.
    */
   dentroDe?: SeccionId;
+  /**
+   * Qué es, en una o dos palabras, para nombrar el producto fuera de la
+   * carta (pedidos, Excel, correos, producción): «Empanada · Bonito»,
+   * «Brazo · Selva Negra» (12-11-2026). Sin él, el nombre basta solo
+   * («Pack Cumpleaños», «Barra Gallega»).
+   */
+  tipo?: string;
   order: number;
 };
 
 export const secciones: readonly Seccion[] = [
   {
     id: "tartas-obrador",
+    tipo: "Tarta",
     label: "Tartas de bizcocho",
     eyebrow: "Dulce · Tartas",
     aviso:
@@ -59,36 +67,42 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "cremosas",
+    tipo: "Tarta cremosa",
     label: "Mousses y Tartas Dulces",
     eyebrow: "Dulce · Cremosas",
     order: 200,
   },
   {
     id: "planchas",
+    tipo: "Plancha",
     label: "Las Planchas San Lorenzo",
     eyebrow: "Dulce · Planchas",
     order: 400,
   },
   {
     id: "coleccion-especial",
+    tipo: "Plancha especial",
     label: "La Colección Especial de Planchas",
     eyebrow: "Dulce · Planchas",
     order: 500,
   },
   {
     id: "bocados",
+    tipo: "Bocaditos",
     label: "Bocaditos del Obrador",
     eyebrow: "Dulce · Recomendación del chef",
     order: 600,
   },
   {
     id: "bizcochos",
+    tipo: "Bollería",
     label: "Bizcochos y bollería de mantequilla",
     eyebrow: "Dulce · Bizcochos",
     order: 700,
   },
   {
     id: "brazos",
+    tipo: "Brazo",
     label: "Brazos y Mini Brazos",
     eyebrow: "Dulce · Brazos",
     order: 800,
@@ -101,6 +115,7 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "las-lorenzas",
+    tipo: "Mini croissants dulces",
     label: "Mini Croissants Dulces",
     eyebrow: "Dulce · Mini Croissants",
     order: 1000,
@@ -110,18 +125,21 @@ export const secciones: readonly Seccion[] = [
     // (y veganas) van todas en `salado-para-todos`. El id no cambia: lo
     // guardan los productos.
     id: "dulce-para-todos",
+    tipo: "Sin gluten",
     label: "Sin gluten",
     eyebrow: "Sin gluten · Dulce",
     order: 1050,
   },
   {
     id: "empanadas",
+    tipo: "Empanada",
     label: "Empanadas y supremas de hojaldre",
     eyebrow: "Salado · Hojaldre",
     order: 1100,
   },
   {
     id: "supremas",
+    tipo: "Suprema de hojaldre",
     label: "Supremas de hojaldre",
     eyebrow: "Salado · Hojaldre",
     dentroDe: "empanadas",
@@ -129,12 +147,14 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "quiches",
+    tipo: "Quiche",
     label: "Quiches artesanas",
     eyebrow: "Salado · Especialidad del horno",
     order: 1400,
   },
   {
     id: "tartas-saladas",
+    tipo: "Tarta salada",
     label: "Tartas saladas",
     eyebrow: "Salado · Horno",
     order: 1500,
@@ -147,12 +167,14 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "las-lorenzas-salado",
+    tipo: "Mini croissants salados",
     label: "Mini Croissants Salados",
     eyebrow: "Salado · Mini Croissants",
     order: 1700,
   },
   {
     id: "salado-para-todos",
+    tipo: "Sin alérgenos",
     label: "Sin alérgenos y especial para veganos",
     eyebrow: "Sin alérgenos · Veganos",
     order: 1750,
@@ -187,3 +209,19 @@ export const bloqueDe = (id: SeccionId): SeccionId => seccionById(id).dentroDe ?
 
 export const isSeccionId = (value: string | null): value is SeccionId =>
   value !== null && (seccionIds as readonly string[]).includes(value);
+
+const sinAcentos = (t: string) =>
+  t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/**
+ * El nombre de un producto con su tipo delante, para leerlo fuera de la
+ * carta: «Empanada · Bonito». No se añade si la sección no tiene tipo, si
+ * la sección no se conoce o si el nombre ya lo lleva («Bizcocho Casero…»,
+ * «Tarta Cremosa de Queso al Horno · Sin gluten»).
+ */
+export function nombreConTipo(nombre: string, seccion: string | null | undefined): string {
+  if (!seccion || !isSeccionId(seccion)) return nombre;
+  const tipo = seccionById(seccion).tipo;
+  if (!tipo || sinAcentos(nombre).includes(sinAcentos(tipo))) return nombre;
+  return `${tipo} · ${nombre}`;
+}
