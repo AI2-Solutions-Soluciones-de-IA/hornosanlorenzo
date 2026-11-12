@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { listarClientes } from "~/lib/db/clientes";
 import { listarSuscriptores } from "~/lib/db/suscriptores";
 import { clientesAExcel, suscritosAExcel } from "~/lib/clientes-excel";
-import { esAdmin } from "~/lib/auth/guardia";
+import { veClientes } from "~/lib/auth/guardia";
 
 export const prerender = false;
 
@@ -17,7 +17,7 @@ const MAX_EXCEL = 5000;
  * búsqueda (`q`), en un .xlsx. Todas las páginas, no solo la que se ve.
  */
 export const GET: APIRoute = async ({ url, locals }) => {
-  if (!esAdmin(locals.usuario)) return noEncontrado();
+  if (!veClientes(locals.usuario)) return noEncontrado();
 
   const suscritos = url.searchParams.get("vista") === "suscritos";
   const texto = (url.searchParams.get("q") ?? "").slice(0, 80).trim() || undefined;

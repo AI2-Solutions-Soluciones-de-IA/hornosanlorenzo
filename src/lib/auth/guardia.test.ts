@@ -7,8 +7,7 @@ import {
   ROL_ADMIN,
   ROL_OFICINA,
   ROL_OFICINA_ALCOBENDAS,
-  ROL_OFICINA_POZUELO,
-} from "~/lib/auth/guardia";
+  ROL_OFICINA_POZUELO, veClientes } from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
 const admin = { id: "u2", email: "c@d.e", name: "Carmen", rol: ROL_ADMIN };
@@ -141,8 +140,13 @@ describe("oficina de cada tienda", () => {
   const alcobendas = { id: "u4", email: "al@b.c", name: "Alba", rol: ROL_OFICINA_ALCOBENDAS };
   const pozuelo = { id: "u5", email: "po@z.u", name: "Pablo", rol: ROL_OFICINA_POZUELO };
 
-  it("entra solo a Pedidos, como la oficina", () => {
+  it("entra a Pedidos y a Clientes (12-11-2026), y a nada más", () => {
     for (const usuario of [alcobendas, pozuelo]) {
+      expect(veClientes(usuario)).toBe(true);
+      expect(guardiaAdmin({ usuario, pathname: "/admin/clientes" })).toBeNull();
+      expect(guardiaAdmin({ usuario, pathname: "/api/admin/clientes/exportar" })).toBeNull();
+      expect(guardiaAdmin({ usuario, pathname: "/admin/produccion" })!.status).toBe(404);
+      expect(guardiaAdmin({ usuario, pathname: "/admin/noticias" })!.status).toBe(404);
       expect(esAdmin(usuario)).toBe(false);
       expect(vePedidos(usuario)).toBe(true);
       expect(guardiaAdmin({ usuario, pathname: "/admin/pedidos" })).toBeNull();
@@ -156,6 +160,12 @@ describe("oficina de cada tienda", () => {
   it("Alcobendas ve lo suyo y los envíos a domicilio; Pozuelo, lo suyo", () => {
     expect(destinosVisibles(alcobendas)).toEqual(["alcobendas", "domicilio"]);
     expect(destinosVisibles(pozuelo)).toEqual(["pozuelo"]);
+  });
+
+  it("la oficina general sigue sin Clientes; el admin, sí", () => {
+    expect(veClientes(oficina)).toBe(false);
+    expect(guardiaAdmin({ usuario: oficina, pathname: "/admin/clientes" })!.status).toBe(404);
+    expect(veClientes(admin)).toBe(true);
   });
 
   it("el admin y la oficina general lo ven todo", () => {

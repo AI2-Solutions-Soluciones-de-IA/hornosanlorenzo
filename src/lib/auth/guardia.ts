@@ -8,9 +8,9 @@ export const ROL_ADMIN = "admin";
 /** La oficina entra en el panel, pero solo a Pedidos (7-10-2026). */
 export const ROL_OFICINA = "oficina";
 /**
- * La oficina de cada tienda (6-11-2026): también solo Pedidos, y de ellos
- * solo los suyos. Alcobendas lleva además los envíos a domicilio, que salen
- * de su obrador.
+ * La oficina de cada tienda (6-11-2026): Pedidos, y de ellos solo los suyos
+ * (Alcobendas lleva además los envíos a domicilio, que salen de su
+ * obrador). Desde el 12-11-2026, también Clientes, que es solo consulta.
  */
 export const ROL_OFICINA_ALCOBENDAS = "oficina_alcobendas";
 export const ROL_OFICINA_POZUELO = "oficina_pozuelo";
@@ -56,16 +56,29 @@ export function destinosVisibles(usuario: Usuario): DestinoPedido[] | undefined 
   return DESTINOS_DE_OFICINA[usuario?.rol ?? ""];
 }
 
-/** Lo único del panel que abre la oficina: la página de pedidos y su API. */
+/** Lo que abre la oficina general: la página de pedidos y su API. */
 const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
+
+/**
+ * Lo que abre la oficina de cada tienda: Pedidos y, desde el 12-11-2026,
+ * Clientes (la lista de cuentas y de suscritos, y su Excel: solo consulta).
+ */
+const RUTAS_OFICINA_TIENDA = [...RUTAS_OFICINA, "/admin/clientes", "/api/admin/clientes"];
+
+const esOficinaDeTienda = (usuario: Usuario): boolean =>
+  usuario?.rol === ROL_OFICINA_ALCOBENDAS || usuario?.rol === ROL_OFICINA_POZUELO;
+
+/** Quien ve la sección Clientes: el admin y la oficina de cada tienda. */
+export function veClientes(usuario: Usuario): boolean {
+  return esAdmin(usuario) || esOficinaDeTienda(usuario);
+}
 
 /** Lo que abre cada papel; la entrada al panel (`/admin`) la sirve aparte. */
 export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
   if (esAdmin(usuario)) return true;
   if (!esOficina(usuario)) return false;
-  return RUTAS_OFICINA.some(
-    (base) => pathname === base || pathname.startsWith(`${base}/`),
-  );
+  const rutas = esOficinaDeTienda(usuario) ? RUTAS_OFICINA_TIENDA : RUTAS_OFICINA;
+  return rutas.some((base) => pathname === base || pathname.startsWith(`${base}/`));
 }
 
 /** Todo lo que hay debajo de estas rutas está cerrado. */
