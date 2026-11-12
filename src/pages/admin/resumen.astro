@@ -238,16 +238,16 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
             <thead>
               <tr class="text-left numeracion">
                 <th class="py-2 font-medium">Día</th>
-                <th class="py-2 font-medium text-right">Pedidos</th>
-                <th class="py-2 font-medium text-right">Importe</th>
+                <th class="py-2 pl-6 sm:pl-10 font-medium text-right">Pedidos</th>
+                <th class="py-2 pl-6 sm:pl-10 font-medium text-right">Importe</th>
               </tr>
             </thead>
             <tbody>
               {datos.porDia.map((d) => (
                 <tr class="border-t border-[color:var(--color-line)]">
                   <td class="py-2">{formatDateISO(d.dia)}</td>
-                  <td class="py-2 text-right tabular-nums">{d.pedidos}</td>
-                  <td class="py-2 text-right tabular-nums">{formatPriceCents(d.importeCents)}</td>
+                  <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{d.pedidos}</td>
+                  <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{formatPriceCents(d.importeCents)}</td>
                 </tr>
               ))}
             </tbody>
