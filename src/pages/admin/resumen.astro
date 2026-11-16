@@ -31,7 +31,9 @@ const atajos = [
 
 // Mismo criterio que los filtros de /admin/pedidos: solo se acepta la forma
 // de fecha, y esta página se sirve en servidor fuera del ISR, así que aquí
-// sí se leen parámetros. Por defecto, el mes en curso.
+// sí se leen parámetros. Por defecto, el mes en curso. Se pueden elegir días
+// futuros a propósito: «Venta por día» va por fecha de entrega y lo útil es
+// ver lo que viene (las cifras por día de entrada salen vacías, y es lo normal).
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
 const lee = (clave: string) => {
   const v = Astro.url.searchParams.get(clave) ?? "";
@@ -67,11 +69,11 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
   <form method="get" class="flex flex-wrap items-end gap-4 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-4">
     <div>
       <label for="r-desde" class="numeracion block">Desde</label>
-      <input id="r-desde" type="date" name="desde" value={desde} max={hoy} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <input id="r-desde" type="date" name="desde" value={desde} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <div>
       <label for="r-hasta" class="numeracion block">Hasta</label>
-      <input id="r-hasta" type="date" name="hasta" value={hasta} max={hoy} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+      <input id="r-hasta" type="date" name="hasta" value={hasta} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
     </div>
     <button type="submit" class="btn btn-primario">Ver</button>
     <div class="flex flex-wrap gap-2 sm:ml-auto">
@@ -229,31 +231,49 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
         })()}
       </section>
 
-      <section class="mt-8">
-        <h2 class="numeracion">Pedidos por día</h2>
-        {datos.porDia.length === 0 ? (
-          <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Ningún pedido en el rango.</p>
-        ) : (
-          <div class="mt-3 max-w-xl overflow-x-auto"><table class="w-full text-sm">
-            <thead>
-              <tr class="text-left numeracion">
-                <th class="py-2 font-medium">Día</th>
-                <th class="py-2 pl-6 sm:pl-10 font-medium text-right">Pedidos</th>
-                <th class="py-2 pl-6 sm:pl-10 font-medium text-right">Importe</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datos.porDia.map((d) => (
-                <tr class="border-t border-[color:var(--color-line)]">
-                  <td class="py-2">{formatDateISO(d.dia)}</td>
-                  <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{d.pedidos}</td>
-                  <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{formatPriceCents(d.importeCents)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table></div>
-        )}
-      </section>
+      <div class="mt-8 grid gap-8 lg:grid-cols-2">
+        {[
+          {
+            titulo: "Compra por día",
+            nota: "Por el día en que el cliente hizo el pedido.",
+            vacio: "Ningún pedido en el rango.",
+            filas: datos.compraPorDia,
+          },
+          {
+            titulo: "Venta por día",
+            nota: "Por el día de entrega, que es cuando se produce: un encargo hecho el lunes para el sábado cuenta el sábado.",
+            vacio: "Ninguna entrega en el rango.",
+            filas: datos.ventaPorDia,
+          },
+        ].map((t) => (
+          <section>
+            <h2 class="numeracion">{t.titulo}</h2>
+            <p class="mt-1 text-xs text-[color:var(--color-ink-muted)]">{t.nota}</p>
+            {t.filas.length === 0 ? (
+              <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">{t.vacio}</p>
+            ) : (
+              <div class="mt-3 overflow-x-auto"><table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left numeracion">
+                    <th class="py-2 font-medium">Día</th>
+                    <th class="py-2 pl-6 sm:pl-10 font-medium text-right">Pedidos</th>
+                    <th class="py-2 pl-6 sm:pl-10 font-medium text-right">Importe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {t.filas.map((d) => (
+                    <tr class="border-t border-[color:var(--color-line)]">
+                      <td class="py-2">{formatDateISO(d.dia)}</td>
+                      <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{d.pedidos}</td>
+                      <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{formatPriceCents(d.importeCents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+            )}
+          </section>
+        ))}
+      </div>
     </>
   )}
 </AdminLayout>

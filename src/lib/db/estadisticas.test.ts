@@ -9,8 +9,17 @@ describeSiHayBD("resumen del panel", () => {
   let stats: typeof import("~/lib/db/estadisticas");
 
   const pedido = (
-    lines: { slug: string; name: string; qty: number; unitPriceCents: number }[],
-    payload: Partial<{ mode: "recogida" | "domicilio"; storeId: string; dateISO: string }> = {},
+    lines: {
+      slug: string;
+      name: string;
+      qty: number;
+      unitPriceCents: number;
+    }[],
+    payload: Partial<{
+      mode: "recogida" | "domicilio";
+      storeId: string;
+      dateISO: string;
+    }> = {},
     shippingCents = 0,
   ) => {
     const subtotal = lines.reduce((s, l) => s + l.qty * l.unitPriceCents, 0);
@@ -35,13 +44,27 @@ describeSiHayBD("resumen del panel", () => {
   // Un día que ninguna otra prueba usa: `pedidos.test.ts` comparte la tabla
   // y corre a la vez. Todo lo de aquí se fecha ese día y se limpia por correo.
   const DIA = "2021-03-10";
+  // Días de entrega propios, también sin uso en otras pruebas.
+  const ENTREGA = "2021-03-15";
+  const ENTREGA_FUERA = "2021-03-16";
   const CORREO = "stats@prueba.test";
   // Los nombres de las líneas son los de ENTONCES; la ficha actual se llama
   // distinto a propósito, para probar que el ranking enseña el de ahora.
-  const CEBRA = { slug: "stats-cebra", name: "Cebra", qty: 1, unitPriceCents: 600 };
-  const TARTA = { slug: "stats-tarta", name: "Tarta de queso", qty: 2, unitPriceCents: 1850 };
+  const CEBRA = {
+    slug: "stats-cebra",
+    name: "Cebra",
+    qty: 1,
+    unitPriceCents: 600,
+  };
+  const TARTA = {
+    slug: "stats-tarta",
+    name: "Tarta de queso",
+    qty: 2,
+    unitPriceCents: 1850,
+  };
   // Slugs propios, para limpiar solo lo de aquí.
-  const soloMios = (r: { slug: string | null }) => r.slug === null || r.slug.startsWith("stats-");
+  const soloMios = (r: { slug: string | null }) =>
+    r.slug === null || r.slug.startsWith("stats-");
 
   // `productos.test.ts` vacía la tabla en su arranque y corre a la vez que
   // este fichero: cada prueba del ranking vuelve a poner sus fichas.
@@ -66,7 +89,9 @@ describeSiHayBD("resumen del panel", () => {
     await aseguraFichas();
 
     // Cobrado por Stripe: 6 €
-    const stripe = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, { dispositivo: "movil" });
+    const stripe = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, {
+      dispositivo: "movil",
+    });
     await pedidos.marcarPagado({ pedidoId: stripe, sessionId: "cs_stats_1" });
     // Cobrado en tienda: 37 €, a domicilio con 5 € de reparto → 42 €
     const tienda = await pedidos.crearPedidoIniciado(
@@ -87,7 +112,9 @@ describeSiHayBD("resumen del panel", () => {
       { estado: "sin_pago" },
     );
     // Carrito abandonado: no cuenta en recaudación (ni en aparatos)
-    await pedidos.crearPedidoIniciado(pedido([TARTA]) as never, { dispositivo: "tablet" });
+    await pedidos.crearPedidoIniciado(pedido([TARTA]) as never, {
+      dispositivo: "tablet",
+    });
     // Todo lo anterior, fechado en el día propio (mediodía de Madrid).
     await pool.query(
       `update pedidos set created_at = ($2::date + interval '12 hours') at time zone 'Europe/Madrid'
@@ -95,11 +122,22 @@ describeSiHayBD("resumen del panel", () => {
       [CORREO, DIA],
     );
     // Y uno fuera del rango, el día siguiente.
-    const fuera = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, { estado: "sin_pago" });
+    const fuera = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, {
+      estado: "sin_pago",
+    });
     await pool.query(
       `update pedidos set created_at = ($2::date + interval '36 hours') at time zone 'Europe/Madrid'
         where id = $1`,
       [fuera, DIA],
+    );
+    // Entregas: los del día propio, el ENTREGA; el de fuera, el siguiente.
+    await pool.query(
+      "update pedidos set fecha_entrega = $2::date where email = $1",
+      [CORREO, ENTREGA],
+    );
+    await pool.query(
+      "update pedidos set fecha_entrega = $2::date where id = $1",
+      [fuera, ENTREGA_FUERA],
     );
 
     await pool.query(
@@ -119,7 +157,12 @@ describeSiHayBD("resumen del panel", () => {
 
   it("cuenta los pedidos del rango por estado, sin mezclar lo cobrado con lo pendiente", async () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
-    expect(r.pedidos).toEqual({ total: 3, cobrados: 2, sinPagar: 1, abandonados: 1 });
+    expect(r.pedidos).toEqual({
+      total: 3,
+      cobrados: 2,
+      sinPagar: 1,
+      abandonados: 1,
+    });
     expect(r.recaudacionCents).toBe(600 + 4200);
     expect(r.pendienteCents).toBe(600);
     // Ticket medio sobre los tres pedidos con importe (no el abandonado).
@@ -140,14 +183,22 @@ describeSiHayBD("resumen del panel", () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
     const mios = r.ranking.filter(soloMios);
     expect(mios).toContainEqual({
-      slug: "stats-tarta", nombre: "Tarta de queso al horno", categoria: "tartas",
-      unidades: 2, importeCents: 3700, pedidos: 1,
+      slug: "stats-tarta",
+      nombre: "Tarta de queso al horno",
+      categoria: "tartas",
+      unidades: 2,
+      importeCents: 3700,
+      pedidos: 1,
     });
     // Dos pedidos con una cebra cada uno (el cobrado y el sin pagar); el
     // carrito abandonado no cuenta.
     expect(mios).toContainEqual({
-      slug: "stats-cebra", nombre: "Mini croissant cebra", categoria: "bolleria",
-      unidades: 2, importeCents: 1200, pedidos: 2,
+      slug: "stats-cebra",
+      nombre: "Mini croissant cebra",
+      categoria: "bolleria",
+      unidades: 2,
+      importeCents: 1200,
+      pedidos: 2,
     });
   });
 
@@ -155,8 +206,12 @@ describeSiHayBD("resumen del panel", () => {
     await aseguraFichas();
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
     expect(r.ranking).toContainEqual({
-      slug: "stats-cero", nombre: "Bizcocho que nadie pide", categoria: "bolleria",
-      unidades: 0, importeCents: 0, pedidos: 0,
+      slug: "stats-cero",
+      nombre: "Bizcocho que nadie pide",
+      categoria: "bolleria",
+      unidades: 0,
+      importeCents: 0,
+      pedidos: 0,
     });
   });
 
@@ -164,7 +219,14 @@ describeSiHayBD("resumen del panel", () => {
     await aseguraFichas();
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
     expect(r.ranking.filter((x) => x.slug === null)).toEqual([
-      { slug: null, nombre: "Fuera de carta", categoria: null, unidades: 1, importeCents: 100, pedidos: 1 },
+      {
+        slug: null,
+        nombre: "Fuera de carta",
+        categoria: null,
+        unidades: 1,
+        importeCents: 100,
+        pedidos: 1,
+      },
     ]);
   });
 
@@ -182,14 +244,35 @@ describeSiHayBD("resumen del panel", () => {
     expect(r.clientes.total).toBeGreaterThanOrEqual(2);
   });
 
-  it("pedidos por día del rango, en hora de Madrid", async () => {
+  it("compra por día: por el día en que entró el pedido, en hora de Madrid", async () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
-    expect(r.porDia).toEqual([{ dia: DIA, pedidos: 3, importeCents: 5400 }]);
+    expect(r.compraPorDia).toEqual([
+      { dia: DIA, pedidos: 3, importeCents: 5400 },
+    ]);
+  });
+
+  it("venta por día: por el día de entrega, que es cuando se produce", async () => {
+    // Por fecha de entrega el rango no mira cuándo entraron: el de fuera de
+    // rango (entró al día siguiente) cuenta en su día de entrega.
+    const r = await stats.resumen({ desde: ENTREGA, hasta: ENTREGA_FUERA });
+    expect(r.ventaPorDia).toEqual([
+      { dia: ENTREGA, pedidos: 3, importeCents: 5400 },
+      { dia: ENTREGA_FUERA, pedidos: 1, importeCents: 600 },
+    ]);
+    // Y al revés: en el día en que entraron no se entrega nada.
+    expect(
+      (await stats.resumen({ desde: DIA, hasta: DIA })).ventaPorDia,
+    ).toEqual([]);
   });
 
   it("desde qué aparato, solo los pedidos con importe; los de antes, sin dato", async () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
-    expect(r.porDispositivo).toEqual({ movil: 1, tablet: 0, ordenador: 1, sinDato: 1 });
+    expect(r.porDispositivo).toEqual({
+      movil: 1,
+      tablet: 0,
+      ordenador: 1,
+      sinDato: 1,
+    });
   });
 
   it("lo devuelto desde Stripe se resta de la recaudación", async () => {
@@ -209,8 +292,17 @@ describeSiHayBD("resumen del panel", () => {
     // La carta entera sigue saliendo, a cero, y sin fila de «Fuera de carta».
     const mios = r.ranking.filter(soloMios);
     // A cero todos, el orden es por nombre.
-    expect(mios.map((x) => x.slug)).toEqual(["stats-cero", "stats-cebra", "stats-tarta"]);
-    expect(mios.every((x) => x.unidades === 0 && x.importeCents === 0 && x.pedidos === 0)).toBe(true);
-    expect(r.porDia).toEqual([]);
+    expect(mios.map((x) => x.slug)).toEqual([
+      "stats-cero",
+      "stats-cebra",
+      "stats-tarta",
+    ]);
+    expect(
+      mios.every(
+        (x) => x.unidades === 0 && x.importeCents === 0 && x.pedidos === 0,
+      ),
+    ).toBe(true);
+    expect(r.compraPorDia).toEqual([]);
+    expect(r.ventaPorDia).toEqual([]);
   });
 });

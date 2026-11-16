@@ -3,7 +3,8 @@ import { pool } from "~/lib/db/pool";
 /**
  * Cifras del resumen del panel para un rango de días. El rango va por el
  * día en que ENTRÓ el pedido (`created_at`, en hora de Madrid), no por el
- * día de entrega. Único sitio con este SQL; hacia fuera, camelCase.
+ * día de entrega; la única excepción es `ventaPorDia`, que va por entrega.
+ * Único sitio con este SQL; hacia fuera, camelCase.
  *
  * Lo cobrado y lo pendiente van por separado a propósito: sumar un pedido
  * sin pagar a la recaudación es contar dinero que no ha entrado. Los
@@ -23,7 +24,12 @@ export type ProductoEnRanking = {
 };
 
 export type Resumen = {
-  pedidos: { total: number; cobrados: number; sinPagar: number; abandonados: number };
+  pedidos: {
+    total: number;
+    cobrados: number;
+    sinPagar: number;
+    abandonados: number;
+  };
   /** Lo cobrado menos lo devuelto desde Stripe. */
   recaudacionCents: number;
   devoluciones: { pedidos: number; cents: number };
@@ -32,7 +38,12 @@ export type Resumen = {
   porModalidad: { recogida: number; domicilio: number };
   porTienda: { storeId: string; pedidos: number }[];
   /** Desde qué aparato (migración 022); `sinDato` = pedidos de antes de apuntarlo. */
-  porDispositivo: { movil: number; tablet: number; ordenador: number; sinDato: number };
+  porDispositivo: {
+    movil: number;
+    tablet: number;
+    ordenador: number;
+    sinDato: number;
+  };
   /**
    * Toda la carta activa, de más a menos vendido; los que no venden, a cero.
    * Va por la ficha (slug), no por el nombre de la línea: el nombre se
@@ -44,8 +55,17 @@ export type Resumen = {
    */
   ranking: ProductoEnRanking[];
   clientes: { total: number; nuevos: number };
-  porDia: { dia: string; pedidos: number; importeCents: number }[];
+  /** Por el día en que ENTRÓ el pedido: lo que se ha encargado cada día. */
+  compraPorDia: PorDia[];
+  /**
+   * Por el día de ENTREGA, que es cuando se produce (mismo criterio que la
+   * hoja de Producción). Aquí el rango se aplica a la fecha de entrega, no a
+   * la de entrada: un encargo hecho el lunes para el sábado cuenta el sábado.
+   */
+  ventaPorDia: PorDia[];
 };
+
+export type PorDia = { dia: string; pedidos: number; importeCents: number };
 
 // Mismo criterio de día que el filtro de `/admin/pedidos`: la fecha local
 // de Madrid, no la UTC de la base de datos.
@@ -59,7 +79,16 @@ const n = (v: unknown): number => Number(v ?? 0);
 export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
   const args = [desde, hasta];
 
-  const [totales, modalidad, tiendas, ranking, clientes, dias, aparatos] = await Promise.all([
+  const [
+    totales,
+    modalidad,
+    tiendas,
+    ranking,
+    clientes,
+    dias,
+    aparatos,
+    entregas,
+  ] = await Promise.all([
     pool.query(
       `select count(*) filter (where ${CON_IMPORTE})              as total,
               count(*) filter (where p.estado = 'pagado')         as cobrados,
@@ -142,11 +171,34 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
         group by 1`,
       args,
     ),
+    // Venta por día: por fecha de entrega, que es cuando se produce.
+    pool.query(
+      `select to_char(p.fecha_entrega, 'YYYY-MM-DD') as dia,
+              count(*)                        as pedidos,
+              coalesce(sum(p.total_cents), 0) as importe
+         from pedidos p
+        where p.fecha_entrega between $1::date and $2::date and ${CON_IMPORTE}
+        group by p.fecha_entrega
+        order by p.fecha_entrega`,
+      args,
+    ),
   ]);
-  const aparato = Object.fromEntries(aparatos.rows.map((r) => [r.dispositivo, n(r.pedidos)]));
+  const porDia = (
+    filas: { dia: string; pedidos: unknown; importe: unknown }[],
+  ): PorDia[] =>
+    filas.map((r) => ({
+      dia: r.dia,
+      pedidos: n(r.pedidos),
+      importeCents: n(r.importe),
+    }));
+  const aparato = Object.fromEntries(
+    aparatos.rows.map((r) => [r.dispositivo, n(r.pedidos)]),
+  );
 
   const t = totales.rows[0];
-  const modo = Object.fromEntries(modalidad.rows.map((r) => [r.mode, n(r.pedidos)]));
+  const modo = Object.fromEntries(
+    modalidad.rows.map((r) => [r.mode, n(r.pedidos)]),
+  );
 
   return {
     pedidos: {
@@ -160,7 +212,10 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
     pendienteCents: n(t.pendiente),
     ticketMedioCents: Math.round(n(t.ticket_medio)),
     porModalidad: { recogida: n(modo.recogida), domicilio: n(modo.domicilio) },
-    porTienda: tiendas.rows.map((r) => ({ storeId: r.storeId, pedidos: n(r.pedidos) })),
+    porTienda: tiendas.rows.map((r) => ({
+      storeId: r.storeId,
+      pedidos: n(r.pedidos),
+    })),
     porDispositivo: {
       movil: n(aparato.movil),
       tablet: n(aparato.tablet),
@@ -175,7 +230,11 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
       importeCents: n(r.importe),
       pedidos: n(r.pedidos),
     })),
-    clientes: { total: n(clientes.rows[0].total), nuevos: n(clientes.rows[0].nuevos) },
-    porDia: dias.rows.map((r) => ({ dia: r.dia, pedidos: n(r.pedidos), importeCents: n(r.importe) })),
+    clientes: {
+      total: n(clientes.rows[0].total),
+      nuevos: n(clientes.rows[0].nuevos),
+    },
+    compraPorDia: porDia(dias.rows),
+    ventaPorDia: porDia(entregas.rows),
   };
 }
