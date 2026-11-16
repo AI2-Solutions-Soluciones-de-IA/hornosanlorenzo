@@ -22,13 +22,33 @@ function sumaDias(iso: string, dias: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Último día del mes de `iso` («2026-02-10» → «2026-02-28»). */
+function finDeMes(iso: string): string {
+  const [a, m] = iso.split("-").map(Number);
+  // El día 0 del mes siguiente es el último de este (m va de 1 a 12).
+  return new Date(Date.UTC(a, m, 0)).toISOString().slice(0, 10);
+}
+
 const hoy = hoyEnMadrid();
+const inicioMes = `${hoy.slice(0, 7)}-01`;
+const inicioMesQueViene = sumaDias(finDeMes(hoy), 1);
+// «Este mes» llega hasta el último día del mes, y hay atajos hacia delante,
+// para que «Venta por día» (por fecha de entrega) enseñe lo que viene. Lo que
+// va por día de entrada sale vacío en los días futuros, y es lo normal.
 const atajos = [
   { id: "hoy", label: "Hoy", desde: hoy, hasta: hoy },
   { id: "7", label: "Últimos 7 días", desde: sumaDias(hoy, -6), hasta: hoy },
-  { id: "mes", label: "Este mes", desde: `${hoy.slice(0, 7)}-01`, hasta: hoy },
+  { id: "mes", label: "Este mes", desde: inicioMes, hasta: finDeMes(hoy) },
   { id: "30", label: "Últimos 30 días", desde: sumaDias(hoy, -29), hasta: hoy },
+  { id: "prox7", label: "Próximos 7 días", desde: hoy, hasta: sumaDias(hoy, 6) },
+  {
+    id: "mesQueViene",
+    label: "Mes que viene",
+    desde: inicioMesQueViene,
+    hasta: finDeMes(inicioMesQueViene),
+  },
 ] as const;
+const porDefecto = atajos.find((a) => a.id === "mes")!;
 
 // Mismo criterio que los filtros de /admin/pedidos: solo se acepta la forma
 // de fecha, y esta página se sirve en servidor fuera del ISR, así que aquí
@@ -40,8 +60,8 @@ const lee = (clave: string) => {
   const v = Astro.url.searchParams.get(clave) ?? "";
   return FECHA.test(v) ? v : undefined;
 };
-let desde = lee("desde") ?? atajos[2].desde;
-let hasta = lee("hasta") ?? atajos[2].hasta;
+let desde = lee("desde") ?? porDefecto.desde;
+let hasta = lee("hasta") ?? porDefecto.hasta;
 if (desde > hasta) [desde, hasta] = [hasta, desde];
 // `?ranking=todo` enseña la carta entera en vez de los dos extremos.
 const verCarta = Astro.url.searchParams.get("ranking") === "todo";
