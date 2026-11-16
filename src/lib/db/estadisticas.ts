@@ -1,4 +1,5 @@
 import { pool } from "~/lib/db/pool";
+import type { DestinoPedido } from "~/lib/db/pedidos";
 
 /**
  * Cifras del resumen del panel para un rango de días. El rango va por el
@@ -11,7 +12,16 @@ import { pool } from "~/lib/db/pool";
  * carritos abandonados (`iniciado`) se cuentan aparte y no suman en nada.
  */
 
-export type Rango = { desde: string; hasta: string };
+export type Rango = {
+  desde: string;
+  hasta: string;
+  /**
+   * Solo para «Compra por día» y «Venta por día»: los destinos de una
+   * oficina (pestañas «Todo · Alcobendas · Pozuelo», como en Pedidos). Sin
+   * él, todos. El resto del resumen no se filtra.
+   */
+  destinos?: DestinoPedido[];
+};
 
 export type ProductoEnRanking = {
   slug: string | null;
@@ -74,10 +84,23 @@ const EN_RANGO = `${DIA} between $1::date and $2::date`;
 /** Pedidos que cuentan como venta: cobrados y sin pagar; nunca los abandonados. */
 const CON_IMPORTE = "p.estado in ('pagado', 'sin_pago')";
 
+/**
+ * El destino del pedido: la tienda de recogida o `domicilio`. Mismo criterio
+ * que `DESTINO_SQL` de `pedidos.ts`, del que salen las pestañas de Pedidos.
+ */
+const DESTINO = `(case p.mode when 'domicilio' then 'domicilio'
+                  when 'recogida' then p.store_id end)`;
+const DE_DESTINOS = `($3::text[] is null or ${DESTINO} = any($3::text[]))`;
+
 const n = (v: unknown): number => Number(v ?? 0);
 
-export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
+export async function resumen({
+  desde,
+  hasta,
+  destinos,
+}: Rango): Promise<Resumen> {
   const args = [desde, hasta];
+  const argsPorDia = [desde, hasta, destinos ?? null];
 
   const [
     totales,
@@ -159,10 +182,10 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
               count(*)                        as pedidos,
               coalesce(sum(p.total_cents), 0) as importe
          from pedidos p
-        where ${EN_RANGO} and ${CON_IMPORTE}
+        where ${EN_RANGO} and ${CON_IMPORTE} and ${DE_DESTINOS}
         group by ${DIA}
         order by ${DIA}`,
-      args,
+      argsPorDia,
     ),
     pool.query(
       `select coalesce(p.dispositivo, 'sin_dato') as dispositivo, count(*) as pedidos
@@ -178,9 +201,10 @@ export async function resumen({ desde, hasta }: Rango): Promise<Resumen> {
               coalesce(sum(p.total_cents), 0) as importe
          from pedidos p
         where p.fecha_entrega between $1::date and $2::date and ${CON_IMPORTE}
+          and ${DE_DESTINOS}
         group by p.fecha_entrega
         order by p.fecha_entrega`,
-      args,
+      argsPorDia,
     ),
   ]);
   const porDia = (

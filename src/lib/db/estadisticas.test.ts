@@ -265,6 +265,38 @@ describeSiHayBD("resumen del panel", () => {
     ).toEqual([]);
   });
 
+  it("compra y venta por día de una oficina: Alcobendas lleva también el domicilio", async () => {
+    // Datos: Stripe en Alcobendas (6 €), domicilio (42 €), Pozuelo sin pagar
+    // (6 €) y el de fuera, en Alcobendas (6 €).
+    const alc = await stats.resumen({
+      desde: DIA,
+      hasta: DIA,
+      destinos: ["alcobendas", "domicilio"],
+    });
+    expect(alc.compraPorDia).toEqual([
+      { dia: DIA, pedidos: 2, importeCents: 4800 },
+    ]);
+    const poz = await stats.resumen({
+      desde: ENTREGA,
+      hasta: ENTREGA_FUERA,
+      destinos: ["pozuelo"],
+    });
+    expect(poz.ventaPorDia).toEqual([
+      { dia: ENTREGA, pedidos: 1, importeCents: 600 },
+    ]);
+    const alcVenta = await stats.resumen({
+      desde: ENTREGA,
+      hasta: ENTREGA_FUERA,
+      destinos: ["alcobendas", "domicilio"],
+    });
+    expect(alcVenta.ventaPorDia).toEqual([
+      { dia: ENTREGA, pedidos: 2, importeCents: 4800 },
+      { dia: ENTREGA_FUERA, pedidos: 1, importeCents: 600 },
+    ]);
+    // El resto del resumen no se filtra por oficina.
+    expect(alc.pedidos.total).toBe(3);
+  });
+
   it("desde qué aparato, solo los pedidos con importe; los de antes, sin dato", async () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
     expect(r.porDispositivo).toEqual({
