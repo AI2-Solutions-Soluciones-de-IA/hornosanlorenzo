@@ -89,7 +89,8 @@ export const secciones: readonly Seccion[] = [
   },
   {
     id: "bocados",
-    tipo: "Bocaditos",
+    // Sin `tipo` (17-11-2026): el nombre ya dice qué son («Pastelitos
+    // Variados», «Petisús Variados») y en los pedidos sobraba «Bocaditos ·».
     label: "Bocaditos del Obrador",
     eyebrow: "Dulce · Recomendación del chef",
     order: 600,
@@ -213,13 +214,17 @@ export const seccionById = (id: SeccionId): Seccion =>
   secciones.find((s) => s.id === id)!;
 
 /** El bloque de la carta donde sale una sección: el suyo, o el de `dentroDe`. */
-export const bloqueDe = (id: SeccionId): SeccionId => seccionById(id).dentroDe ?? id;
+export const bloqueDe = (id: SeccionId): SeccionId =>
+  seccionById(id).dentroDe ?? id;
 
 export const isSeccionId = (value: string | null): value is SeccionId =>
   value !== null && (seccionIds as readonly string[]).includes(value);
 
 const sinAcentos = (t: string) =>
-  t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  t
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
 /**
  * El nombre de un producto con su tipo delante, para leerlo fuera de la
@@ -227,7 +232,10 @@ const sinAcentos = (t: string) =>
  * la sección no se conoce o si el nombre ya lo lleva («Bizcocho Casero…»,
  * «Tarta Cremosa de Queso al Horno · Sin gluten»).
  */
-export function nombreConTipo(nombre: string, seccion: string | null | undefined): string {
+export function nombreConTipo(
+  nombre: string,
+  seccion: string | null | undefined,
+): string {
   if (!seccion || !isSeccionId(seccion)) return nombre;
   const tipo = seccionById(seccion).tipo;
   if (!tipo || sinAcentos(nombre).includes(sinAcentos(tipo))) return nombre;
