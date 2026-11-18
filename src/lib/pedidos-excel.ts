@@ -42,6 +42,8 @@ const COLUMNAS: { header: string; key: string; width: number }[] = [
   { header: "Procesado", key: "procesado", width: 11 },
   { header: "Procesado por", key: "procesadoPor", width: 32 },
   { header: "Archivado", key: "archivado", width: 11 },
+  // Web o teléfono (TPV de las oficinas, 13-11-2026), y quién lo apuntó.
+  { header: "Origen", key: "origen", width: 30 },
 ];
 
 const EUROS = '#,##0.00 "€"';
@@ -147,6 +149,10 @@ export async function pedidosAExcel(pedidos: PedidoConLineas[]): Promise<Buffer>
         ? [p.procesadoPor, entradaEnMadrid(new Date(p.procesadoEn))].filter(Boolean).join(" · ")
         : "",
       archivado: p.archivadoEn ? "Sí" : "No",
+      origen:
+        p.origen === "tpv"
+          ? `Teléfono${p.registradoPor ? ` · ${p.registradoPor}` : ""}`
+          : "Web",
     });
     fila.font = FUENTE;
     // Arriba y con saltos de línea: un pedido de varios productos ocupa una

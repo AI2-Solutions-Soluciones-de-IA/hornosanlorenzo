@@ -10,6 +10,7 @@ import {
   minimoPedidoCents,
   franjasRecogida,
   MIN_ORDER_COPY,
+  horaDeMadrid,
 } from "~/lib/entrega";
 import { stores, type StoreId } from "~/data/stores";
 import { productosParaPedido } from "~/lib/db/productos";
@@ -97,6 +98,15 @@ export const orderPayloadSchema = z.object({
 export type OrderPayload = z.infer<typeof orderPayloadSchema>;
 
 
+/** Un producto fuera de la carta, apuntado en el TPV (13-11-2026). */
+export type LineaLibre = { nombre: string; precioCents: number; qty: number };
+
+/** El día de hoy en Madrid, `YYYY-MM-DD`. */
+function hoyEnMadridISO(now: Date): string {
+  const d = horaDeMadrid(now);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export type PricedLine = {
   slug: string;
   name: string;
@@ -111,6 +121,12 @@ export type PricedLine = {
 
 export type PricedOrder = {
   lines: PricedLine[];
+  /**
+   * Solo en el TPV (`flexible`): los límites de la web que este pedido se
+   * salta («ese día ya está completo», «menos plazo del normal»). La
+   * oficina los ve y decide; en la web son errores y esto queda vacío.
+   */
+  avisos: string[];
   subtotalCents: number;
   shippingCents: number;
   totalCents: number;
@@ -144,8 +160,33 @@ export class OrderError extends Error {
  */
 export async function priceOrder(
   payload: OrderPayload,
-  { userId, now = new Date() }: { userId?: string; now?: Date } = {},
+  {
+    userId,
+    now = new Date(),
+    flexible = false,
+    libres = [],
+  }: {
+    userId?: string;
+    now?: Date;
+    /**
+     * TPV de las oficinas (13-11-2026): los límites de la web (plazo,
+     * franja, cupo del día, máximos, mínimo, zona de reparto, agotado, la
+     * foto del pack) no cortan, se devuelven en `avisos`. Lo que no se puede
+     * apuntar (un producto que no existe, un tamaño sin elegir) sigue
+     * cortando. Solo lo pasa `/api/tpv/pedido`.
+     */
+    flexible?: boolean;
+    /** Solo en el TPV: productos fuera de la carta, con nombre y precio a mano. */
+    libres?: readonly LineaLibre[];
+  } = {},
 ): Promise<PricedOrder> {
+  const avisos: string[] = [];
+  /** En la web corta; en el TPV se apunta y sigue. */
+  const limite = (mensaje: string) => {
+    if (!flexible) throw new OrderError(mensaje);
+    avisos.push(mensaje);
+  };
+
   if (payload.mode === "domicilio") {
     if (!payload.address || payload.address.trim().length < 6) {
       throw new OrderError("Falta la dirección de entrega.");
@@ -156,17 +197,20 @@ export async function priceOrder(
       throw new OrderError("Falta el código postal de entrega.");
     }
     if (!admiteCP(payload.postalCode)) {
-      throw new OrderError(
-        `No repartimos en el código postal ${payload.postalCode}. ${ZONA_REPARTO_COPY}`,
-      );
+      limite(`No repartimos en el código postal ${payload.postalCode}. ${ZONA_REPARTO_COPY}`);
     }
   } else {
     const valid = stores.some((s) => s.id === payload.storeId);
     if (!valid) throw new OrderError("La tienda de recogida no es válida.");
   }
 
-  if (!tieneNombreYApellido(payload.name)) {
-    throw new OrderError("Escribe tu nombre y apellidos para que podamos identificar el pedido.");
+  // En el TPV basta con un nombre: lo escribe la oficina al teléfono.
+  if (flexible ? payload.name.trim().length < 2 : !tieneNombreYApellido(payload.name)) {
+    throw new OrderError(
+      flexible
+        ? "Escribe el nombre del cliente."
+        : "Escribe tu nombre y apellidos para que podamos identificar el pedido.",
+    );
   }
   if (!esTelefonoValido(payload.phone)) {
     throw new OrderError("El teléfono de contacto no parece válido.");
@@ -213,9 +257,11 @@ export async function priceOrder(
     }
 
     if (product.agotado) {
-      throw new OrderError(
-        `«${product.name}» se ha agotado. Quítalo del carrito y vuelve a intentarlo.`,
-      );
+      if (flexible) limite(`«${product.name}» está marcado como agotado en la web.`);
+      else
+        throw new OrderError(
+          `«${product.name}» se ha agotado. Quítalo del carrito y vuelve a intentarlo.`,
+        );
     }
 
     // Un pack se cobra al precio de SU ficha (ya validada arriba); lo que se
@@ -249,7 +295,11 @@ export async function priceOrder(
       }
       const conFoto = def.piezas.some((x) => x.tipo === "fija" && x.requiereFoto);
       if (conFoto && !item.fotoUrl)
-        throw new OrderError(`«${product.name}»: sube la foto para la plancha.`);
+        limite(
+          flexible
+            ? `«${product.name}» lleva foto: pídesela al cliente (por correo o WhatsApp) y apúntalo en las notas.`
+            : `«${product.name}»: sube la foto para la plancha.`,
+        );
       if (!conFoto && item.fotoUrl) throw new OrderError("Elección no válida.");
       // La URL la manda el navegador: solo vale una foto que esté de verdad
       // en nuestro almacén.
@@ -312,16 +362,36 @@ export async function priceOrder(
   const sobreLimite = productoSobreLimite(payload.items);
   if (sobreLimite) {
     const nombre = lines.find((l) => l.slug === sobreLimite)?.name ?? sobreLimite;
-    throw new OrderError(
-      `De «${nombre}» se pueden pedir online hasta ${MAX_UNIDADES_POR_PRODUCTO} unidades. ${LLAMANOS_COPY}`,
+    limite(
+      flexible
+        ? `Más de ${MAX_UNIDADES_POR_PRODUCTO} unidades de «${nombre}»: en la web no se deja.`
+        : `De «${nombre}» se pueden pedir online hasta ${MAX_UNIDADES_POR_PRODUCTO} unidades. ${LLAMANOS_COPY}`,
     );
   }
+
+  // Lo de fuera de la carta, detrás de lo de la carta y sin slug.
+  for (const l of libres) {
+    lines.push({
+      slug: "",
+      name: l.nombre.trim(),
+      qty: l.qty,
+      unitPriceCents: l.precioCents,
+      totalCents: l.precioCents * l.qty,
+    });
+  }
+  if (lines.length === 0) throw new OrderError("El pedido no lleva ningún producto.");
 
   const subtotalCents = lines.reduce((sum, l) => sum + l.totalCents, 0);
 
   // Antes que la fecha: un pedido de este tamaño no se cierra por la web, y
   // decirle que cambie de día no le ayudaría.
-  if (superaImporte(subtotalCents)) throw new OrderError(LIMITE_IMPORTE_COPY);
+  if (superaImporte(subtotalCents))
+    limite(flexible ? "Es un pedido grande: en la web no se deja pedir tanto importe." : LIMITE_IMPORTE_COPY);
+
+  // Un día que ya ha pasado no es un límite de la web: es un error.
+  if (flexible && payload.dateISO < hoyEnMadridISO(now)) {
+    throw new OrderError("El día de entrega ya ha pasado.");
+  }
 
   // El plazo depende del importe y de la tienda, así que la fecha no se puede
   // validar hasta tener el pedido valorado.
@@ -331,8 +401,10 @@ export async function priceOrder(
       storeId: payload.storeId,
     })
   ) {
-    throw new OrderError(
-      `La fecha elegida no está disponible para este pedido por la web. Revisa el día de entrega. ${LLAMANOS_COPY}`,
+    limite(
+      flexible
+        ? "En la web no se podría pedir para ese día (menos plazo del normal, o la tienda cierra)."
+        : `La fecha elegida no está disponible para este pedido por la web. Revisa el día de entrega. ${LLAMANOS_COPY}`,
     );
   }
 
@@ -342,8 +414,8 @@ export async function priceOrder(
     const franjas = franjasRecogida(payload.storeId, payload.dateISO, now);
     if (!franjas.includes(payload.slot ?? "morning")) {
       const tienda = stores.find((s) => s.id === payload.storeId);
-      throw new OrderError(
-        `Ese día la tienda cierra a las ${tienda?.pickupUntilReducido ?? tienda?.cierreFestivo ?? "14:30"}: elige la franja de mañana.`,
+      limite(
+        `Ese día la tienda cierra a las ${tienda?.pickupUntilReducido ?? tienda?.cierreFestivo ?? "14:30"}: la franja de tarde no está abierta.`,
       );
     }
   }
@@ -355,14 +427,20 @@ export async function priceOrder(
   const encargadas =
     (await unidadesEncargadas(payload.dateISO)).get(payload.dateISO) ?? 0;
   if (!cabeEnElDia(payload.dateISO, encargadas, unidadesTotales(lines))) {
-    throw new OrderError(DIA_COMPLETO_COPY);
+    limite(
+      flexible
+        ? `Ese día el obrador ya está completo en la web (${encargadas} unidades encargadas).`
+        : DIA_COMPLETO_COPY,
+    );
   }
 
   // El mínimo depende del día de entrega, no del día en que se pide.
   if (!meetsMinimum(payload.mode, subtotalCents, payload.dateISO)) {
     const minimo = minimoPedidoCents(payload.mode, payload.dateISO) / 100;
-    throw new OrderError(
-      `Para ese día el pedido mínimo a domicilio es de ${minimo} €. ${MIN_ORDER_COPY}`,
+    limite(
+      flexible
+        ? `No llega al mínimo de ${minimo} € del reparto a domicilio para ese día.`
+        : `Para ese día el pedido mínimo a domicilio es de ${minimo} €. ${MIN_ORDER_COPY}`,
     );
   }
 
@@ -370,6 +448,7 @@ export async function priceOrder(
 
   return {
     lines,
+    avisos,
     subtotalCents,
     shippingCents: envio,
     totalCents: subtotalCents + envio,

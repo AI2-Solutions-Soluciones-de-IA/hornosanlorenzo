@@ -86,6 +86,23 @@ export function destinosDeVista(
 const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
 
 /**
+ * El TPV (13-11-2026), de momento solo para la cuenta de Oscar (18-11-2026):
+ * se prueba en producción antes de dárselo a las oficinas. Ni el otro admin
+ * lo ve. Para abrirlo a más gente, añadir aquí su correo (o quitar la lista
+ * y volver a ponerlo en `RUTAS_OFICINA`).
+ */
+const CORREOS_TPV: readonly string[] = ["oscarsr96@hotmail.com"];
+const RUTAS_TPV = ["/tpv", "/api/tpv"];
+
+const esRutaTpv = (pathname: string): boolean =>
+  RUTAS_TPV.some((base) => pathname === base || pathname.startsWith(`${base}/`));
+
+/** Quien puede abrir el TPV: un admin de la lista, comparando el correo exacto. */
+export function veTpv(usuario: Usuario): boolean {
+  return esAdmin(usuario) && CORREOS_TPV.includes(usuario?.email ?? "");
+}
+
+/**
  * Lo que abre la oficina de Alcobendas: Pedidos y Clientes (la lista de
  * cuentas y de suscritos, y su Excel: solo consulta), desde el 12-11-2026.
  */
@@ -100,6 +117,7 @@ export function veClientes(usuario: Usuario): boolean {
 
 /** Lo que abre cada papel; la entrada al panel (`/admin`) la sirve aparte. */
 export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
+  if (esRutaTpv(pathname)) return veTpv(usuario);
   if (esAdmin(usuario)) return true;
   if (!esOficina(usuario)) return false;
   const rutas = veClientesOficina(usuario) ? RUTAS_OFICINA_CLIENTES : RUTAS_OFICINA;
@@ -107,7 +125,7 @@ export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
 }
 
 /** Todo lo que hay debajo de estas rutas está cerrado. */
-const RUTAS_PANEL = ["/admin", "/api/admin"];
+const RUTAS_PANEL = ["/admin", "/api/admin", "/tpv", "/api/tpv"];
 
 /** `/administracion` no es `/admin`: o es exacta, o cuelga con una barra. */
 const esRutaDelPanel = (pathname: string): boolean =>

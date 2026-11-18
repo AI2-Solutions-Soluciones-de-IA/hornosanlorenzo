@@ -139,7 +139,7 @@ const entrega = (p: PedidoConLineas) =>
       <section class="pedido">
         <div class="cab">
           <strong>{p.nombre ? `Pedido de ${p.nombre}` : "Pedido"}</strong>
-          <span>Ref. {p.id.slice(0, 8)}</span>
+          <span>{p.origen === "tpv" ? "Por teléfono · " : ""}Ref. {p.id.slice(0, 8)}</span>
         </div>
         <div class="datos">
           <div><span>Entrega</span>{entrega(p)}</div>

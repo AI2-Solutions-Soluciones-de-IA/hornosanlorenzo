@@ -770,3 +770,73 @@ describe("orderPayloadSchema: opciones de un pack", () => {
     expect(orderPayloadSchema.safeParse(con(9)).success).toBe(false);
   });
 });
+
+describe("priceOrder en el TPV (flexible, 13-11-2026)", () => {
+  it("los límites de la web avisan pero no cortan", async () => {
+    // El mismo día (la web no deja) y por la tarde un sábado en Alcobendas.
+    const sabado = { ...pedidoBase(), dateISO: "2026-03-14", slot: "afternoon" as const };
+    await expect(priceOrder(sabado, { now: AHORA })).rejects.toThrow();
+    const r = await priceOrder(sabado, { now: AHORA, flexible: true });
+    expect(r.avisos.some((a) => a.includes("franja de tarde"))).toBe(true);
+    expect(r.totalCents).toBe(3700);
+  });
+
+  it("sin avisos cuando el pedido valdría también en la web", async () => {
+    const r = await priceOrder(pedidoBase(), { now: AHORA, flexible: true });
+    expect(r.avisos).toEqual([]);
+  });
+
+  it("el cupo del día lleno es un aviso", async () => {
+    unidadesEncargadas.mockResolvedValue(new Map([[FECHA_RECOGIDA, 100_000]]));
+    await expect(priceOrder(pedidoBase(), { now: AHORA })).rejects.toThrow();
+    const r = await priceOrder(pedidoBase(), { now: AHORA, flexible: true });
+    expect(r.avisos.join(" ")).toMatch(/completo/);
+  });
+
+  it("un agotado y un CP fuera de zona son avisos; un día pasado, no", async () => {
+    productosParaPedido.mockResolvedValue(catalogo({ ...SENCILLO, agotado: true }));
+    const domicilio: OrderPayload = {
+      ...pedidoBase(),
+      mode: "domicilio",
+      dateISO: FECHA_DOMICILIO,
+      slot: undefined,
+      storeId: undefined,
+      address: "Calle Falsa 123",
+      postalCode: "28900",
+    };
+    const r = await priceOrder(domicilio, { now: AHORA, flexible: true });
+    expect(r.avisos.join(" ")).toMatch(/agotado/);
+    expect(r.avisos.join(" ")).toMatch(/28900/);
+    await expect(
+      priceOrder({ ...domicilio, dateISO: "2026-03-09" }, { now: AHORA, flexible: true }),
+    ).rejects.toThrow(/ya ha pasado/);
+  });
+
+  it("basta un nombre, y lo de fuera de la carta suma con su precio", async () => {
+    const r = await priceOrder(
+      { ...pedidoBase(), name: "Ana" },
+      { now: AHORA, flexible: true, libres: [{ nombre: "Tarta de 30 raciones", precioCents: 4500, qty: 1 }] },
+    );
+    expect(r.lines.at(-1)).toMatchObject({ slug: "", name: "Tarta de 30 raciones", totalCents: 4500 });
+    expect(r.subtotalCents).toBe(3700 + 4500);
+    await expect(priceOrder({ ...pedidoBase(), name: "Ana" }, { now: AHORA })).rejects.toThrow(/apellidos/);
+  });
+
+  it("solo con productos fuera de la carta también vale; sin nada, no", async () => {
+    const r = await priceOrder(
+      { ...pedidoBase(), items: [] },
+      { now: AHORA, flexible: true, libres: [{ nombre: "Encargo", precioCents: 1000, qty: 2 }] },
+    );
+    expect(r.totalCents).toBe(2000);
+    await expect(priceOrder({ ...pedidoBase(), items: [] }, { now: AHORA, flexible: true })).rejects.toThrow(
+      /ningún producto/,
+    );
+  });
+
+  it("lo que no se puede apuntar sigue cortando: un tamaño sin elegir", async () => {
+    productosParaPedido.mockResolvedValue(catalogo(CON_TAMANOS));
+    await expect(
+      priceOrder({ ...pedidoBase(), items: [{ slug: CON_TAMANOS.slug, qty: 1 }] }, { now: AHORA, flexible: true }),
+    ).rejects.toThrow(/Elige un tamaño/);
+  });
+});

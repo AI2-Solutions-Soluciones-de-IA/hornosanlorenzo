@@ -1,0 +1,53 @@
+---
+// src/pages/tpv.astro
+// TPV de las oficinas (13-11-2026): apuntar un pedido mientras se atiende
+// la llamada, desde el móvil, la tableta o el ordenador. Lo cierra el
+// middleware como el panel (admin y oficinas).
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import Tpv from "~/islands/Tpv.tsx";
+import { listarProductos } from "~/lib/db/productos";
+import { todasLasDefiniciones } from "~/lib/db/packs";
+import { cartaTpv, type ProductoTpv } from "~/lib/tpv";
+import { ROL_OFICINA_POZUELO } from "~/lib/auth/guardia";
+import { getImage } from "astro:assets";
+
+/** Miniatura de 400 px de ancho, como las tarjetas de la tienda: el original es de hasta 1600. */
+async function miniatura(foto: ProductoTpv["foto"]): Promise<ProductoTpv["foto"]> {
+  if (!foto) return null;
+  try {
+    const alto = Math.round((400 * foto.alto) / foto.ancho);
+    const img = await getImage({ src: foto.url, width: 400, height: alto, format: "webp", quality: 70 });
+    return { url: img.src, ancho: 400, alto };
+  } catch {
+    return foto;
+  }
+}
+
+export const prerender = false;
+
+let carta: ProductoTpv[] = [];
+let fallo = false;
+try {
+  // Con las ofertas de Este mes: el TPV cobra lo mismo que la web.
+  const [productos, definiciones] = await Promise.all([
+    listarProductos({ soloActivos: true, conOfertas: true }),
+    todasLasDefiniciones(),
+  ]);
+  carta = await Promise.all(
+    cartaTpv(productos, definiciones).map(async (p) => ({ ...p, foto: await miniatura(p.foto) })),
+  );
+} catch (error) {
+  fallo = true;
+  console.error("[tpv] no se pudo leer la carta:", error instanceof Error ? error.message : error);
+}
+
+// Cada oficina empieza con su tienda marcada.
+const tienda = Astro.locals.usuario?.rol === ROL_OFICINA_POZUELO ? "pozuelo" : "alcobendas";
+---
+<AdminLayout titulo="Nuevo pedido">
+  {fallo ? (
+    <p>No se ha podido cargar la carta. Recarga la página en un momento.</p>
+  ) : (
+    <Tpv client:load carta={carta} tiendaInicial={tienda} />
+  )}
+</AdminLayout>

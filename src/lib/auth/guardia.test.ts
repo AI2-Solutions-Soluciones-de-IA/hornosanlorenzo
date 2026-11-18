@@ -7,7 +7,7 @@ import {
   ROL_ADMIN,
   ROL_OFICINA,
   ROL_OFICINA_ALCOBENDAS,
-  ROL_OFICINA_POZUELO, veClientes, destinosDeVista } from "~/lib/auth/guardia";
+  ROL_OFICINA_POZUELO, veClientes, destinosDeVista, puedeEntrar, veTpv } from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
 const admin = { id: "u2", email: "c@d.e", name: "Carmen", rol: ROL_ADMIN };
@@ -182,6 +182,50 @@ describe("oficina de cada tienda", () => {
   it("un papel parecido no cuela", () => {
     const raro = { ...pozuelo, rol: "oficina_POZUELO" };
     expect(vePedidos(raro)).toBe(false);
+  });
+});
+
+describe("TPV (13-11-2026): de momento, solo la cuenta de Oscar (18-11-2026)", () => {
+  const oscar = { id: "u6", email: "oscarsr96@hotmail.com", name: "Oscar", rol: ROL_ADMIN };
+  const otroAdmin = { ...admin, email: "dep.comercial@hornosanlorenzo.com" };
+  const alcobendas = { id: "u4", email: "al@b.c", name: "Alba", rol: ROL_OFICINA_ALCOBENDAS };
+  const pozuelo = { id: "u5", email: "po@z.u", name: "Pablo", rol: ROL_OFICINA_POZUELO };
+
+  it("lo abre la cuenta de Oscar, la página y su API", () => {
+    expect(veTpv(oscar)).toBe(true);
+    expect(guardiaAdmin({ usuario: oscar, pathname: "/tpv" })).toBeNull();
+    expect(guardiaAdmin({ usuario: oscar, pathname: "/api/tpv/pedido" })).toBeNull();
+  });
+
+  it("ni el otro admin ni las oficinas: 404, y sin el enlace", () => {
+    for (const usuario of [otroAdmin, oficina, alcobendas, pozuelo]) {
+      expect(veTpv(usuario)).toBe(false);
+      expect(guardiaAdmin({ usuario, pathname: "/tpv" })!.status).toBe(404);
+      expect(guardiaAdmin({ usuario, pathname: "/api/tpv/pedido" })!.status).toBe(404);
+      expect(guardiaAdmin({ usuario, pathname: "//tpv" })!.status).toBe(404);
+      expect(puedeEntrar(usuario, "/tpv")).toBe(false);
+    }
+  });
+
+  it("el correo tiene que ser exacto y la cuenta, admin", () => {
+    expect(veTpv({ ...oscar, email: "OSCARSR96@hotmail.com" })).toBe(false);
+    expect(veTpv({ ...oscar, rol: ROL_OFICINA })).toBe(false);
+  });
+
+  it("el resto del panel sigue igual para el otro admin y las oficinas", () => {
+    expect(guardiaAdmin({ usuario: otroAdmin, pathname: "/admin/resumen" })).toBeNull();
+    expect(guardiaAdmin({ usuario: oficina, pathname: "/admin/pedidos" })).toBeNull();
+  });
+
+  it("sin sesión, a /acceso; un cliente, 404", () => {
+    expect(guardiaAdmin({ usuario: null, pathname: "/tpv" })!.headers.get("location")).toBe("/acceso");
+    expect(guardiaAdmin({ usuario: null, pathname: "/api/tpv/pedido" })!.status).toBe(302);
+    expect(guardiaAdmin({ usuario: cliente, pathname: "/tpv" })!.status).toBe(404);
+    expect(guardiaAdmin({ usuario: cliente, pathname: "/api/tpv/pedido" })!.status).toBe(404);
+  });
+
+  it("«/tpvx» no es el TPV", () => {
+    expect(guardiaAdmin({ usuario: null, pathname: "/tpvx" })).toBeNull();
   });
 });
 

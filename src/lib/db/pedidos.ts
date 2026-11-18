@@ -69,6 +69,9 @@ export type PedidoConLineas = {
   /** Archivado en el panel (migración 031); null si no. */
   archivadoEn: Date | null;
   archivadoPor: string | null;
+  /** `tpv`: tomado por teléfono en la oficina (migración 032). */
+  origen?: "web" | "tpv";
+  registradoPor?: string | null;
   createdAt: Date;
   lineas: LineaPedido[];
 };
@@ -114,8 +117,15 @@ export async function crearPedidoIniciado(
     estado = "iniciado",
     dispositivo = null,
     comprobarHueco = false,
+    origen = "web",
+    registradoPor = null,
   }: {
-    estado?: "iniciado" | "sin_pago";
+    /** `pagado` solo desde el TPV: la oficina lo ha cobrado ya en tienda. */
+    estado?: "iniciado" | "sin_pago" | "pagado";
+    /** `tpv`: tomado por teléfono en la oficina (migración 032). */
+    origen?: "web" | "tpv";
+    /** Quién lo apuntó en el TPV (nombre de la cuenta). */
+    registradoPor?: string | null;
     /** Móvil, tablet u ordenador, para el Resumen (migración 022). */
     dispositivo?: "movil" | "tablet" | "ordenador" | null;
     /**
@@ -143,9 +153,9 @@ export async function crearPedidoIniciado(
          user_id, mode, fecha_entrega, slot, store_id, address, postal_code,
          email, telefono, nombre, notas,
          subtotal_cents, envio_cents, total_cents, estado, dispositivo,
-         reserva_hasta
+         reserva_hasta, origen, registrado_por
        ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
-                 now() + make_interval(mins => $17::int))
+                 now() + make_interval(mins => $17::int), $18, $19)
        returning id`,
       [
         order.userId ?? null,
@@ -165,6 +175,8 @@ export async function crearPedidoIniciado(
         estado,
         dispositivo,
         reservaMinutos,
+        origen,
+        registradoPor,
       ],
     );
     const id = rows[0].id;
@@ -177,7 +189,8 @@ export async function crearPedidoIniciado(
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [
           id,
-          linea.slug,
+          // Un producto fuera de la carta (TPV) no tiene slug.
+          linea.slug || null,
           linea.name,
           linea.variantLabel ?? null,
           linea.qty,
@@ -451,6 +464,8 @@ const PROYECCION_PEDIDO = `
   p.procesado_por  as "procesadoPor",
   p.archivado_en   as "archivadoEn",
   p.archivado_por  as "archivadoPor",
+  p.origen,
+  p.registrado_por as "registradoPor",
   p.created_at     as "createdAt",
   coalesce(
     (select json_agg(json_build_object(

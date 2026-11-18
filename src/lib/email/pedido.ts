@@ -23,6 +23,14 @@ export type DatosPedido = {
   telefono?: string;
   notas?: string;
   referencia: string;
+  /**
+   * Falso solo en un pedido del TPV que se paga al recoger (13-11-2026):
+   * entonces nada dice «pagado». Sin él, pagado (los de la web).
+   */
+  pagado?: boolean;
+  /** `tpv`: tomado por teléfono en la oficina; quién lo apuntó. */
+  origen?: "web" | "tpv";
+  registradoPor?: string;
 };
 
 export type LineaCorreo = {
@@ -105,7 +113,7 @@ function tablaLineas(d: DatosPedido, conFoto: boolean): string {
     .join("");
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:15px;margin:8px 0 16px;">
 ${filas}
-<tr><td style="padding:10px 0 0;font-weight:bold;">Total pagado</td><td align="right" style="padding:10px 0 0;font-weight:bold;white-space:nowrap;">${euros(d.totalCents)}</td></tr>
+<tr><td style="padding:10px 0 0;font-weight:bold;">${d.pagado === false ? "Total a pagar" : "Total pagado"}</td><td align="right" style="padding:10px 0 0;font-weight:bold;white-space:nowrap;">${euros(d.totalCents)}</td></tr>
 </table>`;
 }
 
@@ -131,7 +139,14 @@ const lineasTexto = (d: DatosPedido, conFoto: boolean) =>
 
 /** Al obrador: todo lo que hace falta para prepararlo y llamar al cliente. */
 export function correoObrador(d: DatosPedido): Mensaje {
-  const asunto = `Pedido web — ${d.modalidad} · ${d.dia} · ${euros(d.totalCents)}`;
+  const tpv = d.origen === "tpv";
+  const titulo = tpv
+    ? `Pedido por teléfono${d.pagado === false ? " (sin pagar)" : " (cobrado)"}`
+    : "Pedido pagado";
+  const pie = tpv
+    ? `Ref. ${d.referencia}${d.registradoPor ? ` · lo apuntó ${d.registradoPor}` : ""}`
+    : `Referencia Stripe: ${d.referencia}`;
+  const asunto = `${tpv ? "Pedido por teléfono" : "Pedido web"} — ${d.modalidad} · ${d.dia} · ${euros(d.totalCents)}`;
   const datos: [string, string | undefined][] = [
     ["Modalidad", d.modalidad],
     ["Día", d.franja ? `${d.dia} (${d.franja})` : d.dia],
@@ -145,24 +160,32 @@ export function correoObrador(d: DatosPedido): Mensaje {
     ["Notas", d.notas],
   ];
   const texto = [
-    `Pedido pagado — ${euros(d.totalCents)}`,
+    `${titulo} — ${euros(d.totalCents)}`,
     "",
     lineasTexto(d, true),
     "",
     ...datos.filter(([, v]) => v).map(([e, v]) => `${e}: ${v}`),
     "",
-    `Referencia Stripe: ${d.referencia}`,
+    pie,
     "Respondiendo a este correo le escribes al cliente.",
   ].join("\n");
   const html = plantilla(
     asunto,
-    `<p style="margin:0 0 4px;font-size:22px;">Pedido pagado</p>
+    `<p style="margin:0 0 4px;font-size:22px;">${esc(titulo)}</p>
 <p style="margin:0 0 16px;color:${COLOR.suave};font-family:Arial,sans-serif;font-size:14px;">${esc(d.modalidad)} · ${esc(d.dia)}</p>
 ${tablaLineas(d, true)}
 ${tablaDatos(datos)}
-<p style="margin:0;font-size:13px;color:${COLOR.suave};font-family:Arial,sans-serif;">Referencia Stripe: ${esc(d.referencia)}<br>Respondiendo a este correo le escribes al cliente.</p>`,
+<p style="margin:0;font-size:13px;color:${COLOR.suave};font-family:Arial,sans-serif;">${esc(pie)}<br>Respondiendo a este correo le escribes al cliente.</p>`,
   );
   return { asunto, texto, html };
+}
+
+/** La primera frase de la confirmación: pagado, o se paga al recoger. */
+function estadoCliente(d: DatosPedido): string {
+  if (d.pagado !== false) return "Tu pedido está pagado y anotado en el obrador.";
+  return d.aDomicilio
+    ? "Tu pedido está anotado en el obrador. Se paga al recibirlo."
+    : "Tu pedido está anotado en el obrador. Se paga al recogerlo en la tienda.";
 }
 
 /** Al cliente: la confirmación, con a quién llamar si necesita cambiar algo. */
@@ -185,11 +208,11 @@ export function correoCliente(d: DatosPedido): Mensaje {
   const texto = [
     saludo,
     "",
-    "Tu pedido está pagado y anotado en el obrador.",
+    estadoCliente(d),
     d.nombre ? `Está a nombre de ${d.nombre}.` : "",
     "",
     lineasTexto(d, false),
-    `Total pagado: ${euros(d.totalCents)}`,
+    `${d.pagado === false ? "Total a pagar" : "Total pagado"}: ${euros(d.totalCents)}`,
     "",
     ...datos.filter(([, v]) => v).map(([e, v]) => `${e}: ${v}`),
     "",
@@ -201,7 +224,7 @@ export function correoCliente(d: DatosPedido): Mensaje {
   const html = plantilla(
     asunto,
     `<p style="margin:0 0 8px;font-size:22px;">${esc(saludo)}</p>
-<p style="margin:0 0 16px;">Tu pedido está pagado y anotado en el obrador.${
+<p style="margin:0 0 16px;">${esc(estadoCliente(d))}${
       d.nombre ? ` Está a nombre de <strong>${esc(d.nombre)}</strong>.` : ""
     }</p>
 ${tablaLineas(d, false)}

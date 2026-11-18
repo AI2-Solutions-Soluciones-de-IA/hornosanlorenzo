@@ -125,8 +125,9 @@ describe("pedidosAExcel", () => {
       "1× Pack desayuno · 15,00 € (Cebra · 6 unidades, Glaseadas)\n2× Glaseadas · 6,00 €",
     );
     expect(val("Foto")).toBe("https://blob.example/foto.jpg");
-    expect(cabecera.slice(-4)).toEqual(["Foto", "Procesado", "Procesado por", "Archivado"]);
+    expect(cabecera.slice(-5)).toEqual(["Foto", "Procesado", "Procesado por", "Archivado", "Origen"]);
     expect(val("Archivado")).toBe("No");
+    expect(val("Origen")).toBe("Web");
   });
 
   it("«Procesado»: Sí con quién y cuándo (hora de Madrid), o No", async () => {
@@ -140,6 +141,12 @@ describe("pedidosAExcel", () => {
     expect(val(2, "Procesado por")).toBe("Oficina Alcobendas · 2026-11-12 09:05");
     expect(val(3, "Procesado")).toBe("No");
     expect(val(3, "Procesado por") ?? "").toBe("");
+  });
+
+  it("«Origen»: los del TPV dicen teléfono y quién lo apuntó", async () => {
+    const ws = await hoja([pedido({ origen: "tpv", registradoPor: "Oficina Alcobendas" })]);
+    const cabecera = ws.getRow(1).values as string[];
+    expect(ws.getRow(2).getCell(cabecera.indexOf("Origen")).value).toBe("Teléfono · Oficina Alcobendas");
   });
 
   it("sin pedidos, solo la cabecera", async () => {

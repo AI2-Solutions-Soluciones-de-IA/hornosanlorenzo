@@ -77,3 +77,31 @@ describe("correoCliente", () => {
     expect(c.texto.startsWith("¡Gracias por tu pedido!")).toBe(true);
   });
 });
+
+describe("pedido por teléfono (TPV, 13-11-2026)", () => {
+  const tpv: DatosPedido = { ...base, origen: "tpv", pagado: false, referencia: "a1b2c3d4", registradoPor: "Oficina Alcobendas" };
+
+  it("al cliente sin pagar no le dice «pagado»", () => {
+    const c = correoCliente(tpv);
+    for (const t of [c.texto, c.html]) {
+      expect(t).not.toMatch(/pagado/i);
+      expect(t).toContain("Se paga al recogerlo en la tienda");
+      expect(t).toContain("Total a pagar");
+    }
+    expect(correoCliente({ ...tpv, aDomicilio: true }).texto).toContain("Se paga al recibirlo");
+  });
+
+  it("cobrado en tienda, sí dice pagado", () => {
+    expect(correoCliente({ ...tpv, pagado: true }).texto).toContain("Tu pedido está pagado");
+  });
+
+  it("el aviso a la tienda dice que es por teléfono, quién lo apuntó, y no habla de Stripe", () => {
+    const c = correoObrador(tpv);
+    expect(c.asunto).toMatch(/^Pedido por teléfono — /);
+    for (const t of [c.texto, c.html]) {
+      expect(t).toContain("Pedido por teléfono (sin pagar)");
+      expect(t).toContain("lo apuntó Oficina Alcobendas");
+      expect(t).not.toContain("Stripe");
+    }
+  });
+});

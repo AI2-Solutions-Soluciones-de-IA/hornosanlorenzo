@@ -104,6 +104,9 @@ export default defineConfig({
         /^\/carrito\//,
         "/acceso",
         /^\/acceso\//,
+        // TPV de las oficinas (13-11-2026): con sesión, como el panel.
+        "/tpv",
+        /^\/tpv\//,
         /^\/api\//,
         // La baja de las ofertas: depende del token y recibe un POST.
         "/baja",

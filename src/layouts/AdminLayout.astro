@@ -21,6 +21,8 @@ Astro.response.headers.set("Cache-Control", "private, no-store");
 // Pedidos lo primero y Resumen lo último (9-10-2026).
 const todas = [
   { href: "/admin/pedidos", label: "Pedidos" },
+  // TPV (13-11-2026): apuntar un pedido por teléfono.
+  { href: "/tpv", label: "Nuevo pedido" },
   { href: "/admin/produccion", label: "Producción" },
   { href: "/admin/productos", label: "Productos" },
   { href: "/admin/packs", label: "Packs" },
