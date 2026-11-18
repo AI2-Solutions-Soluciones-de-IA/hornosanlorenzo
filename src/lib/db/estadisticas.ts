@@ -262,3 +262,19 @@ export async function resumen({
     ventaPorDia: porDia(entregas.rows),
   };
 }
+
+/**
+ * Pedidos de la web por día de entrada (18-11-2026), para la conversión de
+ * la página de visitas: los que cuentan como venta y entraron por la web,
+ * no por el TPV. Días sin pedidos no salen.
+ */
+export async function pedidosWebPorDia(desde: string, hasta: string): Promise<Map<string, number>> {
+  const { rows } = await pool.query<{ dia: string; pedidos: string }>(
+    `select ${DIA}::text as dia, count(*) as pedidos
+       from pedidos p
+      where ${EN_RANGO} and ${CON_IMPORTE} and p.origen = 'web'
+      group by 1`,
+    [desde, hasta],
+  );
+  return new Map(rows.map((r) => [r.dia, n(r.pedidos)]));
+}

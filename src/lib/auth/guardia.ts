@@ -86,21 +86,26 @@ export function destinosDeVista(
 const RUTAS_OFICINA = ["/admin/pedidos", "/api/admin/pedidos"];
 
 /**
- * El TPV (13-11-2026), de momento solo para la cuenta de Oscar (18-11-2026):
- * se prueba en producción antes de dárselo a las oficinas. Ni el otro admin
- * lo ve. Para abrirlo a más gente, añadir aquí su correo (o quitar la lista
- * y volver a ponerlo en `RUTAS_OFICINA`).
+ * Lo que de momento solo abre la cuenta de Oscar, ni siquiera el otro
+ * admin: el TPV (13-11-2026, en prueba en producción antes de dárselo a
+ * las oficinas) y las visitas de la web (18-11-2026). Para abrirlo a más
+ * gente, añadir aquí su correo.
  */
-const CORREOS_TPV: readonly string[] = ["oscarsr96@hotmail.com"];
-const RUTAS_TPV = ["/tpv", "/api/tpv"];
+const CORREOS_SOLO_OSCAR: readonly string[] = ["oscarsr96@hotmail.com"];
+const RUTAS_SOLO_OSCAR = ["/tpv", "/api/tpv", "/admin/visitas", "/api/admin/visitas"];
 
-const esRutaTpv = (pathname: string): boolean =>
-  RUTAS_TPV.some((base) => pathname === base || pathname.startsWith(`${base}/`));
+const esRutaSoloOscar = (pathname: string): boolean =>
+  RUTAS_SOLO_OSCAR.some((base) => pathname === base || pathname.startsWith(`${base}/`));
 
-/** Quien puede abrir el TPV: un admin de la lista, comparando el correo exacto. */
-export function veTpv(usuario: Usuario): boolean {
-  return esAdmin(usuario) && CORREOS_TPV.includes(usuario?.email ?? "");
+/** Un admin de la lista, comparando el correo exacto. */
+export function esCuentaDeOscar(usuario: Usuario): boolean {
+  return esAdmin(usuario) && CORREOS_SOLO_OSCAR.includes(usuario?.email ?? "");
 }
+
+/** Quien puede abrir el TPV. */
+export const veTpv = esCuentaDeOscar;
+/** Quien ve las visitas de la web. */
+export const veVisitas = esCuentaDeOscar;
 
 /**
  * Lo que abre la oficina de Alcobendas: Pedidos y Clientes (la lista de
@@ -117,7 +122,7 @@ export function veClientes(usuario: Usuario): boolean {
 
 /** Lo que abre cada papel; la entrada al panel (`/admin`) la sirve aparte. */
 export function puedeEntrar(usuario: Usuario, pathname: string): boolean {
-  if (esRutaTpv(pathname)) return veTpv(usuario);
+  if (esRutaSoloOscar(pathname)) return esCuentaDeOscar(usuario);
   if (esAdmin(usuario)) return true;
   if (!esOficina(usuario)) return false;
   const rutas = veClientesOficina(usuario) ? RUTAS_OFICINA_CLIENTES : RUTAS_OFICINA;

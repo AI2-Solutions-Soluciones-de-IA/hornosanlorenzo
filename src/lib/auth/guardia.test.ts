@@ -7,7 +7,7 @@ import {
   ROL_ADMIN,
   ROL_OFICINA,
   ROL_OFICINA_ALCOBENDAS,
-  ROL_OFICINA_POZUELO, veClientes, destinosDeVista, puedeEntrar, veTpv } from "~/lib/auth/guardia";
+  ROL_OFICINA_POZUELO, veClientes, destinosDeVista, puedeEntrar, veTpv, veVisitas } from "~/lib/auth/guardia";
 
 const cliente = { id: "u1", email: "a@b.c", name: "Ana", rol: "cliente" };
 const admin = { id: "u2", email: "c@d.e", name: "Carmen", rol: ROL_ADMIN };
@@ -222,6 +222,18 @@ describe("TPV (13-11-2026): de momento, solo la cuenta de Oscar (18-11-2026)", (
     expect(guardiaAdmin({ usuario: null, pathname: "/api/tpv/pedido" })!.status).toBe(302);
     expect(guardiaAdmin({ usuario: cliente, pathname: "/tpv" })!.status).toBe(404);
     expect(guardiaAdmin({ usuario: cliente, pathname: "/api/tpv/pedido" })!.status).toBe(404);
+  });
+
+  it("las visitas, igual: solo la cuenta de Oscar", () => {
+    expect(veVisitas(oscar)).toBe(true);
+    expect(guardiaAdmin({ usuario: oscar, pathname: "/admin/visitas" })).toBeNull();
+    expect(guardiaAdmin({ usuario: oscar, pathname: "/api/admin/visitas/ahora" })).toBeNull();
+    for (const usuario of [otroAdmin, oficina, alcobendas, pozuelo]) {
+      expect(veVisitas(usuario)).toBe(false);
+      expect(guardiaAdmin({ usuario, pathname: "/admin/visitas" })!.status).toBe(404);
+      expect(guardiaAdmin({ usuario, pathname: "/api/admin/visitas/ahora" })!.status).toBe(404);
+    }
+    expect(guardiaAdmin({ usuario: null, pathname: "/admin/visitas" })!.status).toBe(302);
   });
 
   it("«/tpvx» no es el TPV", () => {

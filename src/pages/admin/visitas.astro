@@ -1,0 +1,282 @@
+---
+// src/pages/admin/visitas.astro
+// Visitas de la web (18-11-2026), con el contador propio (Redis de
+// Upstash). De momento solo para la cuenta de Oscar (lo corta el
+// middleware). Lo de hoy y «ahora en la web» se refresca solo cada minuto.
+import AdminLayout from "~/layouts/AdminLayout.astro";
+import { leerVisitas, type Visitas } from "~/lib/visitas-lectura";
+import { redisConfigurado } from "~/lib/redis";
+import { diaEnMadrid, sumaDias, sumaRecuentos, ORIGENES } from "~/lib/visitas";
+import { pedidosWebPorDia } from "~/lib/db/estadisticas";
+import { listarProductos } from "~/lib/db/productos";
+import { formatDateISO } from "~/lib/format";
+
+export const prerender = false;
+
+const hoy = diaEnMadrid();
+const atajos = [
+  { id: "hoy", label: "Hoy", desde: hoy, hasta: hoy },
+  { id: "7", label: "Últimos 7 días", desde: sumaDias(hoy, -6), hasta: hoy },
+  { id: "mes", label: "Este mes", desde: `${hoy.slice(0, 7)}-01`, hasta: hoy },
+  { id: "30", label: "Últimos 30 días", desde: sumaDias(hoy, -29), hasta: hoy },
+] as const;
+
+const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+const lee = (k: string) => {
+  const v = Astro.url.searchParams.get(k) ?? "";
+  return FECHA.test(v) ? v : undefined;
+};
+let desde = lee("desde") ?? atajos[1].desde;
+let hasta = lee("hasta") ?? atajos[1].hasta;
+if (desde > hasta) [desde, hasta] = [hasta, desde];
+if (hasta > hoy) hasta = hoy;
+// Hasta 92 días de una vez: es una petición a Redis por día.
+if (desde < sumaDias(hasta, -91)) desde = sumaDias(hasta, -91);
+const atajoActivo = atajos.find((a) => a.desde === desde && a.hasta === hasta)?.id;
+
+const configurado = redisConfigurado();
+const [visitas, pedidos, productos] = await Promise.all([
+  configurado ? leerVisitas(desde, hasta) : Promise.resolve(null as Visitas | null),
+  pedidosWebPorDia(desde, hasta).catch(() => null),
+  listarProductos({ soloActivos: false }).catch(() => []),
+]);
+
+const totalVisitas = visitas?.dias.reduce((s, d) => s + d.visitas, 0) ?? 0;
+const totalPaginas = visitas?.dias.reduce((s, d) => s + d.paginas, 0) ?? 0;
+// La conversión, solo con los días que el contador ya contaba: los pedidos
+// de antes del 18-11-2026 no tienen visitas con las que compararse.
+const totalPedidos = pedidos && visitas
+  ? visitas.dias.filter((d) => d.visitas > 0).reduce((s, d) => s + (pedidos.get(d.dia) ?? 0), 0)
+  : null;
+const conversion = totalPedidos !== null && totalVisitas > 0 ? (100 * totalPedidos) / totalVisitas : null;
+const maxDia = Math.max(1, ...(visitas?.dias.map((d) => d.visitas) ?? [0]));
+
+// Nombre legible de cada ruta: las páginas fijas y las fichas de producto.
+const FIJAS: Record<string, string> = {
+  "/": "Portada",
+  "/catalogo": "Catálogo",
+  "/carrito": "Carrito",
+  "/carta": "Carta",
+  "/tiendas": "Tiendas",
+  "/contacto": "Contacto",
+  "/servicios": "Servicios",
+  "/noticias": "Este mes",
+  "/a-quien-servimos": "A quién servimos",
+  "/tradicion-y-calidad": "Tradición y calidad",
+  "/pedido/gracias": "Pedido hecho (gracias)",
+  "/otra": "Otras rutas",
+};
+const porSlug = new Map(productos.map((p) => [p.slug, p.name]));
+function nombreRuta(ruta: string): string {
+  if (FIJAS[ruta]) return FIJAS[ruta];
+  const m = ruta.match(/^\/catalogo\/([^/]+)$/);
+  if (m && porSlug.has(m[1])) return porSlug.get(m[1])!;
+  return ruta;
+}
+
+const paginas = visitas ? sumaRecuentos(visitas.dias, "porPagina").slice(0, 15) : [];
+const origenes = visitas
+  ? sumaRecuentos(visitas.dias, "porOrigen").sort((a, b) => b[1] - a[1] || ORIGENES.indexOf(a[0] as never) - ORIGENES.indexOf(b[0] as never))
+  : [];
+const dispositivos = visitas ? sumaRecuentos(visitas.dias, "porDispositivo") : [];
+const NOMBRE_DISPOSITIVO: Record<string, string> = { movil: "Móvil", tablet: "Tablet", ordenador: "Ordenador" };
+const pct = (n: number, total: number) => (total > 0 ? Math.round((100 * n) / total) : 0);
+const fmt = (n: number) => n.toLocaleString("es-ES");
+const diaCorto = (iso: string) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+};
+
+const rangoLegible = desde === hasta ? formatDateISO(desde) : `${formatDateISO(desde)} — ${formatDateISO(hasta)}`;
+const kpi = "bg-[color:var(--color-leche)] p-5";
+const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
+const barra = "h-2 bg-[color:var(--color-latte)]";
+const relleno = "h-2 bg-[color:var(--color-moka)]";
+---
+<AdminLayout titulo="Visitas">
+  <form method="get" class="flex flex-wrap items-end gap-4 border border-[color:var(--color-avellana)] bg-[color:var(--color-leche)] p-4">
+    <div>
+      <label for="v-desde" class="numeracion block">Desde</label>
+      <input id="v-desde" type="date" name="desde" value={desde} max={hoy} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label for="v-hasta" class="numeracion block">Hasta</label>
+      <input id="v-hasta" type="date" name="hasta" value={hasta} max={hoy} class="mt-2 block border border-[color:var(--color-avellana)] bg-[color:var(--color-paper)] px-3 py-2 text-sm" />
+    </div>
+    <button type="submit" class="btn btn-primario">Ver</button>
+    <div class="flex flex-wrap gap-2 sm:ml-auto">
+      {atajos.map((a) => (
+        <a
+          href={`/admin/visitas?desde=${a.desde}&hasta=${a.hasta}`}
+          class:list={[
+            "px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] border border-[color:var(--color-avellana)] hover:bg-[color:var(--color-latte)] transition-colors",
+            atajoActivo === a.id && "bg-[color:var(--color-latte)] text-[color:var(--color-moka)]",
+          ]}
+          aria-current={atajoActivo === a.id ? "true" : undefined}
+        >
+          {a.label}
+        </a>
+      ))}
+    </div>
+  </form>
+
+  <p class="numeracion mt-6">Visitas entre {rangoLegible}</p>
+
+  {!configurado && (
+    <p class="mt-4 border-l-2 border-[color:var(--color-caramelo)] pl-3 py-2 text-sm">
+      Falta conectar el contador (Redis de Upstash): faltan sus variables en Vercel.
+    </p>
+  )}
+  {configurado && !visitas && (
+    <p class="mt-4 border-l-2 border-[color:var(--color-caramelo)] pl-3 py-2 text-sm">
+      Ahora mismo no se pueden leer las visitas. Vuelve a intentarlo en un momento.
+    </p>
+  )}
+
+  {visitas && (
+    <>
+      <ul class="mt-4 grid gap-px bg-[color:var(--color-avellana)] border border-[color:var(--color-avellana)] grid-cols-2 lg:grid-cols-5">
+        <li class={kpi}>
+          <p class="numeracion">Ahora en la web</p>
+          <p class={cifra}><span data-ahora>{fmt(visitas.ahora)}</span></p>
+          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">Últimos 5 minutos · se actualiza solo</p>
+        </li>
+        <li class={kpi}>
+          <p class="numeracion">Visitas</p>
+          <p class={cifra}>{fmt(totalVisitas)}</p>
+          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">Hoy: <span data-visitas-hoy>{fmt(visitas.dias.at(-1)?.dia === hoy ? visitas.dias.at(-1)!.visitas : 0)}</span></p>
+        </li>
+        <li class={kpi}>
+          <p class="numeracion">Personas</p>
+          <p class={cifra}>{fmt(visitas.unicos)}</p>
+          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">Distintas en el rango (aprox.)</p>
+        </li>
+        <li class={kpi}>
+          <p class="numeracion">Páginas vistas</p>
+          <p class={cifra}>{fmt(totalPaginas)}</p>
+          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">
+            {totalVisitas > 0 ? `${(totalPaginas / totalVisitas).toLocaleString("es-ES", { maximumFractionDigits: 1 })} por visita` : "—"}
+          </p>
+        </li>
+        <li class:list={[kpi, "col-span-2 lg:col-span-1"]}>
+          <p class="numeracion">Conversión</p>
+          <p class={cifra}>
+            {conversion === null ? "—" : `${conversion.toLocaleString("es-ES", { maximumFractionDigits: 1 })} %`}
+          </p>
+          <p class="mt-2 text-xs text-[color:var(--color-ink-muted)]">
+            {totalPedidos === null ? "No se pudieron leer los pedidos" : `${fmt(totalPedidos)} ${totalPedidos === 1 ? "pedido web" : "pedidos web"} en ${fmt(totalVisitas)} visitas`}
+          </p>
+        </li>
+      </ul>
+
+      <div class="mt-8 grid gap-8 lg:grid-cols-2">
+        <section>
+          <h2 class="numeracion">Por día</h2>
+          <table class="mt-3 w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-[color:var(--color-ink-muted)]">
+                <th class="py-1 font-normal">Día</th>
+                <th class="py-1 font-normal w-1/3"><span class="sr-only">Gráfica</span></th>
+                <th class="py-1 font-normal text-right">Visitas</th>
+                <th class="py-1 font-normal text-right">Pedidos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...visitas.dias].reverse().map((d) => (
+                <tr class="border-t border-[color:var(--color-line)]">
+                  <td class="py-1.5 whitespace-nowrap">{diaCorto(d.dia)}</td>
+                  <td class="py-1.5 pr-3"><div class={barra}><div class={relleno} style={`width:${pct(d.visitas, maxDia)}%`}></div></div></td>
+                  <td class="py-1.5 text-right tabular-nums">{fmt(d.visitas)}</td>
+                  <td class="py-1.5 text-right tabular-nums">{pedidos ? fmt(pedidos.get(d.dia) ?? 0) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2 class="numeracion">Páginas más vistas</h2>
+          {paginas.length === 0 ? (
+            <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Todavía no hay visitas en el rango.</p>
+          ) : (
+            <ol class="mt-3 text-sm">
+              {paginas.map(([ruta, n]) => (
+                <li class="flex items-baseline justify-between gap-3 border-t border-[color:var(--color-line)] py-1.5">
+                  <span class="min-w-0 truncate" title={ruta}>{nombreRuta(ruta)}</span>
+                  <span class="tabular-nums">{fmt(n)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        <section>
+          <h2 class="numeracion">De dónde llegan</h2>
+          {origenes.length === 0 ? (
+            <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Sin datos.</p>
+          ) : (
+            <ul class="mt-3 space-y-2 text-sm">
+              {origenes.map(([o, n]) => (
+                <li>
+                  <div class="flex justify-between gap-3"><span class="first-letter:uppercase">{o}</span><span class="tabular-nums">{fmt(n)} · {pct(n, totalVisitas)} %</span></div>
+                  <div class:list={[barra, "mt-1"]}><div class={relleno} style={`width:${pct(n, totalVisitas)}%`}></div></div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section>
+          <h2 class="numeracion">Desde qué aparato</h2>
+          {dispositivos.length === 0 ? (
+            <p class="mt-3 text-sm text-[color:var(--color-ink-muted)]">Sin datos.</p>
+          ) : (
+            <ul class="mt-3 space-y-2 text-sm">
+              {dispositivos.map(([d, n]) => (
+                <li>
+                  <div class="flex justify-between gap-3"><span>{NOMBRE_DISPOSITIVO[d] ?? d}</span><span class="tabular-nums">{fmt(n)} · {pct(n, totalVisitas)} %</span></div>
+                  <div class:list={[barra, "mt-1"]}><div class={relleno} style={`width:${pct(n, totalVisitas)}%`}></div></div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <p class="mt-8 text-xs text-[color:var(--color-ink-muted)] max-w-2xl">
+        Contador propio, sin cookies: una visita es una llegada a la web desde fuera (Google, Instagram, un enlace
+        o escribiendo la dirección); las páginas vistas son todas las que se abren. No cuenta el panel, el TPV
+        ni los robots. Empezó a contar el 18-11-2026; lo anterior está en Vercel Analytics.
+      </p>
+    </>
+  )}
+</AdminLayout>
+
+<script>
+  // Cada minuto, con la pestaña visible: «ahora en la web» y las visitas de
+  // hoy. Pocas operaciones de Redis (3 por vuelta).
+  let reloj: number | undefined;
+  async function refresca() {
+    if (document.hidden || !document.querySelector("[data-ahora]")) return;
+    try {
+      const r = await fetch("/api/admin/visitas/ahora", { cache: "no-store" });
+      if (!r.ok) return;
+      const d = (await r.json()) as { ahora: number; visitasHoy: number } | null;
+      if (!d) return;
+      const pon = (sel: string, n: number) => {
+        const el = document.querySelector(sel);
+        if (el) el.textContent = n.toLocaleString("es-ES");
+      };
+      pon("[data-ahora]", d.ahora);
+      pon("[data-visitas-hoy]", d.visitasHoy);
+    } catch {}
+  }
+  document.addEventListener("astro:page-load", () => {
+    window.clearInterval(reloj);
+    if (!document.querySelector("[data-ahora]")) return;
+    reloj = window.setInterval(refresca, 60_000);
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refresca();
+  });
+</script>

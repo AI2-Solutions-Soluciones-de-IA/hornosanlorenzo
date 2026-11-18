@@ -12,6 +12,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
+  // El aviso de visitas (18-11-2026) llega con cada página: no necesita
+  // sesión y buscarla despertaría Postgres en cada visita.
+  if (context.url.pathname === "/api/v") {
+    context.locals.usuario = null;
+    return next();
+  }
+
   // Este middleware corre en TODAS las peticiones, no solo en las de
   // autenticación. Si `getSession` lanza —un corte momentáneo con Postgres,
   // una cookie corrupta, un fallo interno de Better Auth— no puede tumbar el

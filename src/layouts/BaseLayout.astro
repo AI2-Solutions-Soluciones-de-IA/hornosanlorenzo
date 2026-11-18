@@ -59,3 +59,46 @@ const jsonLd = props.jsonLd
     <Analytics />
   </body>
 </html>
+
+<script>
+  /**
+   * Visitas para el panel (18-11-2026): un aviso a `/api/v` por página, sin
+   * cookies ni almacenamiento. La cabecera navega sin recargar, así que la
+   * primera página de la pestaña es la que trae de dónde llega (`n: 1`).
+   * Si falla, no pasa nada: ni se reintenta ni se avisa.
+   */
+  function avisaVisitas() {
+    let primera = true;
+    // Una página, un aviso: el catálogo cambia la consulta al filtrar.
+    let ultima = "";
+    document.addEventListener("astro:page-load", () => {
+      try {
+        if (location.pathname === ultima) return;
+        ultima = location.pathname;
+        // El panel y el TPV no cuentan (el servidor también los descarta).
+        if (/^\/(admin|tpv)(\/|$)/.test(location.pathname)) return;
+        const n = primera ? 1 : 0;
+        primera = false;
+        const params = new URLSearchParams(location.search);
+        const tablet = navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent) ? 1 : 0;
+        const datos = JSON.stringify({
+          p: location.pathname,
+          r: n ? document.referrer : "",
+          u: n ? (params.get("utm_source") ?? "") : "",
+          n,
+          t: tablet,
+        });
+        if (!navigator.sendBeacon?.("/api/v", datos))
+          fetch("/api/v", { method: "POST", body: datos, keepalive: true }).catch(() => {});
+      } catch {}
+    });
+  }
+  // Un solo oyente por pestaña. Y nada desde un iframe: para ir a una página
+  // con islas `client:only` (el catálogo), el router de Astro la carga antes
+  // en un iframe oculto, y eso contaba una visita de más.
+  const marca = window as unknown as { __hslVisitas?: boolean };
+  if (window.self === window.top && !marca.__hslVisitas) {
+    marca.__hslVisitas = true;
+    avisaVisitas();
+  }
+</script>
