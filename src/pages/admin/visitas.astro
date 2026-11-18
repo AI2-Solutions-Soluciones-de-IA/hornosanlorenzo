@@ -35,19 +35,19 @@ if (desde < sumaDias(hasta, -91)) desde = sumaDias(hasta, -91);
 const atajoActivo = atajos.find((a) => a.desde === desde && a.hasta === hasta)?.id;
 
 const configurado = redisConfigurado();
-const [visitas, pedidos, productos] = await Promise.all([
+const [visitas, productos] = await Promise.all([
   configurado ? leerVisitas(desde, hasta) : Promise.resolve(null as Visitas | null),
-  pedidosWebPorDia(desde, hasta).catch(() => null),
   listarProductos({ soloActivos: false }).catch(() => []),
 ]);
+// Los pedidos web, solo desde que el contador empezó a contar: los de antes
+// no tienen visitas con las que compararse y la conversión saldría inflada.
+const pedidos = visitas?.inicioMs != null
+  ? await pedidosWebPorDia(desde, hasta, visitas.inicioMs).catch(() => null)
+  : visitas ? new Map<string, number>() : null;
 
 const totalVisitas = visitas?.dias.reduce((s, d) => s + d.visitas, 0) ?? 0;
 const totalPaginas = visitas?.dias.reduce((s, d) => s + d.paginas, 0) ?? 0;
-// La conversión, solo con los días que el contador ya contaba: los pedidos
-// de antes del 18-11-2026 no tienen visitas con las que compararse.
-const totalPedidos = pedidos && visitas
-  ? visitas.dias.filter((d) => d.visitas > 0).reduce((s, d) => s + (pedidos.get(d.dia) ?? 0), 0)
-  : null;
+const totalPedidos = pedidos ? [...pedidos.values()].reduce((s, n) => s + n, 0) : null;
 const conversion = totalPedidos !== null && totalVisitas > 0 ? (100 * totalPedidos) / totalVisitas : null;
 const maxDia = Math.max(1, ...(visitas?.dias.map((d) => d.visitas) ?? [0]));
 

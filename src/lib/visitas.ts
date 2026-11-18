@@ -12,11 +12,17 @@
  * no gastan horas de cómputo (ni ponen en riesgo los pedidos).
  */
 
-/** Las claves llevan prefijo por si la base de Redis se comparte algún día. */
-const PREFIJO = "hsl";
+/**
+ * Las claves llevan prefijo por si la base de Redis se comparte algún día.
+ * `hsl2`: el 18-11-2026 se empezó de cero para dejar fuera las pruebas
+ * del estreno (las claves `hsl:` caducan solas).
+ */
+const PREFIJO = "hsl2";
 export const claveDia = (dia: string) => `${PREFIJO}:v:${dia}`;
 export const claveUnicos = (dia: string) => `${PREFIJO}:u:${dia}`;
 export const CLAVE_AHORA = `${PREFIJO}:ahora`;
+/** Cuándo empezó a contar (ms): la conversión solo mira pedidos de después. */
+export const CLAVE_INICIO = `${PREFIJO}:inicio`;
 
 /** Lo que se guarda de cada día dura algo más de un año. */
 export const DURACION_SEGUNDOS = 400 * 24 * 60 * 60;
@@ -166,7 +172,7 @@ type Comando = (string | number)[];
  * Los comandos de Redis de una página vista. La primera página de una
  * visita (`nueva`) cuenta además la visita, su origen, el dispositivo y el
  * visitante único; las siguientes, solo la página. Unas 3 operaciones por
- * página y 10 en la primera: con el plan gratuito de Upstash (500.000 al
+ * página y 11 en la primera: con el plan gratuito de Upstash (500.000 al
  * mes) dan para unas 90.000 páginas vistas al mes.
  */
 export function comandosDeVisita(v: {
@@ -193,6 +199,8 @@ export function comandosDeVisita(v: {
       ["EXPIRE", u, DURACION_SEGUNDOS],
       // Quien se fue hace rato sale de «ahora», para que no crezca.
       ["ZREMRANGEBYSCORE", CLAVE_AHORA, "-inf", v.ahoraMs - VENTANA_AHORA_MS],
+      // Solo la primera vez: desde cuándo se cuenta.
+      ["SET", CLAVE_INICIO, v.ahoraMs, "NX"],
     );
   }
   return cmds;

@@ -113,22 +113,23 @@ describe("comandosDeVisita", () => {
   };
   it("una página más: 3 operaciones", () => {
     expect(comandosDeVisita({ ...base, nueva: null })).toEqual([
-      ["HINCRBY", "hsl:v:2026-11-18", "t", 1],
-      ["HINCRBY", "hsl:v:2026-11-18", "p:/carrito", 1],
-      ["ZADD", "hsl:ahora", 1_000_000, "abc"],
+      ["HINCRBY", "hsl2:v:2026-11-18", "t", 1],
+      ["HINCRBY", "hsl2:v:2026-11-18", "p:/carrito", 1],
+      ["ZADD", "hsl2:ahora", 1_000_000, "abc"],
     ]);
   });
-  it("la primera de una visita cuenta visita, origen, aparato y persona (10 en total)", () => {
+  it("la primera de una visita cuenta visita, origen, aparato y persona, y desde cuándo se cuenta (11 en total)", () => {
     const c = comandosDeVisita({
       ...base,
       nueva: { origen: "google", dispositivo: "movil" },
     });
-    expect(c).toHaveLength(10);
-    expect(c).toContainEqual(["HINCRBY", "hsl:v:2026-11-18", "v", 1]);
-    expect(c).toContainEqual(["HINCRBY", "hsl:v:2026-11-18", "o:google", 1]);
-    expect(c).toContainEqual(["HINCRBY", "hsl:v:2026-11-18", "d:movil", 1]);
-    expect(c).toContainEqual(["PFADD", "hsl:u:2026-11-18", "abc"]);
+    expect(c).toHaveLength(11);
+    expect(c).toContainEqual(["HINCRBY", "hsl2:v:2026-11-18", "v", 1]);
+    expect(c).toContainEqual(["HINCRBY", "hsl2:v:2026-11-18", "o:google", 1]);
+    expect(c).toContainEqual(["HINCRBY", "hsl2:v:2026-11-18", "d:movil", 1]);
+    expect(c).toContainEqual(["PFADD", "hsl2:u:2026-11-18", "abc"]);
     expect(c.filter((x) => x[0] === "EXPIRE")).toHaveLength(2);
+    expect(c).toContainEqual(["SET", "hsl2:inicio", 1_000_000, "NX"]);
   });
 });
 

@@ -268,13 +268,19 @@ export async function resumen({
  * la página de visitas: los que cuentan como venta y entraron por la web,
  * no por el TPV. Días sin pedidos no salen.
  */
-export async function pedidosWebPorDia(desde: string, hasta: string): Promise<Map<string, number>> {
+export async function pedidosWebPorDia(
+  desde: string,
+  hasta: string,
+  /** Solo los pedidos hechos desde este momento (ms): cuando empezó el contador de visitas. */
+  desdeMs: number,
+): Promise<Map<string, number>> {
   const { rows } = await pool.query<{ dia: string; pedidos: string }>(
     `select ${DIA}::text as dia, count(*) as pedidos
        from pedidos p
       where ${EN_RANGO} and ${CON_IMPORTE} and p.origen = 'web'
+        and p.created_at >= to_timestamp($3::double precision / 1000)
       group by 1`,
-    [desde, hasta],
+    [desde, hasta, desdeMs],
   );
   return new Map(rows.map((r) => [r.dia, n(r.pedidos)]));
 }

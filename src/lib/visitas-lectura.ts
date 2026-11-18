@@ -7,6 +7,7 @@
 import { pipeline } from "~/lib/redis";
 import {
   CLAVE_AHORA,
+  CLAVE_INICIO,
   VENTANA_AHORA_MS,
   claveDia,
   claveUnicos,
@@ -16,7 +17,13 @@ import {
   type Dia,
 } from "~/lib/visitas";
 
-export type Visitas = { dias: Dia[]; unicos: number; ahora: number };
+export type Visitas = {
+  dias: Dia[];
+  unicos: number;
+  ahora: number;
+  /** Cuándo empezó a contar (ms), o `null` si aún no ha llegado ninguna visita. */
+  inicioMs: number | null;
+};
 
 export async function leerVisitas(
   desde: string,
@@ -28,12 +35,15 @@ export async function leerVisitas(
     ...dias.map((d) => ["HGETALL", claveDia(d)]),
     ["PFCOUNT", ...dias.map(claveUnicos)],
     ["ZCOUNT", CLAVE_AHORA, ahoraMs - VENTANA_AHORA_MS, "+inf"],
+    ["GET", CLAVE_INICIO],
   ]);
   if (!r) return null;
+  const inicio = Number(r[dias.length + 2]);
   return {
     dias: dias.map((d, i) => diaDesdeHash(d, r[i])),
     unicos: Number(r[dias.length] ?? 0),
     ahora: Number(r[dias.length + 1] ?? 0),
+    inicioMs: r[dias.length + 2] != null && Number.isFinite(inicio) ? inicio : null,
   };
 }
 
