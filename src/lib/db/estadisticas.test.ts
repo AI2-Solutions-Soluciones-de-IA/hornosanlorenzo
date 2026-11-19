@@ -244,10 +244,12 @@ describeSiHayBD("resumen del panel", () => {
     expect(r.clientes.total).toBeGreaterThanOrEqual(2);
   });
 
+  // Productos: las unidades de las líneas (1 cebra + 2 tartas + 1 línea sin
+  // ficha + 1 cebra = 5); el carrito abandonado no suma.
   it("compra por día: por el día en que entró el pedido, en hora de Madrid", async () => {
     const r = await stats.resumen({ desde: DIA, hasta: DIA });
     expect(r.compraPorDia).toEqual([
-      { dia: DIA, pedidos: 3, importeCents: 5400 },
+      { dia: DIA, pedidos: 3, productos: 5, importeCents: 5400 },
     ]);
   });
 
@@ -256,13 +258,43 @@ describeSiHayBD("resumen del panel", () => {
     // rango (entró al día siguiente) cuenta en su día de entrega.
     const r = await stats.resumen({ desde: ENTREGA, hasta: ENTREGA_FUERA });
     expect(r.ventaPorDia).toEqual([
-      { dia: ENTREGA, pedidos: 3, importeCents: 5400 },
-      { dia: ENTREGA_FUERA, pedidos: 1, importeCents: 600 },
+      { dia: ENTREGA, pedidos: 3, productos: 5, importeCents: 5400 },
+      { dia: ENTREGA_FUERA, pedidos: 1, productos: 1, importeCents: 600 },
     ]);
     // Y al revés: en el día en que entraron no se entrega nada.
     expect(
       (await stats.resumen({ desde: DIA, hasta: DIA })).ventaPorDia,
     ).toEqual([]);
+  });
+
+  it("productos: un pack cuenta sus piezas por las unidades del pack", async () => {
+    // Un día propio (el 11 ya lo usa el pedido de fuera de rango).
+    const DIA_PACK = "2021-03-12";
+    const id = await pedidos.crearPedidoIniciado(pedido([CEBRA]) as never, {
+      estado: "sin_pago",
+    });
+    // 2 packs de 3 + 2 piezas = 10, más la cebra suelta = 11.
+    await pool.query(
+      `insert into lineas_pedido (pedido_id, slug, nombre, qty, unit_price_cents, detalle)
+       values ($1, 'stats-pack', 'Pack prueba', 2, 2000, $2::jsonb)`,
+      [
+        id,
+        JSON.stringify([
+          { slug: "stats-tarta", nombre: "Tarta", qty: 3 },
+          { slug: "stats-cebra", nombre: "Cebra", qty: 2 },
+        ]),
+      ],
+    );
+    await pool.query(
+      `update pedidos set created_at = ($2::date + interval '12 hours') at time zone 'Europe/Madrid'
+        where id = $1`,
+      [id, DIA_PACK],
+    );
+    const r = await stats.resumen({ desde: DIA_PACK, hasta: DIA_PACK });
+    expect(r.compraPorDia).toEqual([
+      { dia: DIA_PACK, pedidos: 1, productos: 11, importeCents: 600 },
+    ]);
+    await pool.query("delete from pedidos where id = $1", [id]);
   });
 
   it("compra y venta por día de una oficina: Alcobendas lleva también el domicilio", async () => {
@@ -274,7 +306,7 @@ describeSiHayBD("resumen del panel", () => {
       destinos: ["alcobendas", "domicilio"],
     });
     expect(alc.compraPorDia).toEqual([
-      { dia: DIA, pedidos: 2, importeCents: 4800 },
+      { dia: DIA, pedidos: 2, productos: 4, importeCents: 4800 },
     ]);
     const poz = await stats.resumen({
       desde: ENTREGA,
@@ -282,7 +314,7 @@ describeSiHayBD("resumen del panel", () => {
       destinos: ["pozuelo"],
     });
     expect(poz.ventaPorDia).toEqual([
-      { dia: ENTREGA, pedidos: 1, importeCents: 600 },
+      { dia: ENTREGA, pedidos: 1, productos: 1, importeCents: 600 },
     ]);
     const alcVenta = await stats.resumen({
       desde: ENTREGA,
@@ -290,8 +322,8 @@ describeSiHayBD("resumen del panel", () => {
       destinos: ["alcobendas", "domicilio"],
     });
     expect(alcVenta.ventaPorDia).toEqual([
-      { dia: ENTREGA, pedidos: 2, importeCents: 4800 },
-      { dia: ENTREGA_FUERA, pedidos: 1, importeCents: 600 },
+      { dia: ENTREGA, pedidos: 2, productos: 4, importeCents: 4800 },
+      { dia: ENTREGA_FUERA, pedidos: 1, productos: 1, importeCents: 600 },
     ]);
     // El resto del resumen no se filtra por oficina.
     expect(alc.pedidos.total).toBe(3);

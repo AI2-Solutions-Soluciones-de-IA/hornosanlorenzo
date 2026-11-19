@@ -75,7 +75,13 @@ export type Resumen = {
   ventaPorDia: PorDia[];
 };
 
-export type PorDia = { dia: string; pedidos: number; importeCents: number };
+export type PorDia = {
+  dia: string;
+  pedidos: number;
+  /** Unidades de esos pedidos; un pack cuenta todas sus piezas. */
+  productos: number;
+  importeCents: number;
+};
 
 // Mismo criterio de día que el filtro de `/admin/pedidos`: la fecha local
 // de Madrid, no la UTC de la base de datos.
@@ -91,6 +97,21 @@ const CON_IMPORTE = "p.estado in ('pagado', 'sin_pago')";
 const DESTINO = `(case p.mode when 'domicilio' then 'domicilio'
                   when 'recogida' then p.store_id end)`;
 const DE_DESTINOS = `($3::text[] is null or ${DESTINO} = any($3::text[]))`;
+/**
+ * Las unidades de cada pedido, para unirlas sin repetir el pedido por línea.
+ * Un pack cuenta sus piezas (`detalle`) por las unidades del pack, como en
+ * la hoja de Producción: 2 packs de 6 piezas son 12 productos.
+ */
+const CON_UNIDADES = `left join (
+         select l.pedido_id,
+                sum(case when l.detalle is null then l.qty
+                         else l.qty * coalesce(
+                           (select sum((d->>'qty')::int)
+                              from jsonb_array_elements(l.detalle) d), 1)
+                    end) as uds
+           from lineas_pedido l
+          group by l.pedido_id) u
+         on u.pedido_id = p.id`;
 
 const n = (v: unknown): number => Number(v ?? 0);
 
@@ -180,8 +201,9 @@ export async function resumen({
     pool.query(
       `select to_char(${DIA}, 'YYYY-MM-DD') as dia,
               count(*)                        as pedidos,
+              coalesce(sum(u.uds), 0)         as productos,
               coalesce(sum(p.total_cents), 0) as importe
-         from pedidos p
+         from pedidos p ${CON_UNIDADES}
         where ${EN_RANGO} and ${CON_IMPORTE} and ${DE_DESTINOS}
         group by ${DIA}
         order by ${DIA}`,
@@ -198,8 +220,9 @@ export async function resumen({
     pool.query(
       `select to_char(p.fecha_entrega, 'YYYY-MM-DD') as dia,
               count(*)                        as pedidos,
+              coalesce(sum(u.uds), 0)         as productos,
               coalesce(sum(p.total_cents), 0) as importe
-         from pedidos p
+         from pedidos p ${CON_UNIDADES}
         where p.fecha_entrega between $1::date and $2::date and ${CON_IMPORTE}
           and ${DE_DESTINOS}
         group by p.fecha_entrega
@@ -208,11 +231,12 @@ export async function resumen({
     ),
   ]);
   const porDia = (
-    filas: { dia: string; pedidos: unknown; importe: unknown }[],
+    filas: { dia: string; pedidos: unknown; productos: unknown; importe: unknown }[],
   ): PorDia[] =>
     filas.map((r) => ({
       dia: r.dia,
       pedidos: n(r.pedidos),
+      productos: n(r.productos),
       importeCents: n(r.importe),
     }));
   const aparato = Object.fromEntries(
