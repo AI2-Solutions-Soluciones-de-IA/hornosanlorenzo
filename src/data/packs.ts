@@ -12,6 +12,7 @@
  */
 
 import { alergenoIds } from "~/data/alergenos";
+import { nombreConTipo } from "~/data/secciones";
 
 /** Lo mínimo que estas cuentas necesitan saber de un producto de la carta. */
 export type ProductoPieza = {
@@ -127,6 +128,11 @@ export type PiezaResuelta = {
   varianteLabel: string | null;
   /** Unidades de esa pieza por cada pack. Hoy siempre 1. */
   qty: number;
+  /**
+   * Sección de la carta de la pieza. No se guarda en el pedido: se lee de
+   * `productos` al mostrarlo (23-11-2026), para nombrarla con su tipo.
+   */
+  seccion?: string | null;
 };
 
 /**
@@ -208,9 +214,14 @@ export function precioPorPersonaCents(precioPackCents: number, def: DefinicionPa
   return Math.round(precioPackCents / def.personas.max / 10) * 10;
 }
 
-/** Etiqueta legible de una pieza resuelta: «Empanada de carne · Entera 16–20 rac.» */
+/**
+ * Etiqueta legible de una pieza resuelta: «Empanada · Carne · Entera 16–20
+ * rac.». Con la sección, lleva su tipo delante, como las líneas sueltas del
+ * pedido: «Variados · 24 ud» solo no dice que son mini croissants dulces.
+ */
 export function etiquetaPieza(p: PiezaResuelta): string {
-  return p.varianteLabel ? `${p.nombre} · ${p.varianteLabel}` : p.nombre;
+  const nombre = nombreConTipo(p.nombre, p.seccion);
+  return p.varianteLabel ? `${nombre} · ${p.varianteLabel}` : nombre;
 }
 
 /**

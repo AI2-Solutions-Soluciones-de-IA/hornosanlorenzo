@@ -474,7 +474,11 @@ const PROYECCION_PEDIDO = `
               'varianteLabel', l.variante_label,
               'qty', l.qty,
               'unitPriceCents', l.unit_price_cents,
-              'detalle', l.detalle,
+              -- Cada pieza de un pack, con la sección de su producto (para su tipo).
+              'detalle', (select jsonb_agg(d || jsonb_build_object('seccion',
+                                   (select pr.seccion from productos pr where pr.slug = d->>'slug'))
+                                 order by i)
+                            from jsonb_array_elements(l.detalle) with ordinality as x(d, i)),
               'fotoUrl', l.foto_url,
               'seccion', (select pr.seccion from productos pr where pr.slug = l.slug))
             order by l.orden)

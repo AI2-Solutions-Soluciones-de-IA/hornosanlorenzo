@@ -228,6 +228,17 @@ describe("etiquetaPieza", () => {
     expect(etiquetaPieza({ slug: "a", nombre: "Empanada", varianteLabel: "Entera", qty: 1 })).toBe("Empanada · Entera");
     expect(etiquetaPieza({ slug: "a", nombre: "Foto", varianteLabel: null, qty: 1 })).toBe("Foto");
   });
+  it("con la sección, lleva su tipo delante (y no lo repite)", () => {
+    expect(
+      etiquetaPieza({ slug: "a", nombre: "Variados · 24 ud", varianteLabel: null, qty: 1, seccion: "las-lorenzas" }),
+    ).toBe("Mini croissants dulces · Variados · 24 ud");
+    expect(
+      etiquetaPieza({ slug: "a", nombre: "Carne", varianteLabel: "Entera · 16–20 rac.", qty: 1, seccion: "empanadas" }),
+    ).toBe("Empanada · Carne · Entera · 16–20 rac.");
+    expect(
+      etiquetaPieza({ slug: "a", nombre: "Quiche Carbonara", varianteLabel: null, qty: 1, seccion: "quiches" }),
+    ).toBe("Quiche Carbonara");
+  });
 });
 
 describe("requiereFoto", () => {

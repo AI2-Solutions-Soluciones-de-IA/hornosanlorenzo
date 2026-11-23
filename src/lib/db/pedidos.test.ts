@@ -110,7 +110,8 @@ describeSiHayBD("repositorio de pedidos", () => {
       estado: "sin_pago",
     });
     const leido = (await repo.listarPedidos(50)).find((p) => p.id === id)!;
-    expect(leido.lineas[0].detalle).toEqual(detalle);
+    // Al leerlo, cada pieza trae la sección de su producto (aquí no existe: nula).
+    expect(leido.lineas[0].detalle).toEqual(detalle.map((d) => ({ ...d, seccion: null })));
     expect(leido.lineas[0].fotoUrl).toBe("https://blob.example/tarta.jpg");
     expect(leido.lineas[1].detalle).toBeNull();
     expect(leido.lineas[1].fotoUrl).toBeNull();
@@ -129,7 +130,7 @@ describeSiHayBD("repositorio de pedidos", () => {
     const leido = await repo.pedidoPorId(id);
     expect(leido?.id).toBe(id);
     expect(leido?.reconstruido).toBe(false);
-    expect(leido?.lineas[0].detalle).toEqual(detalle);
+    expect(leido?.lineas[0].detalle).toEqual(detalle.map((d) => ({ ...d, seccion: null })));
     expect(await repo.pedidoPorId("00000000-0000-0000-0000-000000000000")).toBeNull();
   });
 
