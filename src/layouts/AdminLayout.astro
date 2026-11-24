@@ -127,7 +127,7 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
    * Número en rojo junto a «Pedidos» en el menú del panel (9-10-2026): los
    * pedidos entrados desde la última vez que se abrió Pedidos en este
    * navegador. Esa marca la deja `PedidosNuevos.tsx` en localStorage al
-   * abrir la página de Pedidos. Mira cada 20 s con la pestaña visible.
+   * abrir la página de Pedidos. Mira cada 10 min con la pestaña visible, y al volver a ella.
    * La cabecera de la web usa navegación sin recarga, así que todo se
    * engancha a `astro:page-load` y se limpia en cada cambio de página.
    */
@@ -165,7 +165,7 @@ const seccionActual = secciones.find((s) => s.href === actual)?.label ?? "Panel"
     if (!document.querySelector("[data-contador-pedidos]")) return;
     // Un respiro al cargar: en Pedidos, la isla apunta antes lo ya visto.
     window.setTimeout(mira, 1500);
-    reloj = window.setInterval(mira, 20_000);
+    reloj = window.setInterval(mira, 10 * 60_000);
   });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) mira();

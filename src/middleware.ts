@@ -1,6 +1,14 @@
 import { defineMiddleware } from "astro:middleware";
 import { auth } from "~/lib/auth/server";
 import { guardiaAdmin } from "~/lib/auth/guardia";
+import {
+  RUTA_AVISO,
+  claveDeSesion,
+  cookieDeSesion,
+  guardaSesion,
+  olvidaSesion,
+  sesionGuardada,
+} from "~/lib/aviso-pedidos";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // Las páginas prerenderizadas se generan en build, sin petición real: no
@@ -19,6 +27,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
+  // El aviso de pedidos nuevos del panel (24-11-2026): con la sesión ya
+  // comprobada y guardada en Redis, la pregunta no despierta a Postgres.
+  // Sin guardar (o sin Redis), sigue por el camino de siempre y la guarda.
+  const ruta = context.url.pathname;
+  const cookie =
+    ruta === RUTA_AVISO || ruta === "/api/auth/sign-out"
+      ? cookieDeSesion(context.request.headers.get("cookie"))
+      : null;
+  const claveSesion = cookie ? await claveDeSesion(cookie) : null;
+  if (claveSesion && context.url.pathname === RUTA_AVISO) {
+    const guardada = await sesionGuardada<App.Locals["usuario"]>(claveSesion);
+    if (guardada) {
+      context.locals.usuario = guardada;
+      return (
+        guardiaAdmin({ usuario: guardada, pathname: context.url.pathname }) ??
+        next()
+      );
+    }
+  }
+  // Cerrar sesión borra también la guardada.
+  if (claveSesion && context.url.pathname === "/api/auth/sign-out")
+    await olvidaSesion(claveSesion);
+
   // Este middleware corre en TODAS las peticiones, no solo en las de
   // autenticación. Si `getSession` lanza —un corte momentáneo con Postgres,
   // una cookie corrupta, un fallo interno de Better Auth— no puede tumbar el
@@ -31,6 +62,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     });
 
     context.locals.usuario = sesion?.user ?? null;
+    if (claveSesion && sesion?.user && context.url.pathname === RUTA_AVISO)
+      await guardaSesion(claveSesion, sesion.user);
   } catch (error) {
     // Nunca volcar cookies, tokens ni la cadena de conexión: solo el motivo.
     console.error(

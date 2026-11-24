@@ -1,4 +1,5 @@
 import { pool } from "~/lib/db/pool";
+import { avisaCambioPedidos } from "~/lib/aviso-pedidos";
 import { patronBusqueda } from "~/lib/db/busqueda";
 import { OrderError, type PricedOrder } from "~/lib/pedido";
 import { bloquearDia, unidadesEncargadas } from "~/lib/db/capacidad";
@@ -205,6 +206,8 @@ export async function crearPedidoIniciado(
     }
 
     await cliente.query("commit");
+    // Un pedido del TPV (o sin pago) ya sale en la lista del panel.
+    if (estado !== "iniciado") await avisaCambioPedidos();
     return id;
   } catch (err) {
     await cliente.query("rollback");
@@ -247,6 +250,7 @@ export async function marcarPagado(ref: {
       returning id, notificado_en as "notificadoEn", numero`,
     [ref.pedidoId ?? null, ref.sessionId],
   );
+  if (rows[0]) await avisaCambioPedidos();
   return rows[0] ?? null;
 }
 
@@ -336,6 +340,7 @@ export async function crearPedidoReconstruido(
     }
 
     await cliente.query("commit");
+    await avisaCambioPedidos();
     return rows[0];
   } catch (err) {
     await cliente.query("rollback");

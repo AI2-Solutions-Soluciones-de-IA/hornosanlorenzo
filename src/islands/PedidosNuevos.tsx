@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-const CADA_MS = 20_000;
+// Cada 10 min (24-11-2026): cada 20 s no dejaba apagarse a Neon.
+const CADA_MS = 10 * 60_000;
 const CLAVE_SONIDO = "hsl-pedidos-sonido";
 /** Cuántos pedidos había la última vez que se abrió Pedidos en este navegador. */
 const CLAVE_VISTOS = "hsl-pedidos-vistos";
@@ -29,7 +30,7 @@ function ding() {
  * - Al abrir Pedidos: los que han entrado desde la última visita en este
  *   navegador, con la marca «Nuevo» en la lista (solo sin filtros y en la
  *   primera página, donde salen los más recientes arriba).
- * - Con la página abierta: cada 20 s, con la pestaña visible, pregunta
+ * - Con la página abierta: cada 10 min, con la pestaña visible, pregunta
  *   cuántos hay; si son más, «Han entrado N pedidos nuevos · Ver», el número
  *   en el título de la pestaña y, si se ha activado, un sonido. No mueve la
  *   lista: se ve al pulsar «Ver».
@@ -78,7 +79,7 @@ export default function PedidosNuevos({ inicial, marcables }: { inicial: number;
         setNuevos(Math.max(0, total - inicial));
         // No se apunta como visto: lo será al pulsar «Ver», que recarga.
       } catch {
-        // Sin conexión un rato: se vuelve a mirar en el siguiente minuto.
+        // Sin conexión un rato: se vuelve a mirar en la siguiente vuelta.
       }
     }
     const t = window.setInterval(mira, CADA_MS);
@@ -131,7 +132,7 @@ export default function PedidosNuevos({ inicial, marcables }: { inicial: number;
         </p>
       ) : (
         <p className="text-xs text-[color:var(--color-ink-muted)]">
-          La lista mira cada 20 segundos si han entrado pedidos nuevos.
+          La lista mira cada 10 minutos, y al volver a esta pestaña, si han entrado pedidos nuevos.
         </p>
       )}
       <label className="flex items-center gap-2 text-xs text-[color:var(--color-ink-muted)]">
