@@ -184,6 +184,25 @@ describe("plazo: un día de antelación, hasta las 18:00 (14-10-2026)", () => {
     expect(earliestDate("recogida", new Date("2026-09-29T17:00:00"), { storeId })).toBe("2026-10-01");
   });
 
+  it("domicilio: sábados, domingos y festivos, hasta las 13:00", () => {
+    // Domingo 4-10: antes de las 13:00 vale el lunes; desde las 13:00, el martes.
+    expect(earliestDate("domicilio", new Date("2026-10-04T12:59:00"))).toBe("2026-10-05");
+    expect(earliestDate("domicilio", new Date("2026-10-04T13:00:00"))).toBe("2026-10-06");
+    // Martes 8-12-2026, festivo.
+    expect(earliestDate("domicilio", new Date("2026-12-08T12:59:00"))).toBe("2026-12-09");
+    expect(earliestDate("domicilio", new Date("2026-12-08T13:00:00"))).toBe("2026-12-10");
+  });
+
+  it("festivo entre semana: hasta las 13:00 en las dos tiendas", () => {
+    // Martes 8-12-2026, Inmaculada.
+    for (const storeId of ["alcobendas", "pozuelo"]) {
+      expect(earliestDate("recogida", new Date("2026-12-08T12:59:00"), { storeId })).toBe("2026-12-09");
+      expect(earliestDate("recogida", new Date("2026-12-08T13:00:00"), { storeId })).toBe("2026-12-10");
+    }
+    // La víspera, un día normal: hasta las 18:00 / 17:00.
+    expect(earliestDate("recogida", new Date("2026-12-04T17:30:00"), { storeId: "alcobendas" })).toBe("2026-12-05");
+  });
+
   it("Pozuelo, sábados y domingos: hasta las 13:00", () => {
     const storeId = "pozuelo";
     expect(earliestDate("recogida", new Date("2026-10-03T12:59:00"), { storeId })).toBe("2026-10-04");

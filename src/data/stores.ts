@@ -37,7 +37,7 @@ export type Store = {
    * el día siguiente; desde esa hora, para pasado mañana (5-11-2026).
    */
   horaLimitePedido: number;
-  /** La de los pedidos hechos en sábado o domingo, si es otra. */
+  /** La de los pedidos hechos en sábado, domingo o festivo, si es otra. */
   horaLimitePedidoFinDeSemana?: number;
   openDays: number[]; // 0=Sun ... 6=Sat
   /** Días en que se puede elegir recoger aquí. 0=domingo ... 6=sábado. */

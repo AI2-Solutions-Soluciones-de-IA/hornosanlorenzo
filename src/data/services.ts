@@ -11,7 +11,7 @@ export const services: readonly Service[] = [
     id: "domicilio",
     title: "Reparto propio a domicilio",
     short: "Furgoneta y repartidor de la casa, de lunes a sábado.",
-    body: "Pide por teléfono o desde la tienda online antes de las 18:00 y te lo llevamos al día siguiente, de 9:00 a 14:30. Repartimos en Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón. Nadie subcontratado: al cliente se le conoce por su nombre, no por su número de pedido.",
+    body: "Pide por teléfono o desde la tienda online antes de las 18:00 (sábados, domingos y festivos, antes de las 13:00) y te lo llevamos al día siguiente, de 9:00 a 14:30. Repartimos en Madrid capital, Alcobendas, San Sebastián de los Reyes, Tres Cantos y Pozuelo de Alarcón. Nadie subcontratado: al cliente se le conoce por su nombre, no por su número de pedido.",
     number: "01",
   },
   {

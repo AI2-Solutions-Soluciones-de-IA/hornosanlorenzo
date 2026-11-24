@@ -3,8 +3,8 @@
  *
  *   Envío a domicilio y recogida en tienda — siempre con un día de
  *   antelación: para mañana, hasta la hora límite de hoy; después, pasado
- *   mañana. Domicilio, las 18:00; recogida, la de la tienda (5-11-2026):
- *   Alcobendas, las 18:00 (sábados y domingos, las 13:00); Pozuelo, las 17:00 (sábados y domingos, las 13:00).
+ *   mañana. Domicilio, las 18:00 (sábados, domingos y festivos, las 13:00); recogida, la de la tienda (5-11-2026):
+ *   Alcobendas, las 18:00 (sábados, domingos y festivos, las 13:00); Pozuelo, las 17:00 (sábados, domingos y festivos, las 13:00).
  *   Nada para el mismo día por la web (14-10-2026): quien lo necesite llama.
  *   Alcobendas abre también los domingos; sábados, domingos y festivos
  *   cierra a las 14:30, así que ese día solo hay mañana.
@@ -21,6 +21,9 @@ export type DeliveryMode = "domicilio" | "recogida";
  * recogida mientras no hay tienda elegida (la más permisiva).
  */
 export const CUTOFF_HOUR = 18;
+
+/** La del reparto en pedidos hechos en sábado, domingo o festivo (24-11-2026). */
+export const CUTOFF_HOUR_REDUCIDO = 13;
 
 /** Desde este importe el obrador necesita dos días: no vale el día siguiente. */
 export const DOS_DIAS_DESDE_CENTS = 25_000;
@@ -71,7 +74,7 @@ export const REPARTO_RESUMEN = [
 
 /** Va debajo de las dos modalidades, antes de elegir. */
 export const ANTELACION_COPY =
-  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación: a domicilio, antes de las 18:00 del día anterior; para recoger, antes de las 18:00 en Alcobendas y de las 17:00 en Pozuelo; los sábados y domingos, en las dos tiendas, antes de las 13:00. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
+  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación: a domicilio, antes de las 18:00 del día anterior; para recoger, antes de las 18:00 en Alcobendas y de las 17:00 en Pozuelo. Los sábados, domingos y festivos, tanto a domicilio como en las dos tiendas, antes de las 13:00. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
 
 /**
  * El envío a domicilio no se elige por franja: el reparto propio sale por la
@@ -216,10 +219,18 @@ export function horaLimite(
   now: Date,
   storeId?: string,
 ): number {
-  const tienda = mode === "recogida" ? stores.find((s) => s.id === storeId) : undefined;
+  // Sábado, domingo o festivo (festivos desde el 24-11-2026).
+  const diaReducido =
+    now.getDay() === 0 || now.getDay() === 6 || FESTIVOS.has(toISO(now));
+  if (mode === "domicilio")
+    return diaReducido ? CUTOFF_HOUR_REDUCIDO : CUTOFF_HOUR;
+  const tienda = stores.find((s) => s.id === storeId);
+  // Recogida sin tienda elegida: la más permisiva, para abrir el calendario.
   if (!tienda) return CUTOFF_HOUR;
-  const finDeSemana = now.getDay() === 0 || now.getDay() === 6;
-  return (finDeSemana ? tienda.horaLimitePedidoFinDeSemana : undefined) ?? tienda.horaLimitePedido;
+  return (
+    (diaReducido ? tienda.horaLimitePedidoFinDeSemana : undefined) ??
+    tienda.horaLimitePedido
+  );
 }
 
 /**
