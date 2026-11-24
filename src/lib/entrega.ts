@@ -4,7 +4,7 @@
  *   Envío a domicilio y recogida en tienda — siempre con un día de
  *   antelación: para mañana, hasta la hora límite de hoy; después, pasado
  *   mañana. Domicilio, las 18:00; recogida, la de la tienda (5-11-2026):
- *   Alcobendas, las 18:00 (sábados y domingos, las 13:00); Pozuelo, las 17:00.
+ *   Alcobendas, las 18:00 (sábados y domingos, las 13:00); Pozuelo, las 17:00 (sábados y domingos, las 13:00).
  *   Nada para el mismo día por la web (14-10-2026): quien lo necesite llama.
  *   Alcobendas abre también los domingos; sábados, domingos y festivos
  *   cierra a las 14:30, así que ese día solo hay mañana.
@@ -71,7 +71,7 @@ export const REPARTO_RESUMEN = [
 
 /** Va debajo de las dos modalidades, antes de elegir. */
 export const ANTELACION_COPY =
-  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación: a domicilio, antes de las 18:00 del día anterior; para recoger en Alcobendas, antes de las 18:00 (sábados y domingos, antes de las 13:00); en Pozuelo, antes de las 17:00. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
+  "En ambos casos, los pedidos deben hacerse como mínimo con un día de antelación: a domicilio, antes de las 18:00 del día anterior; para recoger, antes de las 18:00 en Alcobendas y de las 17:00 en Pozuelo; los sábados y domingos, en las dos tiendas, antes de las 13:00. Si no te deja seleccionar el día, no dudes en llamarnos para consultar.";
 
 /**
  * El envío a domicilio no se elige por franja: el reparto propio sale por la

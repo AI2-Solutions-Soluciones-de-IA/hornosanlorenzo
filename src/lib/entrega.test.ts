@@ -182,8 +182,15 @@ describe("plazo: un día de antelación, hasta las 18:00 (14-10-2026)", () => {
     const storeId = "pozuelo";
     expect(earliestDate("recogida", new Date("2026-09-29T16:59:00"), { storeId })).toBe("2026-09-30");
     expect(earliestDate("recogida", new Date("2026-09-29T17:00:00"), { storeId })).toBe("2026-10-01");
-    // El sábado también a las 17:00.
-    expect(earliestDate("recogida", new Date("2026-10-03T16:59:00"), { storeId })).toBe("2026-10-04");
+  });
+
+  it("Pozuelo, sábados y domingos: hasta las 13:00", () => {
+    const storeId = "pozuelo";
+    expect(earliestDate("recogida", new Date("2026-10-03T12:59:00"), { storeId })).toBe("2026-10-04");
+    expect(earliestDate("recogida", new Date("2026-10-03T13:00:00"), { storeId })).toBe("2026-10-05");
+    // El caso del pedido nº 88: sábado a las 16:05 ya no vale el domingo.
+    expect(earliestDate("recogida", new Date("2026-10-03T16:05:00"), { storeId })).toBe("2026-10-05");
+    expect(earliestDate("recogida", new Date("2026-10-04T13:00:00"), { storeId })).toBe("2026-10-06");
   });
 
   it("cuenta la hora de Madrid aunque el reloj del servidor vaya en UTC", () => {

@@ -116,6 +116,8 @@ export const stores: readonly Store[] = [
     pickupUntil: "20:30",
     cierreFestivo: "15:00",
     horaLimitePedido: 17,
+    // Fin de semana, como Alcobendas (24-11-2026): el domingo cierra a las 15:00.
+    horaLimitePedidoFinDeSemana: 13,
     openDays: [0, 1, 2, 3, 4, 5, 6],
     // Recogida también el domingo, de mañana (14-10-2026).
     diasRecogida: [0, 1, 2, 3, 4, 5, 6],
