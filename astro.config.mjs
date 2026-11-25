@@ -57,12 +57,18 @@ export default defineConfig({
       // /catalogo/dulce por primera vez, la página vacía que devuelve el
       // `try/catch` se guarda y todo el mundo ve la tienda vacía hasta el
       // siguiente despliegue, con un 200 que no dispara ninguna alarma.
-      // Diez minutos es la red debajo: la invalidación bajo demanda sigue
-      // dando al obrador el cambio al instante, esto solo garantiza que
-      // ningún error se quede a vivir. Va junto con el `no-store` que ponen
-      // las páginas al degradar (`~/lib/lectura-publica.ts`): con la red
-      // sola, la tienda seguiría vacía diez minutos por cada parpadeo.
-      expiration: 600,
+      // Un día es la red debajo: la invalidación bajo demanda sigue dando al
+      // obrador el cambio al instante, esto solo garantiza que ningún error
+      // se quede a vivir. Va junto con el `no-store` que ponen las páginas al
+      // degradar (`~/lib/lectura-publica.ts`), que es lo que de verdad evita
+      // guardar una tienda vacía.
+      //
+      // Eran diez minutos hasta el 25-11-2026: con la precarga de enlaces,
+      // cada visita al catálogo regeneraba fichas caducadas (unas 100 por
+      // hora) y Neon no se apagaba en todo el día. Las ofertas que acaban
+      // por fecha las retira la regeneración de cada noche
+      // (`/api/cron/revalidar`, en `vercel.json`).
+      expiration: 86_400,
       // Ninguna página con sesión puede entrar en una caché compartida: lo
       // que se guardara ahí se le serviría a la siguiente persona. Esta lista
       // es una medida de seguridad, no de rendimiento.

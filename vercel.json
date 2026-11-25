@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/cron/revalidar", "schedule": "5 23 * * *" }]
+}

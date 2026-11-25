@@ -76,6 +76,10 @@ export const auth = betterAuth({
     window: 60,
     max: 10,
     storage: "database",
+    // Preguntar por la sesión no da acceso a nada y lo hace el botón de
+    // «Acceso» de la cabecera en cada página: con límite, cada página vista
+    // era una escritura en Postgres y Neon no se apagaba nunca (25-11-2026).
+    customRules: { "/get-session": false },
   },
   user: {
     additionalFields: camposAdicionales,
