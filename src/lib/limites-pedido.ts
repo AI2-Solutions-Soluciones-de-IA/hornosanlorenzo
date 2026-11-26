@@ -21,8 +21,8 @@ export const MAX_IMPORTE_PEDIDO_CENTS = 40_000;
  * Los festivos no cambian nada: solo cuenta el día de la semana.
  */
 export const MAX_UNIDADES_DIA = 50;
-/** Viernes y sábados. */
-export const MAX_UNIDADES_DIA_FIN_DE_SEMANA = 100;
+/** Viernes y sábados (150 desde el 26-11-2026; eran 100). El domingo, como entre semana. */
+export const MAX_UNIDADES_DIA_FIN_DE_SEMANA = 150;
 
 /**
  * Minutos que un pedido a medio pagar guarda su hueco. Stripe no deja que su
