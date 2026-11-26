@@ -3,6 +3,7 @@
 import AdminLayout from "~/layouts/AdminLayout.astro";
 import { resumen, type Resumen } from "~/lib/db/estadisticas";
 import { partesDelRanking } from "~/lib/ranking";
+import { conDiasVacios } from "~/lib/por-dia";
 import TablaRanking from "~/components/TablaRanking.astro";
 import { formatPriceCents, formatDateISO } from "~/lib/format";
 import { stores } from "~/data/stores";
@@ -300,12 +301,14 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
             nota: "Por el día en que el cliente hizo el pedido.",
             vacio: "Ningún pedido en el rango.",
             filas: datos.compraPorDia,
+            todos: conDiasVacios(datos.compraPorDia, desde, hasta),
           },
           {
             titulo: "Venta por día",
             nota: "Por el día de entrega, que es cuando se produce: un encargo hecho el lunes para el sábado cuenta el sábado.",
             vacio: "Ninguna entrega en el rango.",
             filas: datos.ventaPorDia,
+            todos: conDiasVacios(datos.ventaPorDia, desde, hasta),
           },
         ].map((t) => (
           <section>
@@ -324,8 +327,8 @@ const cifra = "font-[family-name:var(--font-display)] text-3xl mt-2";
                   </tr>
                 </thead>
                 <tbody>
-                  {t.filas.map((d) => (
-                    <tr class="border-t border-[color:var(--color-line)]">
+                  {t.todos.map((d) => (
+                    <tr class:list={["border-t border-[color:var(--color-line)]", d.pedidos === 0 && "text-[color:var(--color-ink-muted)]"]}>
                       <td class="py-2">{formatDateISO(d.dia)}</td>
                       <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{d.pedidos}</td>
                       <td class="py-2 pl-6 sm:pl-10 text-right tabular-nums whitespace-nowrap">{d.productos}</td>
