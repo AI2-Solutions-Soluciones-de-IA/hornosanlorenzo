@@ -13,7 +13,7 @@ describeSiHayBD("unidades encargadas por día", () => {
   const CORREO = "capacidad@prueba.test";
   // Un día lejano y propio: otros ficheros escriben pedidos a la vez.
   const DIA = "2031-05-16";
-  // Martes: capacidad de 50.
+  // Martes: capacidad de 100.
   const MARTES = "2031-05-20";
   const pedido = (qtys: number[], totalCents = 1000, dateISO = DIA) => ({
     lines: qtys.map((qty, i) => ({
@@ -87,7 +87,7 @@ describeSiHayBD("unidades encargadas por día", () => {
 
     it("con el día lleno no se anota el pedido: 409", async () => {
       const lleno = await pedidos.crearPedidoIniciado(
-        pedido([10, 10, 10, 10, 8], 1000, MARTES) as never,
+        pedido([10, 10, 10, 10, 10, 10, 10, 10, 10, 8], 1000, MARTES) as never,
         { estado: "sin_pago", comprobarHueco: true },
       );
       await expect(
@@ -95,13 +95,13 @@ describeSiHayBD("unidades encargadas por día", () => {
           comprobarHueco: true,
         }),
       ).rejects.toMatchObject({ status: 409 });
-      expect(await ocupadas()).toBe(48);
+      expect(await ocupadas()).toBe(98);
       await pool.query("delete from pedidos where id = $1", [lleno]);
     });
 
     it("dos pedidos a la vez por el último hueco: entra uno solo", async () => {
       const previo = await pedidos.crearPedidoIniciado(
-        pedido([10, 10, 10, 10, 5], 1000, MARTES) as never,
+        pedido([10, 10, 10, 10, 10, 10, 10, 10, 10, 5], 1000, MARTES) as never,
         { estado: "sin_pago", comprobarHueco: true },
       );
       const a = pedidos.crearPedidoIniciado(pedido([4], 1000, MARTES) as never, {
@@ -112,7 +112,7 @@ describeSiHayBD("unidades encargadas por día", () => {
       });
       const res = await Promise.allSettled([a, b]);
       expect(res.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-      expect(await ocupadas()).toBe(49);
+      expect(await ocupadas()).toBe(99);
       await pool.query("delete from pedidos where email = $1 and fecha_entrega = $2", [
         CORREO,
         MARTES,
@@ -141,13 +141,13 @@ describeSiHayBD("unidades encargadas por día", () => {
         "update pedidos set reserva_hasta = now() - interval '1 minute' where id = $1",
         [vencida],
       );
-      // 6 vencidas + 40 ocupadas = 46: cabe, se deja pagar.
+      // 6 vencidas + 90 ocupadas = 96: cabe, se deja pagar.
       const cuarenta = await pedidos.crearPedidoIniciado(
-        pedido([10, 10, 10, 10], 1000, MARTES) as never,
+        pedido([10, 10, 10, 10, 10, 10, 10, 10, 10], 1000, MARTES) as never,
         { estado: "sin_pago", comprobarHueco: true },
       );
       expect(await capacidad.sesionesQueCerrar(MARTES)).toEqual([]);
-      // 6 + 48 = 54: se pasaría, se cierra.
+      // 6 + 98 = 104: se pasaría, se cierra.
       await pedidos.crearPedidoIniciado(pedido([8], 1000, MARTES) as never, {
         estado: "sin_pago",
         comprobarHueco: true,

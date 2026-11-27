@@ -372,16 +372,16 @@ describe("priceOrder — límites del pedido online", () => {
 describe("priceOrder — capacidad del día", () => {
   const conEncargadas = (n: number) =>
     unidadesEncargadas.mockResolvedValue(new Map([[FECHA_RECOGIDA, n]]));
-  // FECHA_RECOGIDA es martes 10-3-2026: capacidad de 50.
+  // FECHA_RECOGIDA es martes 10-3-2026: capacidad de 100.
 
   it("admite el pedido si cabe justo", async () => {
-    conEncargadas(48);
+    conEncargadas(98);
     await expect(priceOrder(pedidoBase(), { now: AHORA })).resolves.toBeDefined();
     expect(unidadesEncargadas).toHaveBeenCalledWith(FECHA_RECOGIDA);
   });
 
   it("lo rechaza si con él se pasa de la capacidad del día", async () => {
-    conEncargadas(49);
+    conEncargadas(99);
     await expect(priceOrder(pedidoBase(), { now: AHORA })).rejects.toThrow(
       /no nos caben más encargos.*comentarnos tu caso/,
     );
@@ -565,7 +565,7 @@ describe("priceOrder con packs", () => {
 
   it("para la capacidad del día, dos packs de 4 piezas ocupan 8 huecos", async () => {
     const dia = cumple({ qty: 2 }).dateISO;
-    // Capacidad de 50 o 100 según el día: se deja justo el hueco de 7.
+    // Capacidad de 100 o 200 según el día: se deja justo el hueco de 7.
     const { maxUnidadesDelDia } = await import("~/lib/limites-pedido");
     unidadesEncargadas.mockResolvedValue(new Map([[dia, maxUnidadesDelDia(dia) - 7]]));
     await expect(priceOrder(cumple({ qty: 2 }), { now: AHORA })).rejects.toThrow(
